@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Checklist de Pruebas Funcionales — EdPlatform</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:Arial,Helvetica,sans-serif;background:#f8f9fa;color:#1a1a2e;line-height:1.6}
+.container{max-width:1100px;margin:0 auto;padding:30px 20px}
+h1{font-size:1.8rem;color:#0a3d62;border-bottom:3px solid #0a3d62;padding-bottom:8px;margin-bottom:10px}
+h2{font-size:1.3rem;color:#135d8a;margin:30px 0 10px;padding:8px 14px;background:#e8f0f8;border-radius:6px}
+table{width:100%;border-collapse:collapse;margin:10px 0;font-size:.9rem}
+th,td{border:1px solid #dde2e8;padding:6px 8px;text-align:left;vertical-align:top}
+th{background:#0a3d62;color:#fff;font-size:.8rem}
+td.idx{text-align:center;width:28px;font-weight:700}
+td.req{min-width:180px;font-size:.82rem;color:#506478}
+td.act{min-width:260px}
+td.res{width:90px;text-align:center}
+td.bug{min-width:180px}
+.radio-group{display:flex;gap:6px;justify-content:center}
+.radio-group label{display:flex;align-items:center;gap:3px;font-size:.75rem;cursor:pointer;padding:2px 6px;border-radius:4px}
+.radio-group input[type=radio]{display:none}
+.radio-group input[type=radio]:checked+span{font-weight:700}
+.lbl-ok{background:#d5f5e3}.lbl-ok input:checked+span{color:#1e8449}
+.lbl-fail{background:#fadbd8}.lbl-fail input:checked+span{color:#c0392b}
+.lbl-na{background:#e8ecf1}.lbl-na input:checked+span{color:#506478}
+.bug-input{width:100%;padding:4px 8px;border:1px solid #dde2e8;border-radius:4px;font-size:.8rem;display:none;margin-top:4px}
+.bug-input.show{display:block}
+.toolbar{position:sticky;top:0;background:#fff;border-bottom:2px solid #0a3d62;padding:12px 0;margin-bottom:20px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;z-index:10}
+.toolbar button{padding:8px 18px;border-radius:6px;border:none;cursor:pointer;font-size:.85rem;font-weight:600}
+.btn-save{background:#0a3d62;color:#fff}.btn-save:hover{background:#135d8a}
+.btn-load{background:#e8ecf1;color:#1a2332}.btn-load:hover{background:#dde2e8}
+.btn-export{background:#1e8449;color:#fff}.btn-export:hover{background:#27ae60}
+.btn-reset{background:#c0392b;color:#fff}.btn-reset:hover{background:#e74c3c}
+.stats{font-size:.85rem;margin-left:auto;display:flex;gap:15px}
+.stats span{font-weight:700}
+.footer{margin-top:40px;padding-top:20px;border-top:1px solid #dde2e8;text-align:center;color:#7b8fa1;font-size:.85rem}
+@media print{.toolbar{display:none}.bug-input.show{display:block;border:none;background:none}.radio-group label{border:1px solid #ccc}}
+</style>
+</head>
+<body>
+<div class="container">
+
+<div class="toolbar">
+  <button class="btn-save" onclick="saveResults()">💾 Guardar Progreso</button>
+  <button class="btn-load" onclick="loadResults()">📂 Cargar Progreso</button>
+  <button class="btn-export" onclick="exportResults()">📋 Exportar Resultados</button>
+  <button class="btn-reset" onclick="resetAll()">🔄 Reiniciar</button>
+  <div class="stats">✅ <span id="cnt-ok">0</span> ❌ <span id="cnt-fail">0</span> ⚠️ <span id="cnt-na">0</span> ⏳ <span id="cnt-pend">95</span></div>
+</div>
+
+<h1>📋 Checklist de Pruebas Funcionales — EdPlatform</h1>
+<p>Versión 1.0 | Total: <strong>95 pruebas</strong> | Marca ✅❌⚠️ y describe el fallo</p>
+
+<form id="checklist">
+
+<!-- VISITANTE -->
+<h2>1. Visitante (19 pruebas)</h2>
+<table>
+<tr><th>#</th><th>Prueba</th><th>Prerrequisito</th><th>Resultado</th><th>Descripción del fallo</th></tr>
+<tr><td class="idx">1</td><td class="act">Acceder a <code>/</code> redirige a <code>/es</code></td><td class="req">Ninguno</td><td class="res"><div class="radio-group"><label class="lbl-ok"><input type="radio" name="r1" value="ok" onchange="toggleBug(1);count()"><span>✅</span></label><label class="lbl-fail"><input type="radio" name="r1" value="fail" onchange="toggleBug(1);count()"><span>❌</span></label><label class="lbl-na"><input type="radio" name="r1" value="na" onchange="toggleBug(1);count()"><span>N/A</span></label></div></td><td class="bug"><input class="bug-input" id="bug1" placeholder="Describe el fallo..."></td></tr>
+<tr><td class="idx">2</td><td class="act"><code>/en</code> muestra página en inglés</td><td class="req">Ninguno</td><td class="res"><div class="radio-group"><label class="lbl-ok"><input type="radio" name="r2" value="ok" onchange="toggleBug(2);count()"><span>✅</span></label><label class="lbl-fail"><input type="radio" name="r2" value="fail" onchange="toggleBug(2);count()"><span>❌</span></label><label class="lbl-na"><input type="radio" name="r2" value="na" onchange="toggleBug(2);count()"><span>N/A</span></label></div></td><td class="bug"><input class="bug-input" id="bug2" placeholder="Describe el fallo..."></td></tr>
+<tr><td class="idx">3</td><td class="act">Landing muestra título, botones Cursos y Registrarse</td><td class="req">Ninguno</td><td class="res"><div class="radio-group"><label class="lbl-ok"><input type="radio" name="r3" value="ok" onchange="toggleBug(3);count()"><span>✅</span></label><label class="lbl-fail"><input type="radio" name="r3" value="fail" onchange="toggleBug(3);count()"><span>❌</span></label><label class="lbl-na"><input type="radio" name="r3" value="na" onchange="toggleBug(3);count()"><span>N/A</span></label></div></td><td class="bug"><input class="bug-input" id="bug3" placeholder="Describe el fallo..."></td></tr>
+<tr><td class="idx">4</td><td class="act">Navbar muestra: Cursos, Mi Panel, Iniciar Sesión, Registrarse</td><td class="req">Ninguno</td><td class="res"><div class="radio-group"><label class="lbl-ok"><input type="radio" name="r4" value="ok" onchange="toggleBug(4);count()"><span>✅</span></label><label class="lbl-fail"><input type="radio" name="r4" value="fail" onchange="toggleBug(4);count()"><span>❌</span></label><label class="lbl-na"><input type="radio" name="r4" value="na" onchange="toggleBug(4);count()"><span>N/A</span></label></div></td><td class="bug"><input class="bug-input" id="bug4" placeholder="Describe el fallo..."></td></tr>
+<tr><td class="idx">5</td><td class="act">Footer muestra Términos, Privacidad, Contacto</td><td class="req">Ninguno</td><td class="res"><div class="radio-group"><label class="lbl-ok"><input type="radio" name="r5" value="ok" onchange="toggleBug(5);count()"><span>✅</span></label><label class="lbl-fail"><input type="radio" name="r5" value="fail" onchange="toggleBug(5);count()"><span>❌</span></label><label class="lbl-na"><input type="radio" name="r5" value="na" onchange="toggleBug(5);count()"><span>N/A</span></label></div></td><td class="bug"><input class="bug-input" id="bug5" placeholder="Describe el fallo..."></td></tr>
+<tr><td class="idx">6</td><td class="act">Cambio de idioma ES↔EN traduce la UI</td><td class="req">Ninguno</td><td class="res"><div class="radio-group"><label class="lbl-ok"><input type="radio" name="r6" value="ok" onchange="toggleBug(6);count()"><span>✅</span></label><label class="lbl-fail"><input type="radio" name="r6" value="fail" onchange="toggleBug(6);count()"><span>❌</span></label><label class="lbl-na"><input type="radio" name="r6" value="na" onchange="toggleBug(6);count()"><span>N/A</span></label></div></td><td class="bug"><input class="bug-input" id="bug6" placeholder="Describe el fallo..."></td></tr>
+<tr><td class="idx">7</td><td class="act">Catálogo <code>/es/courses</code> muestra los cursos del seed</td><td class="req">Ninguno</td><td class="res"><div class="radio-group"><label class="lbl-ok"><input type="radio" name="r7" value="ok" onchange="toggleBug(7);count()"><span>✅</span></label><label class="lbl-fail"><input type="radio" name="r7" value="fail" onchange="toggleBug(7);count()"><span>❌</span></label><label class="lbl-na"><input type="radio" name="r7" value="na" onchange="toggleBug(7);count()"><span>N/A</span></label></div></td><td class="bug"><input class="bug-input" id="bug7" placeholder="Describe el fallo..."></td></tr>
+<tr><td class="idx">8</td><td class="act">Filtro por moneda CUP → solo curso en CUP</td><td class="req">Ninguno</td><td class="res"><div class="radio-group"><label class="lbl-ok"><input type="radio" name="r8" value="ok" onchange="toggleBug(8);count()"><span>✅</span></label><label class="lbl-fail"><input type="radio" name="r8" value="fail" onchange="toggleBug(8);count()"><span>❌</span></label><label class="lbl-na"><input type="radio" name="r8" value="na" onchange="toggleBug(8);count()"><span>N/A</span></label></div></td><td class="bug"><input class="bug-input" id="bug8" placeholder="Describe el fallo..."></td></tr>
+<tr><td class="idx">9</td><td class="act">Filtro por tipo FREE → solo curso gratuito</td><td class="req">Ninguno</td><td class="res"><div class="radio-group"><label class="lbl-ok"><input type="radio" name="r9" value="ok" onchange="toggleBug(9);count()"><span>✅</span></label><label class="lbl-fail"><input type="radio" name="r9" value="fail" onchange="toggleBug(9);count()"><span>❌</span></label><label class="lbl-na"><input type="radio" name="r9" value="na" onchange="toggleBug(9);count()"><span>N/A</span></label></div></td><td class="bug"><input class="bug-input" id="bug9" placeholder="Describe el fallo..."></td></tr>
+<tr><td class="idx">10</td><td class="act">Filtro por tipo PAID → 2 cursos de pago</td><td class="req">Ninguno</td><td class="res"><div class="radio-group"><label class="lbl-ok"><input type="radio" name="r10" value="ok" onchange="toggleBug(10);count()"><span>✅</span></label><label class="lbl-fail"><input type="radio" name="r10" value="fail" onchange="toggleBug(10);count()"><span>❌</span></label><label class="lbl-na"><input type="radio" name="r10" value="na" onchange="toggleBug(10);count()"><span>N/A</span></label></div></td><td class="bug"><input class="bug-input" id="bug10" placeholder="Describe el fallo..."></td></tr>
+<tr><td class="idx">11</td><td class="act">Búsqueda por texto encuentra cursos (case-insensitive)</td><td class="req">Ninguno</td><td class="res"><div class="radio-group"><label class="lbl-ok"><input type="radio" name="r11" value="ok" onchange="toggleBug(11);count()"><span>✅</span></label><label class="lbl-fail"><input type="radio" name="r11" value="fail" onchange="toggleBug(11);count()"><span>❌</span></label><label class="lbl-na"><input type="radio" name="r11" value="na" onchange="toggleBug(11);count()"><span>N/A</span></label></div></td><td class="bug"><input class="bug-input" id="bug11" placeholder="Describe el fallo..."></td></tr>
+<tr><td class="idx">12</td><td class="act">Detalle de curso muestra título, precio, sesiones, instructor</td><td class="req">Ninguno</td><td class="res"><div class="radio-group"><label class="lbl-ok"><input type="radio" name="r12" value="ok" onchange="toggleBug(12);count()"><span>✅</span></label><label class="lbl-fail"><input type="radio" name="r12" value="fail" onchange="toggleBug(12);count()"><span>❌</span></label><label class="lbl-na"><input type="radio" name="r12" value="na" onchange="toggleBug(12);count()"><span>N/A</span></label></div></td><td class="bug"><input class="bug-input" id="bug12" placeholder="Describe el fallo..."></td></tr>
+<tr><td class="idx">13</td><td class="act">Sesiones bloqueadas muestran "Requiere matrícula"</td><td class="req">No matriculado</td><td class="res"><div class="radio-group"><label class="lbl-ok"><input type="radio" name="r13" value="ok" onchange="toggleBug(13);count()"><span>✅</span></label><label class="lbl-fail"><input type="radio" name="r13" value="fail" onchange="toggleBug(13);count()"><span>❌</span></label><label class="lbl-na"><input type="radio" name="r13" value="na" onchange="toggleBug(13);count()"><span>N/A</span></label></div></td><td class="bug"><input class="bug-input" id="bug13" placeholder="Describe el fallo..."></td></tr>
+<tr><td class="idx">14</td><td class="act">Login: formulario visible</td><td class="req">Ninguno</td><td class="res"><div class="radio-group"><label class="lbl-ok"><input type="radio" name="r14" value="ok" onchange="toggleBug(14);count()"><span>✅</span></label><label class="lbl-fail"><input type="radio" name="r14" value="fail" onchange="toggleBug(14);count()"><span>❌</span></label><label class="lbl-na"><input type="radio" name="r14" value="na" onchange="toggleBug(14);count()"><span>N/A</span></label></div></td><td class="bug"><input class="bug-input" id="bug14" placeholder="Describe el fallo..."></td></tr>
+<tr><td class="idx">15</td><td class="act">Login credenciales inválidas → mensaje de error</td><td class="req">Email existente</td><td class="res"><div class="radio-group"><label class="lbl-ok"><input type="radio" name="r15" value="ok" onchange="toggleBug(15);count()"><span>✅</span></label><label class="lbl-fail"><input type="radio" name="r15" value="fail" onchange="toggleBug(15);count()"><span>❌</span></label><label class="lbl-na"><input type="radio" name="r15" value="na" onchange="toggleBug(15);count()"><span>N/A</span></label></div></td><td class="bug"><input class="bug-input" id="bug15" placeholder="Describe el fallo..."></td></tr>
+<tr><td class="idx">16</td><td class="act">Rate-limit: 3+ intentos fallidos → bloqueo 429</td><td class="req">Email existente</td><td class="res"><div class="radio-group"><label class="lbl-ok"><input type="radio" name="r16" value="ok" onchange="toggleBug(16);count()"><span>✅</span></label><label class="lbl-fail"><input type="radio" name="r16" value="fail" onchange="toggleBug(16);count()"><span>❌</span></label><label class="lbl-na"><input type="radio" name="r16" value="na" onchange="toggleBug(16);count()"><span>N/A</span></label></div></td><td class="bug"><input class="bug-input" id="bug16" placeholder="Describe el fallo..."></td></tr>
+<tr><td class="idx">17</td><td class="act">Registro: formulario visible</td><td class="req">Ninguno</td><td class="res"><div class="radio-group"><label class="lbl-ok"><input type="radio" name="r17" value="ok" onchange="toggleBug(17);count()"><span>✅</span></label><label class="lbl-fail"><input type="radio" name="r17" value="fail" onchange="toggleBug(17);count()"><span>❌</span></label><label class="lbl-na"><input type="radio" name="r17" value="na" onchange="toggleBug(17);count()"><span>N/A</span></label></div></td><td class="bug"><input class="bug-input" id="bug17" placeholder="Describe el fallo..."></td></tr>
+<tr><td class="idx">18</td><td class="act">Registro exitoso → redirige al dashboard</td><td class="req">Email nuevo</td><td class="res"><div class="radio-group"><label class="lbl-ok"><input type="radio" name="r18" value="ok" onchange="toggleBug(18);count()"><span>✅</span></label><label class="lbl-fail"><input type="radio" name="r18" value="fail" onchange="toggleBug(18);count()"><span>❌</span></label><label class="lbl-na"><input type="radio" name="r18" value="na" onchange="toggleBug(18);count()"><span>N/A</span></label></div></td><td class="bug"><input class="bug-input" id="bug18" placeholder="Describe el fallo..."></td></tr>
+<tr><td class="idx">19</td><td class="act">Verificación badge inexistente → "no encontrado"</td><td class="req">Ninguno</td><td class="res"><div class="radio-group"><label class="lbl-ok"><input type="radio" name="r19" value="ok" onchange="toggleBug(19);count()"><span>✅</span></label><label class="lbl-fail"><input type="radio" name="r19" value="fail" onchange="toggleBug(19);count()"><span>❌</span></label><label class="lbl-na"><input type="radio" name="r19" value="na" onchange="toggleBug(19);count()"><span>N/A</span></label></div></td><td class="bug"><input class="bug-input" id="bug19" placeholder="Describe el fallo..."></td></tr>
+</table>
+
+<!-- ESTUDIANTE -->
+<h2>2. Estudiante (33 pruebas)</h2>
+<table>
+<tr><th>#</th><th>Prueba</th><th>Prerrequisito</th><th>Resultado</th><th>Descripción del fallo</th></tr>
+<script>
+const studentTests=[
+[20,"Login como estudiante → redirige al dashboard","Email: alumno@edplatform.com"],
+[21,"Dashboard muestra sección \"Mis Cursos\"","Sesión iniciada"],
+[22,"Dashboard muestra sección \"Mis Certificados\"","Sesión iniciada"],
+[23,"Curso matriculado muestra barra de progreso","Matrícula ACTIVE"],
+[24,"Click en curso → va al detalle","Matrícula ACTIVE"],
+[25,"Navbar muestra \"Cerrar Sesión\" (no \"Login\")","Sesión iniciada"],
+[26,"Matricularse en curso gratuito → ACTIVE instantánea","Sesión iniciada + no matriculado"],
+[27,"Re-matricularse mismo curso → error \"ya matriculado\"","Ya matriculado"],
+[28,"Curso de pago muestra botón \"Matricularse\"","Sesión iniciada + no matriculado"],
+[29,"Checkout muestra métodos de pago disponibles","Sesión iniciada"],
+[30,"Estudiante Cuba (CU) ve EnZona + Transfermóvil","País = CU"],
+[31,"Seleccionar método → muestra instrucciones","Checkout abierto"],
+[32,"Subir comprobante de pago → HTTP 201","Método seleccionado"],
+[33,"Doble pago mismo curso → prevención","Pago ya enviado"],
+[34,"Curso gratis: checkout redirige sin pasar por pago","Curso FREE"],
+[35,"Sesiones completadas muestran check ✅","Matrícula ACTIVE"],
+[36,"Click \"Completar\" → progreso se actualiza","Sesión pendiente"],
+[37,"Progreso 0%→50%→100% al completar todas","2 sesiones en curso"],
+[38,"100% progreso → \"Elegible para certificado\"","Todas las sesiones completas"],
+[39,"Click \"Realizar evaluación\" → carga preguntas","100% progreso + evaluación existe"],
+[40,"Pregunta MCQ funciona","Evaluación abierta"],
+[41,"Pregunta TRUEFALSE funciona","Evaluación abierta"],
+[42,"Pregunta SHORT funciona","Evaluación abierta"],
+[43,"Enviar evaluación → corrección server-side","Respuestas completas"],
+[44,"Aprobado (≥80%) → mensaje con score","≥80% correctas"],
+[45,"Reprobado (<80%) → \"Intentar de nuevo\"","<80% correctas"],
+[46,"No acceder a evaluación sin 100% progreso","Progreso < 100%"],
+[47,"Emitir certificado → genera badge","Evaluación aprobada"],
+[48,"Badge ID generado y mostrado","Certificado emitido"],
+[49,"Descargar PDF → 200 application/pdf","Certificado emitido"],
+[50,"Verificar online → página de verificación","Certificado emitido"],
+[51,"Certificado aparece en \"Mis Certificados\"","Certificado emitido"],
+[52,"Cerrar sesión → cookies eliminadas","Sesión activa"]
+];
+studentTests.forEach(([n,act,req])=>{
+document.write(`<tr><td class="idx">${n}</td><td class="act">${act}</td><td class="req">${req}</td><td class="res"><div class="radio-group"><label class="lbl-ok"><input type="radio" name="r${n}" value="ok" onchange="toggleBug(${n});count()"><span>✅</span></label><label class="lbl-fail"><input type="radio" name="r${n}" value="fail" onchange="toggleBug(${n});count()"><span>❌</span></label><label class="lbl-na"><input type="radio" name="r${n}" value="na" onchange="toggleBug(${n});count()"><span>N/A</span></label></div></td><td class="bug"><input class="bug-input" id="bug${n}" placeholder="Describe el fallo..."></td></tr>`);
+});
+</script>
+</table>
+
+<!-- INSTRUCTOR -->
+<h2>3. Instructor (8 pruebas)</h2>
+<table>
+<tr><th>#</th><th>Prueba</th><th>Prerrequisito</th><th>Resultado</th><th>Descripción del fallo</th></tr>
+<script>
+const instTests=[
+[53,"Login como instructor → dashboard","Email: profesor@edplatform.com"],
+[54,"Dashboard muestra cursos donde es instructor","Sesión INSTRUCTOR"],
+[55,"Navbar NO muestra \"Administración\"","Sesión INSTRUCTOR"],
+[56,"API admin/payments → 403 Forbidden","Sesión INSTRUCTOR"],
+[57,"API admin/certificates/revoke → 403","Sesión INSTRUCTOR"],
+[58,"POST /api/courses → crea curso (HTTP 201)","Sesión INSTRUCTOR + slug único"],
+[59,"POST /api/courses con id → edita curso","Ser instructor del curso"],
+[60,"POST /api/courses/{id}/sessions → crea sesión","Ser instructor del curso"]
+];
+instTests.forEach(([n,act,req])=>{
+document.write(`<tr><td class="idx">${n}</td><td class="act">${act}</td><td class="req">${req}</td><td class="res"><div class="radio-group"><label class="lbl-ok"><input type="radio" name="r${n}" value="ok" onchange="toggleBug(${n});count()"><span>✅</span></label><label class="lbl-fail"><input type="radio" name="r${n}" value="fail" onchange="toggleBug(${n});count()"><span>❌</span></label><label class="lbl-na"><input type="radio" name="r${n}" value="na" onchange="toggleBug(${n});count()"><span>N/A</span></label></div></td><td class="bug"><input class="bug-input" id="bug${n}" placeholder="Describe el fallo..."></td></tr>`);
+});
+</script>
+</table>
+
+<!-- ADMIN -->
+<h2>4. Administrador (20 pruebas)</h2>
+<table>
+<tr><th>#</th><th>Prueba</th><th>Prerrequisito</th><th>Resultado</th><th>Descripción del fallo</th></tr>
+<script>
+const adminTests=[
+[61,"Login como admin → dashboard","Email: admin@edplatform.com"],
+[62,"Navbar muestra \"Administración\"","Sesión ADMIN"],
+[63,"<code>/es/dashboard/admin</code> → panel de pagos","Sesión ADMIN"],
+[64,"Contador \"Pagos Pendientes: N\" visible","Sesión ADMIN"],
+[65,"Lista de pagos pendientes con datos completos","Existen pagos PENDING"],
+[66,"Ver comprobante de pago (imagen/PDF)","Pago con proofUrl"],
+[67,"Click \"Verificar Pago\" → matrícula ACTIVA","Pago PENDING seleccionado"],
+[68,"Click \"Rechazar Pago\" con motivo → REJECTED","Pago PENDING + motivo"],
+[69,"Pago verificado desaparece de pendientes","Acaba de verificar"],
+[70,"GET /api/admin/certificates → lista","Sesión ADMIN"],
+[71,"POST revoke → certificado revocado","Certificado activo + motivo"],
+[72,"Verificación pública muestra \"Revocado\"","Certificado revocado"],
+[73,"GET /api/admin/payment-instructions → lista","Sesión ADMIN"],
+[74,"POST crear instrucción → HTTP 201","Método + moneda únicos"],
+[75,"POST editar (con id) → actualiza","Instrucción existente"],
+[76,"Desactivar instrucción (isActive:false)","Instrucción existente"],
+[77,"GET /api/admin/audit-log → entradas","Sesión ADMIN"],
+[78,"Filtrar auditoría por entidad","Entradas existentes"],
+[79,"Estudiante accede a endpoint admin → 403","Sesión STUDENT"],
+[80,"Visitante accede a endpoint admin → 401","Sin sesión"]
+];
+adminTests.forEach(([n,act,req])=>{
+document.write(`<tr><td class="idx">${n}</td><td class="act">${act}</td><td class="req">${req}</td><td class="res"><div class="radio-group"><label class="lbl-ok"><input type="radio" name="r${n}" value="ok" onchange="toggleBug(${n});count()"><span>✅</span></label><label class="lbl-fail"><input type="radio" name="r${n}" value="fail" onchange="toggleBug(${n});count()"><span>❌</span></label><label class="lbl-na"><input type="radio" name="r${n}" value="na" onchange="toggleBug(${n});count()"><span>N/A</span></label></div></td><td class="bug"><input class="bug-input" id="bug${n}" placeholder="Describe el fallo..."></td></tr>`);
+});
+</script>
+</table>
+
+<!-- TECNICOS -->
+<h2>5. Pruebas Técnicas (15 pruebas)</h2>
+<table>
+<tr><th>#</th><th>Prueba</th><th>Prerrequisito</th><th>Resultado</th><th>Descripción del fallo</th></tr>
+<script>
+const techTests=[
+[81,"Headers seguridad: HSTS, X-Content-Type, X-Frame, Referrer","Ninguno"],
+[82,"Cookies httpOnly (access_token, refresh_token)","Login exitoso"],
+[83,"robots.txt accesible (HTTP 200)","Ninguno"],
+[84,"sitemap.xml devuelve XML válido con URLs","Ninguno"],
+[85,"Meta tags Open Graph en landing","Ninguno"],
+[86,"Meta tags Twitter Card","Ninguno"],
+[87,"Schema.org EducationalOrganization","Ninguno"],
+[88,"ARIA landmarks: banner, main, contentinfo","Ninguno"],
+[89,"Elementos nav semánticos","Ninguno"],
+[90,"API verify/{badgeId} → JSON-LD con @context, type, proof","Certificado emitido"],
+[91,"Búsqueda case-insensitive (ILIKE PostgreSQL)","Cursos en BD"],
+[92,"API POST /api/courses → instructor asignado","Sesión INSTRUCTOR"],
+[93,"API courses/{id} incluye instructor.name","Curso con instructor"],
+[94,"API sessions/{id}/mark-complete → recalcula progreso","Matrícula ACTIVE"],
+[95,"API admin/audit-log → registra acciones","Sesión ADMIN"]
+];
+techTests.forEach(([n,act,req])=>{
+document.write(`<tr><td class="idx">${n}</td><td class="act">${act}</td><td class="req">${req}</td><td class="res"><div class="radio-group"><label class="lbl-ok"><input type="radio" name="r${n}" value="ok" onchange="toggleBug(${n});count()"><span>✅</span></label><label class="lbl-fail"><input type="radio" name="r${n}" value="fail" onchange="toggleBug(${n});count()"><span>❌</span></label><label class="lbl-na"><input type="radio" name="r${n}" value="na" onchange="toggleBug(${n});count()"><span>N/A</span></label></div></td><td class="bug"><input class="bug-input" id="bug${n}" placeholder="Describe el fallo..."></td></tr>`);
+});
+</script>
+</table>
+</form>
+
+<div id="export-area" style="display:none;background:#fff;border:1px solid #ddd;padding:20px;margin-top:20px;border-radius:8px;white-space:pre-wrap;font-family:monospace;font-size:.85rem"></div>
+
+<div class="footer">EdPlatform &copy; 2026 — Checklist de Pruebas Funcionales Interactiva</div>
+</div>
+
+<script>
+function toggleBug(n){
+  var radios=document.getElementsByName('r'+n);
+  var bug=document.getElementById('bug'+n);
+  var selected=Array.from(radios).find(r=>r.checked);
+  if(selected&&selected.value==='fail'){bug.classList.add('show');bug.focus()}
+  else{bug.classList.remove('show')}
+}
+function count(){
+  var ok=document.querySelectorAll('input[type=radio][value=ok]:checked').length;
+  var fail=document.querySelectorAll('input[type=radio][value=fail]:checked').length;
+  var na=document.querySelectorAll('input[type=radio][value=na]:checked').length;
+  var pend=95-ok-fail-na;
+  document.getElementById('cnt-ok').textContent=ok;
+  document.getElementById('cnt-fail').textContent=fail;
+  document.getElementById('cnt-na').textContent=na;
+  document.getElementById('cnt-pend').textContent=pend;
+}
+function saveResults(){
+  var data={};
+  for(var i=1;i<=95;i++){
+    var radios=document.getElementsByName('r'+i);
+    var sel=Array.from(radios).find(r=>r.checked);
+    var bug=document.getElementById('bug'+i);
+    if(sel)data['r'+i]={value:sel.value,bug:bug.value};
+  }
+  localStorage.setItem('edplatform-checklist',JSON.stringify(data));
+  alert('Progreso guardado en el navegador.');
+}
+function loadResults(){
+  var raw=localStorage.getItem('edplatform-checklist');
+  if(!raw){alert('No hay progreso guardado.');return}
+  var data=JSON.parse(raw);
+  for(var i=1;i<=95;i++){
+    if(data['r'+i]){
+      var radios=document.getElementsByName('r'+i);
+      Array.from(radios).forEach(r=>{if(r.value===data['r'+i].value)r.checked=true});
+      document.getElementById('bug'+i).value=data['r'+i].bug||'';
+      if(data['r'+i].value==='fail')document.getElementById('bug'+i).classList.add('show');
+    }
+  }
+  count();
+  alert('Progreso cargado.');
+}
+function exportResults(){
+  var lines=[];
+  for(var i=1;i<=95;i++){
+    var radios=document.getElementsByName('r'+i);
+    var sel=Array.from(radios).find(r=>r.checked);
+    var bug=document.getElementById('bug'+i);
+    var status=sel?sel.value:'pend';
+    var row=document.querySelectorAll('table tr')[i]; // aproximado
+    var desc='';
+    if(row){var cells=row.querySelectorAll('td');desc=cells[1]?cells[1].textContent.trim():''}
+    lines.push(`[${status==='ok'?'✅':status==='fail'?'❌':'⚠️'}] #${i} - ${desc}${bug.value?' → '+bug.value:''}`);
+  }
+  document.getElementById('export-area').style.display='block';
+  document.getElementById('export-area').textContent=lines.join('\n');
+  alert('Resultados generados abajo. Copia y pega.');
+}
+function resetAll(){
+  if(!confirm('¿Borrar todo el progreso?'))return;
+  document.querySelectorAll('input[type=radio]').forEach(r=>r.checked=false);
+  document.querySelectorAll('.bug-input').forEach(b=>{b.value='';b.classList.remove('show')});
+  count();
+}
+</script>
+</body>
+</html>

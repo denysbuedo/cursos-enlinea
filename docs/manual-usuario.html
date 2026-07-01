@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Manual de Usuario — EdPlatform</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:Arial,Helvetica,sans-serif;background:#f8f9fa;color:#1a1a2e;line-height:1.6}
+  .container{max-width:1000px;margin:0 auto;padding:40px 20px}
+  h1{font-size:2rem;color:#0a3d62;border-bottom:3px solid #0a3d62;padding-bottom:10px;margin-bottom:30px}
+  h2{font-size:1.4rem;color:#135d8a;margin:35px 0 15px;padding:10px 15px;background:#e8f0f8;border-radius:8px}
+  h3{font-size:1.1rem;color:#1a5276;margin:20px 0 10px}
+  .role-badge{display:inline-block;padding:3px 12px;border-radius:20px;font-size:.75rem;font-weight:700;margin-right:8px}
+  .visitor{background:#d6eaf8;color:#1e40af}
+  .student{background:#d5f5e3;color:#1e8449}
+  .instructor{background:#fef3c6;color:#92400e}
+  .admin{background:#fadbd8;color:#c0392b}
+  .card{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:20px;margin:15px 0}
+  .prereq{background:#fff3cd;border-left:4px solid #d68910;padding:12px 16px;margin:10px 0;border-radius:0 8px 8px 0;font-size:.9rem}
+  .prereq strong{color:#92400e}
+  .steps{margin:10px 0 10px 20px}
+  .steps li{margin:8px 0}
+  .credential-table{width:100%;border-collapse:collapse;margin:15px 0}
+  .credential-table th,.credential-table td{border:1px solid #dde2e8;padding:10px 14px;text-align:left}
+  .credential-table th{background:#0a3d62;color:#fff}
+  .endpoint{font-family:monospace;background:#f1f3f5;padding:2px 8px;border-radius:4px;font-size:.85rem}
+  .toc{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:20px 25px;margin-bottom:30px}
+  .toc a{color:#2874a6;text-decoration:none}
+  .toc a:hover{text-decoration:underline}
+  .toc li{margin:6px 0}
+  .footer{margin-top:50px;padding-top:20px;border-top:1px solid #dde2e8;text-align:center;color:#7b8fa1;font-size:.85rem}
+  @media print{body{background:#fff}.card{border:1px solid #ccc;break-inside:avoid}.role-badge{border:1px solid #ccc}}
+</style>
+</head>
+<body>
+<div class="container">
+
+<h1>📘 Manual de Usuario — EdPlatform</h1>
+
+<p><strong>Versión:</strong> 1.0 &nbsp;|&nbsp; <strong>Fecha:</strong> Mayo 2026</p>
+<p>Plataforma de cursos online con certificados digitales verificables (Open Badges 3.0 + W3C Verifiable Credentials) y pasarela de pagos georresistente.</p>
+
+<!-- TOC -->
+<div class="toc">
+<h3>Índice</h3>
+<ol>
+<li><a href="#roles">Roles del Sistema</a></li>
+<li><a href="#visitante">Visitante (sin autenticación)</a></li>
+<li><a href="#estudiante">Estudiante</a></li>
+<li><a href="#instructor">Instructor</a></li>
+<li><a href="#admin">Administrador</a></li>
+<li><a href="#api">Referencia de API</a></li>
+</ol>
+</div>
+
+<!-- ROLES -->
+<h2 id="roles">1. Roles del Sistema</h2>
+<div class="card">
+<table class="credential-table">
+<tr><th>Rol</th><th>Descripción</th><th>Credenciales de prueba</th></tr>
+<tr><td><span class="role-badge visitor">Visitante</span></td><td>Usuario sin autenticación. Puede ver el catálogo y registrarse.</td><td>—</td></tr>
+<tr><td><span class="role-badge student">Estudiante</span></td><td>Usuario registrado. Se matricula en cursos, avanza sesiones, realiza evaluaciones y obtiene certificados.</td><td>alumno@edplatform.com / password123</td></tr>
+<tr><td><span class="role-badge instructor">Instructor</span></td><td>Crea y gestiona cursos y sesiones.</td><td>profesor@edplatform.com / password123</td></tr>
+<tr><td><span class="role-badge admin">Administrador</span></td><td>Gestiona pagos, certificados, instrucciones de pago y auditoría.</td><td>admin@edplatform.com / password123</td></tr>
+</table>
+</div>
+
+<!-- VISITANTE -->
+<h2 id="visitante">2. Visitante <span class="role-badge visitor">Sin autenticación</span></h2>
+
+<h3>2.1 Ver Catálogo de Cursos</h3>
+<div class="card">
+<p><strong>Prerrequisitos:</strong> Ninguno.</p>
+<p><strong>Pasos:</strong></p>
+<ol class="steps">
+<li>Acceder a <span class="endpoint">/es/courses</span></li>
+<li>Usar los filtros de moneda (CUP/USD/EUR) y tipo (Gratuito/De pago)</li>
+<li>Usar la barra de búsqueda para encontrar cursos por nombre</li>
+</ol>
+</div>
+
+<h3>2.2 Registrarse</h3>
+<div class="card">
+<p><strong>Prerrequisitos:</strong> No tener una sesión activa. Email no registrado previamente.</p>
+<ol class="steps">
+<li>Acceder a <span class="endpoint">/es/register</span></li>
+<li>Completar: nombre, email y contraseña (mínimo 6 caracteres)</li>
+<li>Click en "Registrarme"</li>
+<li>Redirige automáticamente al Dashboard</li>
+</ol>
+</div>
+
+<h3>2.3 Iniciar Sesión</h3>
+<div class="card">
+<p><strong>Prerrequisitos:</strong> Tener una cuenta registrada. No estar bloqueado por rate-limiting (3 intentos fallidos = bloqueo temporal).</p>
+<ol class="steps">
+<li>Acceder a <span class="endpoint">/es/login</span></li>
+<li>Ingresar email y contraseña</li>
+<li>Click en "Entrar"</li>
+</ol>
+</div>
+
+<h3>2.4 Verificar un Certificado</h3>
+<div class="card">
+<p><strong>Prerrequisitos:</strong> Tener el Badge ID de un certificado emitido.</p>
+<ol class="steps">
+<li>Acceder a <span class="endpoint">/es/verify/{badgeId}</span></li>
+<li>La página muestra: estado (válido/revocado), estudiante, curso, fecha de emisión</li>
+</ol>
+</div>
+
+<!-- ESTUDIANTE -->
+<h2 id="estudiante">3. Estudiante <span class="role-badge student">STUDENT</span></h2>
+
+<h3>3.1 Dashboard del Estudiante</h3>
+<div class="card">
+<p><strong>Prerrequisitos:</strong> Haber iniciado sesión.</p>
+<p>El dashboard muestra dos secciones: <strong>Mis Cursos</strong> (cursos matriculados con barra de progreso) y <strong>Mis Certificados</strong> (certificados emitidos).</p>
+</div>
+
+<h3>3.2 Matricularse en un Curso Gratuito</h3>
+<div class="card">
+<p><strong>Prerrequisitos:</strong> Haber iniciado sesión. No estar ya matriculado en ese curso.</p>
+<ol class="steps">
+<li>Ir al catálogo y seleccionar un curso marcado como "Gratuito"</li>
+<li>Click en "Matricularse"</li>
+<li>La matrícula se crea instantáneamente con estado ACTIVE</li>
+<li>Redirige al detalle del curso para comenzar</li>
+</ol>
+</div>
+
+<h3>3.3 Matricularse en un Curso de Pago</h3>
+<div class="card">
+<p><strong>Prerrequisitos:</strong> Haber iniciado sesión. No estar ya matriculado en ese curso.</p>
+<ol class="steps">
+<li>Seleccionar un curso de pago y click en "Matricularse"</li>
+<li>En el checkout, <strong>Paso 1:</strong> Seleccionar método de pago (EnZona, Transfermóvil, Crypto USDT, etc.)</li>
+<li><strong>Paso 2:</strong> Leer las instrucciones de pago y datos de cuenta</li>
+<li><strong>Paso 3:</strong> Realizar el pago y subir el comprobante (imagen o PDF)</li>
+<li>Click en "Enviar" — el pago queda en estado PENDIENTE</li>
+<li>Un administrador revisará el comprobante y activará el acceso</li>
+</ol>
+<div class="prereq"><strong>⏳ Hasta que el admin no verifique el pago, el curso aparecerá como "Pendiente de aprobación" y no se podrá acceder a las sesiones.</strong></div>
+</div>
+
+<h3>3.4 Completar Sesiones</h3>
+<div class="card">
+<p><strong>Prerrequisitos:</strong> Estar matriculado con estado ACTIVE.</p>
+<ol class="steps">
+<li>Abrir el curso desde el dashboard o catálogo</li>
+<li>Ver la lista de sesiones: las completadas muestran ✅, las pendientes tienen botón "Completar"</li>
+<li>Click en "Completar" para cada sesión</li>
+<li>La barra de progreso se actualiza automáticamente</li>
+</ol>
+<div class="prereq"><strong>⚠️ Las sesiones marcadas como "Vista previa" son accesibles sin matrícula. Las demás requieren matrícula activa.</strong></div>
+</div>
+
+<h3>3.5 Realizar Evaluación</h3>
+<div class="card">
+<p><strong>Prerrequisitos:</strong> Haber completado el 100% de las sesiones del curso. Que el curso tenga una evaluación configurada.</p>
+<ol class="steps">
+<li>Al llegar al 100% de progreso, aparece la sección "Elegible para certificado"</li>
+<li>Click en "Realizar evaluación"</li>
+<li>Responder las preguntas (opción múltiple, verdadero/falso, respuesta corta)</li>
+<li>Enviar — la corrección es automática</li>
+<li>Se necesita ≥80% para aprobar. Si se reprueba, se puede reintentar.</li>
+</ol>
+</div>
+
+<h3>3.6 Emitir Certificado</h3>
+<div class="card">
+<p><strong>Prerrequisitos:</strong> Haber aprobado la evaluación (≥80%). No tener ya un certificado emitido para este curso.</p>
+<ol class="steps">
+<li>Tras aprobar, click en "Emitir certificado"</li>
+<li>El sistema genera un Open Badge 3.0 con firma criptográfica EdDSA</li>
+<li>Opciones: Descargar PDF, Verificar online, compartir Badge ID</li>
+<li>El certificado aparece en "Mis Certificados" del dashboard</li>
+</ol>
+</div>
+
+<h3>3.7 Cerrar Sesión</h3>
+<div class="card">
+<p><strong>Prerrequisitos:</strong> Tener una sesión activa.</p>
+<p>Click en "Cerrar Sesión" en la navbar. Las cookies se eliminan y se redirige al inicio.</p>
+</div>
+
+<!-- INSTRUCTOR -->
+<h2 id="instructor">4. Instructor <span class="role-badge instructor">INSTRUCTOR</span></h2>
+
+<h3>4.1 Crear un Curso</h3>
+<div class="card">
+<p><strong>Prerrequisitos:</strong> Haber iniciado sesión como INSTRUCTOR.</p>
+<p><strong>Vía API:</strong></p>
+<div class="prereq"><strong>POST</strong> <span class="endpoint">/api/courses</span><br>
+Body: <code>{"slug":"mi-curso","title":{"es":"Título","en":"Title"},"description":{"es":"Desc","en":"Desc"},"pricingModel":"FREE","currency":"USD"}</code></div>
+<p>El slug debe ser único. El instructor queda asignado automáticamente como creador del curso.</p>
+</div>
+
+<h3>4.2 Añadir Sesiones a un Curso</h3>
+<div class="card">
+<p><strong>Prerrequisitos:</strong> Ser el instructor del curso (o ADMIN). El curso debe existir.</p>
+<div class="prereq"><strong>POST</strong> <span class="endpoint">/api/courses/{id}/sessions</span><br>
+Body: <code>{"title":{"es":"Sesión 1","en":"Session 1"},"description":{"es":"...","en":"..."},"sessionType":"RECORDED","preview":true,"videoUrl":"...","order":1}</code></div>
+<p>Tipos de sesión: RECORDED (grabada), LIVE (en vivo), HYBRID (híbrida).</p>
+<p>Si <code>preview: true</code>, la sesión es visible sin matrícula.</p>
+</div>
+
+<h3>4.3 Editar un Curso</h3>
+<div class="card">
+<p><strong>Prerrequisitos:</strong> Ser el instructor del curso (o ADMIN).</p>
+<p>Mismo endpoint <span class="endpoint">POST /api/courses</span> incluyendo el <code>id</code> del curso.</p>
+</div>
+
+<!-- ADMIN -->
+<h2 id="admin">5. Administrador <span class="role-badge admin">ADMIN</span></h2>
+
+<h3>5.1 Gestionar Pagos Pendientes</h3>
+<div class="card">
+<p><strong>Prerrequisitos:</strong> Haber iniciado sesión como ADMIN. Que existan pagos en estado PENDING.</p>
+<ol class="steps">
+<li>Acceder a <span class="endpoint">/es/dashboard/admin</span></li>
+<li>Ver lista de pagos pendientes con: estudiante, curso, método, monto, comprobante</li>
+<li><strong>Verificar:</strong> Click en "Verificar Pago" → el pago pasa a VERIFIED y la matrícula se activa</li>
+<li><strong>Rechazar:</strong> Escribir motivo y click en "Rechazar Pago" → el pago pasa a REJECTED</li>
+</ol>
+</div>
+
+<h3>5.2 Gestionar Certificados</h3>
+<div class="card">
+<p><strong>Prerrequisitos:</strong> Haber iniciado sesión como ADMIN. Que existan certificados emitidos.</p>
+<div class="prereq"><strong>GET</strong> <span class="endpoint">/api/admin/certificates</span> — Listar todos</div>
+<div class="prereq"><strong>POST</strong> <span class="endpoint">/api/admin/certificates/{id}/revoke</span> — Revocar con motivo</div>
+<p>Un certificado revocado se muestra como "❌ Revocado" en la verificación pública.</p>
+</div>
+
+<h3>5.3 Gestionar Instrucciones de Pago</h3>
+<div class="card">
+<p><strong>Prerrequisitos:</strong> Haber iniciado sesión como ADMIN.</p>
+<div class="prereq"><strong>GET</strong> <span class="endpoint">/api/admin/payment-instructions</span> — Listar</div>
+<div class="prereq"><strong>POST</strong> <span class="endpoint">/api/admin/payment-instructions</span> — Crear/editar (con <code>id</code> para editar)</div>
+<p>Se puede activar/desactivar (<code>isActive: false</code>) y restringir por país (<code>geoRestriction: "CU"</code>).</p>
+</div>
+
+<h3>5.4 Auditoría</h3>
+<div class="card">
+<p><strong>Prerrequisitos:</strong> Haber iniciado sesión como ADMIN.</p>
+<div class="prereq"><strong>GET</strong> <span class="endpoint">/api/admin/audit-log</span> — Consultar registro</div>
+<p>Filtros opcionales: <code>?entity=Payment&action=PAYMENT_VERIFIED</code></p>
+</div>
+
+<!-- API -->
+<h2 id="api">6. Referencia de API</h2>
+<div class="card">
+<table class="credential-table">
+<tr><th>Endpoint</th><th>Método</th><th>Auth</th><th>Descripción</th></tr>
+<tr><td>/api/auth/register</td><td>POST</td><td>❌</td><td>Registrar nuevo usuario</td></tr>
+<tr><td>/api/auth/login</td><td>POST</td><td>❌</td><td>Iniciar sesión (JWT + refresh token)</td></tr>
+<tr><td>/api/auth/logout</td><td>POST</td><td>🔒</td><td>Cerrar sesión</td></tr>
+<tr><td>/api/courses</td><td>GET</td><td>❌</td><td>Catálogo (filtros: currency, pricingModel, search)</td></tr>
+<tr><td>/api/courses</td><td>POST</td><td>👑</td><td>Crear/editar curso (INSTRUCTOR o ADMIN)</td></tr>
+<tr><td>/api/courses/{id}</td><td>GET</td><td>❌</td><td>Detalle con sesiones + instructor</td></tr>
+<tr><td>/api/courses/{id}/sessions</td><td>GET</td><td>❌</td><td>Sesiones (preview si no matriculado)</td></tr>
+<tr><td>/api/courses/{id}/sessions</td><td>POST</td><td>👑</td><td>Crear/editar sesión (instructor del curso)</td></tr>
+<tr><td>/api/enrollments</td><td>POST</td><td>🔒</td><td>Matricularse (gratis→ACTIVE, pago→PENDING_PAYMENT)</td></tr>
+<tr><td>/api/enrollments/me</td><td>GET</td><td>🔒</td><td>Mis matrículas</td></tr>
+<tr><td>/api/sessions/{id}/mark-complete</td><td>POST</td><td>🔒</td><td>Marcar sesión completada + recalcular progreso</td></tr>
+<tr><td>/api/evaluations?courseSlug=x</td><td>GET</td><td>🔒</td><td>Obtener evaluación (requiere 100% progreso)</td></tr>
+<tr><td>/api/evaluations/{id}/submit</td><td>POST</td><td>🔒</td><td>Enviar respuestas (corrección automática)</td></tr>
+<tr><td>/api/certificates/{enrollmentId}</td><td>POST</td><td>🔒</td><td>Emitir certificado (requiere evaluación aprobada)</td></tr>
+<tr><td>/api/certificates</td><td>GET</td><td>🔒</td><td>Mis certificados</td></tr>
+<tr><td>/api/certificates/{id}/pdf</td><td>GET</td><td>❌</td><td>Descargar PDF del certificado</td></tr>
+<tr><td>/api/verify/{badgeId}</td><td>GET</td><td>❌</td><td>Verificación pública JSON-LD + HTML</td></tr>
+<tr><td>/api/payments/instructions</td><td>GET</td><td>❌</td><td>Instrucciones de pago (filtradas por curso y país)</td></tr>
+<tr><td>/api/payments/upload</td><td>POST</td><td>🔒</td><td>Subir comprobante de pago</td></tr>
+<tr><td>/api/admin/payments/pending</td><td>GET</td><td>👑</td><td>Pagos pendientes</td></tr>
+<tr><td>/api/admin/payments/{id}/verify</td><td>POST</td><td>👑</td><td>Verificar pago + activar matrícula</td></tr>
+<tr><td>/api/admin/payments/{id}/reject</td><td>POST</td><td>👑</td><td>Rechazar pago</td></tr>
+<tr><td>/api/admin/certificates</td><td>GET</td><td>👑</td><td>Todos los certificados</td></tr>
+<tr><td>/api/admin/certificates/{id}/revoke</td><td>POST</td><td>👑</td><td>Revocar certificado</td></tr>
+<tr><td>/api/admin/payment-instructions</td><td>GET/POST</td><td>👑</td><td>CRUD instrucciones de pago</td></tr>
+<tr><td>/api/admin/audit-log</td><td>GET</td><td>👑</td><td>Registro de auditoría</td></tr>
+</table>
+<p style="margin-top:10px">🔒 = Autenticado &nbsp;|&nbsp; 👑 = ADMIN o INSTRUCTOR (según endpoint)</p>
+</div>
+
+<div class="footer">
+<p>EdPlatform — Plataforma de Cursos Online con Certificados Verificables &copy; 2026</p>
+</div>
+
+</div>
+</body>
+</html>

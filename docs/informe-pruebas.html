@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Informe de Pruebas — EdPlatform</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:Arial,Helvetica,sans-serif;background:#f8f9fa;color:#1a1a2e;line-height:1.6}
+.container{max-width:900px;margin:0 auto;padding:30px 20px}
+h1{color:#0a3d62;border-bottom:3px solid #0a3d62;padding-bottom:8px;margin-bottom:20px}
+h2{color:#135d8a;margin:25px 0 12px;padding:8px 14px;background:#e8f0f8;border-radius:6px;font-size:1.2rem}
+h3{color:#1a5276;margin:15px 0 8px}
+.card{background:#fff;border:1px solid #dde2e8;border-radius:8px;padding:16px 20px;margin:10px 0}
+.bug{background:#fff5f5;border-left:4px solid #c0392b;padding:10px 14px;margin:8px 0;border-radius:0 8px 8px 0}
+.bug h4{color:#c0392b;margin-bottom:4px}
+.ok-item{background:#f0fdf4;border-left:4px solid #1e8449;padding:10px 14px;margin:8px 0;border-radius:0 8px 8px 0}
+table{width:100%;border-collapse:collapse;margin:10px 0;font-size:.9rem}
+th,td{border:1px solid #dde2e8;padding:8px 12px;text-align:left}
+th{background:#0a3d62;color:#fff;font-size:.85rem}
+code{background:#e8ecf1;padding:2px 6px;border-radius:3px;font-size:.85rem}
+.footer{margin-top:30px;padding-top:15px;border-top:1px solid #dde2e8;text-align:center;color:#7b8fa1;font-size:.85rem}
+.summary{display:flex;gap:15px;flex-wrap:wrap;margin:15px 0}
+.summary-box{background:#fff;border:1px solid #dde2e8;border-radius:8px;padding:12px 20px;text-align:center;min-width:100px}
+.summary-box .num{font-size:1.8rem;font-weight:700}
+.summary-box .label{font-size:.75rem;color:#7b8fa1}
+@media print{body{background:#fff}.bug,.ok-item{break-inside:avoid}}
+</style>
+</head>
+<body>
+<div class="container">
+
+<h1>📊 Informe de Pruebas Funcionales — EdPlatform</h1>
+<p><strong>Fecha:</strong> 31 Mayo 2026 | <strong>Total:</strong> 95 pruebas | <strong>Ejecutadas:</strong> 84</p>
+
+<div class="summary">
+<div class="summary-box"><div class="num" style="color:#1e8449">36</div><div class="label">✅ Pasaron</div></div>
+<div class="summary-box"><div class="num" style="color:#c0392b">19</div><div class="label">❌ Fallaron</div></div>
+<div class="summary-box"><div class="num" style="color:#7b8fa1">29</div><div class="label">⚠️ No verificado</div></div>
+<div class="summary-box"><div class="num" style="color:#d68910">11</div><div class="label">⏳ Pendiente</div></div>
+</div>
+
+<h2>🐛 Bugs Reales Encontrados (12)</h2>
+
+<div class="bug"><h4>#1 — Filtro por moneda USD incluye el curso gratuito</h4>
+<p><strong>Prueba #8.</strong> Al filtrar por USD aparece "Marketing Digital Avanzado" (USD) Y "Introducción a la Programación Web" (gratuito, con currency=USD). El curso gratuito tiene currency=USD en la BD porque es su moneda por defecto, pero <code>pricingModel=FREE</code>. El filtro de moneda debe excluir los cursos gratuitos o el frontend debe aclarar que es gratuito.</p>
+<p><strong>Solución:</strong> El API debe excluir cursos FREE cuando se filtra por moneda, o devolverlos con una marca especial. <strong>→ Corregido en API.</strong></p>
+</div>
+
+<div class="bug"><h4>#2 — Sesiones bloqueadas en curso gratuito</h4>
+<p><strong>Prueba #13.</strong> En "Introducción a la Programación Web" (gratuito), las sesiones aparecen como "Preview gratuito" pero no son accesibles sin matrícula. El botón de matricularse no aparece.</p>
+<p><strong>Causa:</strong> El curso gratuito requiere matrícula explícita. Si el usuario no está logueado, no ve el botón de matricularse. Si está logueado pero no matriculado, debería ver "Matricularse". <strong>→ Revisar flow de matrícula gratuita.</strong></p>
+</div>
+
+<div class="bug"><h4>#3 — Error "sin evaluación" no se maneja en frontend</h4>
+<p><strong>Prueba #39.</strong> Al llegar al 100% de progreso en un curso sin evaluación configurada, aparece "Elegible para certificado" con botón "Realizar evaluación". Al hacer click, la API devuelve error "Este curso no tiene evaluación configurada" y se muestra en pantalla como error crudo. <strong>→ Corregido: ocultar botón si no hay evaluación.</strong></p>
+</div>
+
+<div class="bug"><h4>#4 — PDF de certificado descarga como JSON</h4>
+<p><strong>Prueba #50.</strong> Al hacer click en "Descargar PDF" desde el navegador, se muestra JSON en lugar de descargar el archivo. La API devuelve <code>application/pdf</code> correctamente, pero el frontend hace fetch y muestra la respuesta. <strong>→ Corregido: usar window.open o link directo.</strong></p>
+</div>
+
+<div class="bug"><h4>#5 — Instructor no puede crear cursos desde UI</h4>
+<p><strong>Pruebas #53-60.</strong> El instructor inicia sesión pero no tiene panel de gestión de cursos. Los endpoints existen (POST /api/courses, POST /api/courses/{id}/sessions) pero solo vía API, no hay interfaz visual.</p>
+<p><strong>Estado:</strong> Endpoints funcionales verificados anteriormente. Falta panel de instructor en frontend. → Feature pendiente.</p>
+</div>
+
+<div class="bug"><h4>#6 — Panel admin no carga correctamente</h4>
+<p><strong>Prueba #66.</strong> <code>/es/dashboard/admin</code> no muestra el panel de pagos. Posible error de carga del cliente.</p>
+<p><strong>Verificar:</strong> El panel se renderiza del lado cliente. Requiere sesión ADMIN activa. <strong>→ Revisar.</strong></p>
+</div>
+
+<div class="bug"><h4>#7 — Filtro PAID no visible</h4>
+<p><strong>Prueba #10.</strong> El usuario no ve la opción "De pago" en el selector de tipo de curso. El select tiene las opciones "Todos", "Gratuitos", "De pago". <strong>→ Verificar renderizado del select.</strong></p>
+</div>
+
+<div class="bug"><h4>#8 — Sesiones sin funcionalidad</h4>
+<p><strong>Prueba #13.</strong> Las sesiones preview muestran "Preview gratuito" pero al hacer click no ocurre nada. Los videos son placeholders (YouTube Rick Roll).</p>
+</div>
+
+<div class="bug"><h4>#9 — Verificación de badge revocado no comprobable</h4>
+<p><strong>Prueba #75.</strong> No se pudo probar porque el certificado fue revocado en pruebas anteriores y no se generó uno nuevo. <strong>→ Generar nuevo certificado para prueba.</strong></p>
+</div>
+
+<div class="bug"><h4>#10 — Admin features no accesibles desde UI</h4>
+<p><strong>Pruebas #70-80.</strong> Funcionalidades de admin (verificar pagos, revocar certificados, instrucciones, auditoría) funcionan vía API pero el panel admin no carga. <strong>→ Mismo root cause que #6.</strong></p>
+</div>
+
+<div class="bug"><h4>#11 — Descripción de fallos confusa por números desfasados</h4>
+<p><strong>Prueba #21-22, #53-54.</strong> La numeración del checklist no coincide porque algunas filas quedaron vacías. El usuario reporta "Login como estudiante → redirige al dashboard" como #21 pero en la tabla es #20.</p>
+</div>
+
+<div class="bug"><h4>#12 — No se muestra instructor en sidebar del curso</h4>
+<p><strong>Prueba #12.</strong> El nombre del instructor no aparece en la página de detalle del curso. Se implementó el endpoint pero el frontend no lo renderiza. <strong>→ Verificar integración.</strong></p>
+</div>
+
+<h2>🔧 Correcciones Realizadas</h2>
+
+<div class="ok-item"><h4>✅ Filtro USD ahora excluye cursos gratuitos</h4><p><code>api/courses/route.ts</code>: Cuando se filtra por moneda, se excluyen cursos con pricingModel=FREE.</p></div>
+
+<div class="ok-item"><h4>✅ Evaluación: ocultar botón si no hay evaluación</h4><p><code>courses/[slug]/page.tsx</code>: Si la API devuelve error "no tiene evaluación", se oculta el botón "Realizar evaluación" y se muestra mensaje informativo.</p></div>
+
+<div class="ok-item"><h4>✅ PDF: usar enlace directo en lugar de fetch</h4><p><code>courses/[slug]/page.tsx</code>: El enlace de descarga PDF usa <code>&lt;a href&gt;</code> directo en lugar de fetch.</p></div>
+
+<h2>📋 Resumen por Roles</h2>
+<table>
+<tr><th>Rol</th><th>✅</th><th>❌</th><th>⚠️</th><th>Estado</th></tr>
+<tr><td>Visitante</td><td>6</td><td>4</td><td>9</td><td>Búsqueda y filtros necesitan ajustes</td></tr>
+<tr><td>Estudiante</td><td>22</td><td>7</td><td>4</td><td>Flujo principal OK, evaluación y PDF necesitan fix</td></tr>
+<tr><td>Instructor</td><td>3</td><td>5</td><td>0</td><td>Endpoints existen, falta panel UI</td></tr>
+<tr><td>Administrador</td><td>5</td><td>3</td><td>12</td><td>Panel admin no carga, APIs funcionan</td></tr>
+<tr><td>Técnicas</td><td>0</td><td>0</td><td>15</td><td>No verificadas (requieren curl/devtools)</td></tr>
+</table>
+
+<div class="footer">EdPlatform &copy; 2026 — Informe de Pruebas v1.0</div>
+</div></body></html>

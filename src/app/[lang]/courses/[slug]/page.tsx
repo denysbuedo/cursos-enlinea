@@ -1,0 +1,424 @@
+"use client";
+
+import { useState, useEffect, useCallback } from "react";
+import { useParams } from "next/navigation";
+import Link from "next/link";
+import { getDictionary, getLangFromParams } from "@/lib/i18n";
+import { SessionList } from "@/components/sessions/SessionList";
+import { EvaluationForm } from "@/components/evaluations/EvaluationForm";
+import {
+  BookOpen,
+  Users,
+  Globe,
+  Clock,
+  CheckCircle2,
+  Award,
+  Loader2,
+  User,
+} from "lucide-react";
+
+interface CourseDetail {
+  id: string;
+  slug: string;
+  title: { es: string; en: string };
+  description: { es: string; en: string };
+  pricingModel: string;
+  price?: number;
+  currency: string;
+  visibility: string;
+  status: string;
+  sessions: SessionItem[];
+  isEnrolled: boolean;
+  enrollmentStatus?: string | null;
+  _count: { enrollments: number };
+  instructor?: { name: string };
+  createdAt: string;
+}
+
+interface SessionItem {
+  id: string;
+  courseId: string;
+  title: { es: string; en: string };
+  description: { es: string; en: string };
+  keywords: string[];
+  sessionType: "RECORDED" | "LIVE" | "HYBRID";
+  preview: boolean;
+  videoUrl?: string;
+  videoPlatform?: string;
+  scheduledAt?: string;
+  order: number;
+  status: string;
+}
+
+interface EvaluationData {
+  id: string;
+  title: { es: string; en: string };
+  description?: { es: string; en: string };
+  passingScore: number;
+  questions: Array<{
+    id: string;
+    type: "MCQ" | "TRUEFALSE" | "SHORT";
+    question: { es: string; en: string };
+    options?: { es: string; en: string }[];
+    points: number;
+  }>;
+}
+
+const currencySymbol: Record<string, string> = {
+  CUP: "CUP",
+  USD: "$",
+  EUR: "€",
+};
+
+export default function CourseDetailPage() {
+  const params = useParams<{ lang: string; slug: string }>();
+  const lang = getLangFromParams(params);
+  const dict = getDictionary(lang);
+  const { slug } = params;
+
+  const [course, setCourse] = useState<CourseDetail | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [completedSessions, setCompletedSessions] = useState<string[]>([]);
+  const [completingSession, setCompletingSession] = useState<string | null>(null);
+
+  // Evaluation state
+  const [evaluation, setEvaluation] = useState<EvaluationData | null>(null);
+  const [showEvaluation, setShowEvaluation] = useState(false);
+  const [loadingEval, setLoadingEval] = useState(false);
+  const [noEvalAvailable, setNoEvalAvailable] = useState(false);
+  const [evalPassed, setEvalPassed] = useState(false);
+  const [evalResult, setEvalResult] = useState<{ score: number; passed: boolean } | null>(null);
+
+  // Certificate state
+  const [enrollmentId, setEnrollmentId] = useState<string | null>(null);
+  const [certificate, setCertificate] = useState<{
+    id: string; badgeId: string; verificationUrl: string; issuedAt: string;
+  } | null>(null);
+  const [issuingCert, setIssuingCert] = useState(false);
+
+  const t = (es: string, en: string) => (lang === "en" ? en : es);
+
+  const fetchCourse = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/courses/${slug}`);
+      if (!res.ok) { setError(true); return; }
+      const data = await res.json();
+      setCourse(data);
+
+      if (data.isEnrolled) {
+        const enrollRes = await fetch("/api/enrollments/me");
+        if (enrollRes.ok) {
+          const enrollData = await enrollRes.json();
+          const enrollment = enrollData.data?.find(
+            (e: { course: { slug: string } }) => e.course.slug === slug
+          );
+          if (enrollment) {
+            setProgress(enrollment.progress || 0);
+            setEnrollmentId(enrollment.id);
+            // Cargar sesiones ya completadas
+            if (enrollment.completions) {
+              setCompletedSessions(
+                enrollment.completions.map((c: { sessionId: string }) => c.sessionId)
+              );
+            }
+            // Verificar si ya tiene certificado
+            if (enrollment.certificate) {
+              setCertificate(enrollment.certificate);
+              setEvalResult({ score: 100, passed: true });
+            }
+          }
+        }
+      }
+    } catch {
+      setError(true);
+    } finally {
+      setLoading(false);
+    }
+  }, [slug]);
+
+  useEffect(() => { fetchCourse(); }, [fetchCourse]);
+
+  const handleMarkComplete = async (sessionId: string) => {
+    setCompletingSession(sessionId);
+    try {
+      const res = await fetch(`/api/sessions/${sessionId}/mark-complete`, { method: "POST" });
+      if (res.status === 401) return;
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || "Error");
+      }
+      const data = await res.json();
+      setProgress(data.progress || 0);
+      setCompletedSessions((prev) => [...prev, sessionId]);
+    } catch (e) {
+      console.error("Mark complete error:", e);
+    } finally {
+      setCompletingSession(null);
+    }
+  };
+
+  const handleLoadEvaluation = async () => {
+    setLoadingEval(true);
+    try {
+      const res = await fetch(`/api/evaluations?courseSlug=${slug}`);
+      if (!res.ok) { const err = await res.json(); throw new Error(err.error || "Error"); }
+      const data = await res.json();
+      if (data.alreadyPassed) {
+        setEvalPassed(true);
+        setEvalResult({ score: data.bestScore, passed: true });
+      }
+      setEvaluation(data.data);
+      setShowEvaluation(true);
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : "";
+      if (msg.includes("no tiene evaluación")) {
+        setNoEvalAvailable(true);
+      }
+    } finally {
+      setLoadingEval(false);
+    }
+  };
+
+  const handleSubmitEvaluation = async (answers: { questionId: string; answer: string }[]) => {
+    if (!evaluation) return;
+    const res = await fetch(`/api/evaluations/${evaluation.id}/submit`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ answers }),
+    });
+    if (!res.ok) { const err = await res.json(); throw new Error(err.error || "Error"); }
+    const data = await res.json();
+    setEvalResult(data.data);
+    return data.data;
+  };
+
+  const handleIssueCertificate = async () => {
+    if (!enrollmentId) return;
+    setIssuingCert(true);
+    try {
+      const res = await fetch(`/api/certificates/${enrollmentId}`, { method: "POST" });
+      if (!res.ok) { const err = await res.json(); throw new Error(err.error || "Error"); }
+      const data = await res.json();
+      setCertificate(data.data);
+    } catch (e) {
+      console.error("Issue certificate error:", e);
+    } finally {
+      setIssuingCert(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="container mx-auto py-10 px-4">
+        <div className="h-8 w-64 bg-[#e8ecf1] animate-pulse rounded mb-4" />
+        <div className="h-4 w-96 bg-[#e8ecf1] animate-pulse rounded mb-8" />
+        <div className="space-y-3">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="h-20 bg-[#e8ecf1] animate-pulse rounded-lg" />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !course) {
+    return (
+      <div className="container mx-auto py-20 text-center">
+        <h1 className="text-2xl font-bold text-black">
+          {t("Curso no encontrado", "Course not found")}
+        </h1>
+        <Link href={`/${lang}/courses`} className="mt-4 inline-block text-primary hover:underline">
+          ← {t("Volver al catálogo", "Back to catalog")}
+        </Link>
+      </div>
+    );
+  }
+
+  const isFree = course.pricingModel === "FREE";
+  const allComplete = progress >= 100;
+
+  return (
+    <div className="container mx-auto py-10 px-4 max-w-4xl">
+      <nav className="text-sm text-[#7b8fa1] mb-6">
+        <Link href={`/${lang}/courses`} className="hover:text-black">{dict.courses.allCourses}</Link>
+        <span className="mx-2">/</span>
+        <span className="text-black">{t(course.title.es, course.title.en)}</span>
+      </nav>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="lg:col-span-2 space-y-8">
+          {/* Title + badges */}
+          <div>
+            <div className="flex items-center gap-3 mb-3 flex-wrap">
+              <span style={{background:isFree?"#d5f5e3":"#fef3c6", color:"#000"}} className="inline-flex items-center rounded-full px-3 py-1 text-sm font-medium">
+                {isFree ? dict.courses.free : `${currencySymbol[course.currency] || ""}${course.price} ${course.currency}`}
+              </span>
+              {course.isEnrolled && (
+                <span className="inline-flex items-center rounded-full bg-primary/10 text-primary px-3 py-1 text-sm font-medium">{dict.courses.enrolled}</span>
+              )}
+              {course.enrollmentStatus === "PENDING_PAYMENT" && (
+                <span style={{background:"#fef3c6", color:"#000"}} className="inline-flex items-center gap-1 rounded-full px-3 py-1 text-sm font-medium">
+                  <Clock className="w-3.5 h-3.5" />
+                  {t("Pendiente de aprobación", "Pending approval")}
+                </span>
+              )}
+              {allComplete && (
+                <span style={{background:"#d5f5e3", color:"#000"}} className="inline-flex items-center gap-1 rounded-full px-3 py-1 text-sm font-medium">
+                  <CheckCircle2 className="w-3.5 h-3.5" />{dict.dashboard.complete}
+                </span>
+              )}
+            </div>
+            <h1 className="text-3xl font-bold tracking-tight">{t(course.title.es, course.title.en)}</h1>
+          </div>
+
+          {/* Description */}
+          <div className="prose dark:prose-invert max-w-none">
+            <p className="text-[#7b8fa1] leading-relaxed">{t(course.description.es, course.description.en)}</p>
+          </div>
+
+          {/* Progress bar */}
+          {course.isEnrolled && (
+            <div className="rounded-xl border p-5">
+              <div className="flex justify-between text-sm mb-2">
+                <span className="font-medium">{dict.courses.progress}</span>
+                <span className="text-[#7b8fa1]">{Math.round(progress)}%</span>
+              </div>
+              <div className="h-3 rounded-full bg-[#e8ecf1] overflow-hidden">
+                <div className="h-full rounded-full bg-primary transition-all duration-700 ease-out" style={{ width: `${Math.min(100, progress)}%` }} />
+              </div>
+            </div>
+          )}
+
+          {/* Sessions */}
+          <div>
+            <h2 className="text-xl font-semibold mb-4">{dict.courses.sessions} ({course.sessions.length})</h2>
+            <SessionList
+              sessions={course.sessions}
+              isEnrolled={course.isEnrolled}
+              lang={lang}
+              courseId={course.id}
+              onMarkComplete={course.isEnrolled ? handleMarkComplete : undefined}
+              completingSession={completingSession}
+              completedSessions={completedSessions}
+            />
+          </div>
+
+          {/* Evaluation section */}
+          {course.isEnrolled && allComplete && (
+            <div className="rounded-xl border p-6 bg-gradient-to-r from-amber-50 to-transparent dark:from-amber-950/20">
+              <div className="flex items-start gap-3">
+                <Award className="w-6 h-6 text-amber-500 flex-shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <h3 className="font-semibold">{dict.dashboard.elegible}</h3>
+                  <p className="text-sm text-[#7b8fa1] mt-1 mb-4">
+                    {t("Has completado todas las sesiones. Realiza la evaluación para obtener tu certificado.", "You have completed all sessions. Take the evaluation to earn your certificate.")}
+                  </p>
+
+                  {certificate ? (
+                    // Certificado ya emitido
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-2 text-black font-medium">
+                        <Award className="w-5 h-5" />
+                        {t("¡Certificado emitido!", "Certificate issued!")}
+                      </div>
+                      <p className="text-sm text-[#7b8fa1]">
+                        {t(`Badge ID: ${certificate.badgeId}`, `Badge ID: ${certificate.badgeId}`)}
+                      </p>
+                      <div className="flex gap-3 flex-wrap">
+                        <a href={`/api/certificates/${certificate.id}/pdf`} target="_blank" rel="noopener noreferrer"
+                          className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-white text-sm font-medium hover:opacity-90">
+                          {t("Descargar PDF", "Download PDF")}
+                        </a>
+                        <a href={`/${lang}/verify/${certificate.badgeId}`} target="_blank" rel="noopener noreferrer"
+                          className="inline-flex items-center gap-2 rounded-lg border px-4 py-2 text-sm font-medium hover:bg-accent">
+                          {t("Verificar online", "Verify online")}
+                        </a>
+                      </div>
+                    </div>
+                  ) : evalResult?.passed ? (
+                    // Aprobó pero aún no tiene certificado
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-2 text-black font-medium">
+                        <CheckCircle2 className="w-5 h-5" />
+                        {t(`¡Aprobado con ${evalResult.score}%!`, `Passed with ${evalResult.score}%!`)}
+                      </div>
+                      <button onClick={handleIssueCertificate} disabled={issuingCert}
+                        className="inline-flex items-center gap-2 rounded-lg bg-amber-500 px-5 py-2.5 text-white font-medium hover:bg-amber-600 transition-colors disabled:opacity-50">
+                        {issuingCert ? <Loader2 className="w-4 h-4 animate-spin" /> : <Award className="w-4 h-4" />}
+                        {t("Emitir certificado", "Issue certificate")}
+                      </button>
+                    </div>
+                  ) : noEvalAvailable ? (
+                    <div className="p-3 rounded-lg bg-[#e8ecf1] text-sm text-[#506478]">
+                      {t("Este curso no tiene evaluación configurada. Contacta al instructor.", "This course has no evaluation configured. Contact the instructor.")}
+                    </div>
+                  ) : (
+                    <button onClick={handleLoadEvaluation} disabled={loadingEval}
+                      className="inline-flex items-center gap-2 rounded-lg bg-amber-500 px-5 py-2.5 text-white font-medium hover:bg-amber-600 transition-colors disabled:opacity-50">
+                      {loadingEval ? <Loader2 className="w-4 h-4 animate-spin" /> : <Award className="w-4 h-4" />}
+                      {t("Realizar evaluación", "Take evaluation")}
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {showEvaluation && evaluation && !evalResult?.passed && (
+                <div className="mt-6 pt-6 border-t">
+                  <h4 className="font-semibold mb-4">{t(evaluation.title.es, evaluation.title.en)}</h4>
+                  <EvaluationForm evaluation={evaluation} lang={lang} onSubmit={handleSubmitEvaluation} />
+                </div>
+              )}
+
+              {evalResult && !evalResult.passed && (
+                <button onClick={() => { setShowEvaluation(true); setEvalResult(null); }}
+                  className="mt-4 text-primary hover:underline text-sm">
+                  {t("Intentar de nuevo", "Try again")}
+                </button>
+              )}
+            </div>
+          )}
+
+          {/* Action button */}
+          {!course.isEnrolled && course.enrollmentStatus !== "PENDING_PAYMENT" && !isFree && (
+            <div className="pt-4">
+              <Link href={`/${lang}/checkout?course=${course.slug}`}
+                className="inline-flex items-center rounded-lg bg-primary px-6 py-3 text-white font-medium hover:opacity-90 transition-opacity">
+                {dict.courses.enroll}
+              </Link>
+            </div>
+          )}
+        </div>
+
+        {/* Sidebar */}
+        <aside className="space-y-6">
+          <div className="rounded-xl border p-6 space-y-4">
+            <h3 className="font-semibold">{t("Detalles del curso", "Course Details")}</h3>
+            <div className="space-y-3 text-sm">
+              <div className="flex items-center gap-2 text-[#7b8fa1]">
+                <BookOpen className="w-4 h-4" />
+                <span>{course._count?.enrollments || 0} {t("estudiantes", "students")}</span>
+              </div>
+              <div className="flex items-center gap-2 text-[#7b8fa1]">
+                <Globe className="w-4 h-4" />
+                <span>{course.visibility === "PUBLIC" ? t("Público", "Public") : course.visibility}</span>
+              </div>
+              <div className="flex items-center gap-2 text-[#7b8fa1]">
+                <Clock className="w-4 h-4" />
+                <span>{new Date(course.createdAt).toLocaleDateString(lang === "en" ? "en-US" : "es-ES", { dateStyle: "medium" })}</span>
+              </div>
+              {course.instructor && (
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <User className="w-4 h-4" />
+                  <span>{course.instructor.name}</span>
+                </div>
+              )}
+            </div>
+          </div>
+        </aside>
+      </div>
+    </div>
+  );
+}
