@@ -1,15 +1,13 @@
 import type { Metadata } from "next";
 import "@/app/globals.css";
-
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+import { APP_DESCRIPTION, APP_NAME, APP_URL } from "@/lib/app-config";
 
 export const metadata: Metadata = {
   title: {
-    default: "EdPlatform — Cursos Online con Certificados Verificables",
-    template: "%s | EdPlatform",
+    default: `${APP_NAME} — Cursos Online con Certificados Verificables`,
+    template: `%s | ${APP_NAME}`,
   },
-  description:
-    "Plataforma de educación en línea con certificados digitales verificables (Open Badges 3.0 + W3C Verifiable Credentials) y firma criptográfica EdDSA. Cursos bilingües ES/EN con pasarela de pagos georresistente.",
+  description: APP_DESCRIPTION.es,
   keywords: [
     "cursos online",
     "certificados digitales",
@@ -20,25 +18,23 @@ export const metadata: Metadata = {
     "e-learning",
     "certificados verificables",
   ],
-  authors: [{ name: "EdPlatform" }],
-  creator: "EdPlatform",
-  publisher: "EdPlatform",
+  authors: [{ name: APP_NAME }],
+  creator: APP_NAME,
+  publisher: APP_NAME,
   metadataBase: new URL(APP_URL),
   openGraph: {
     type: "website",
     locale: "es_ES",
     alternateLocale: "en_US",
-    siteName: "EdPlatform",
-    title: "EdPlatform — Cursos Online con Certificados Verificables",
-    description:
-      "Obtén credenciales digitales con reconocimiento internacional respaldadas por Open Badges 3.0 y W3C Verifiable Credentials.",
+    siteName: APP_NAME,
+    title: `${APP_NAME} — Cursos Online con Certificados Verificables`,
+    description: APP_DESCRIPTION.es,
     url: APP_URL,
   },
   twitter: {
     card: "summary_large_image",
-    title: "EdPlatform — Cursos Online con Certificados Verificables",
-    description:
-      "Certificados digitales verificables con firma criptográfica EdDSA. Open Badges 3.0 + W3C VC.",
+    title: `${APP_NAME} — Cursos Online con Certificados Verificables`,
+    description: APP_DESCRIPTION.es,
   },
   robots: {
     index: true,

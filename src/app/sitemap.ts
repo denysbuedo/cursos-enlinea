@@ -1,4 +1,4 @@
-import { Metadata } from "next";
+import type { MetadataRoute } from "next";
 import { prisma } from "@/lib/prisma";
 
 const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
@@ -7,11 +7,11 @@ export async function generateSitemaps() {
   return [{ id: 0 }];
 }
 
-export default async function Sitemap() {
+export default async function Sitemap(): Promise<MetadataRoute.Sitemap> {
   const courses = await prisma.course.findMany({
     where: { status: "PUBLISHED", visibility: "PUBLIC" },
     select: { slug: true, updatedAt: true },
-  });
+  }).catch(() => []);
 
   const staticRoutes = ["", "/courses", "/dashboard", "/verify"].flatMap(
     (route) =>

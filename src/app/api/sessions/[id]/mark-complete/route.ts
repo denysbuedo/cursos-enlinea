@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth";
+import { calculateEnrollmentProgress } from "@/lib/progress";
 
 // POST /api/sessions/[id]/mark-complete
 export async function POST(
@@ -24,17 +25,24 @@ export async function POST(
       );
     }
 
+    if (session.status !== "PUBLISHED") {
+      return NextResponse.json(
+        { error: "La sesión no está disponible" },
+        { status: 403 }
+      );
+    }
+
     // Verificar que el usuario está matriculado en este curso
-    const enrollment = await prisma.enrollment.findUnique({
+    const enrollment = await prisma.enrollment.findFirst({
       where: {
-        userId_courseId: {
-          userId,
-          courseId: session.courseId,
-        },
+        userId,
+        courseId: session.courseId,
+        status: "ACTIVE",
       },
+      orderBy: { createdAt: "desc" },
     });
 
-    if (!enrollment || enrollment.status !== "ACTIVE") {
+    if (!enrollment) {
       return NextResponse.json(
         { error: "No tienes acceso a este curso" },
         { status: 403 }
@@ -53,15 +61,7 @@ export async function POST(
 
     if (existing) {
       // Recalcular progreso también para duplicados
-      const totalSessions = await prisma.session.count({
-        where: { courseId: session.courseId, status: "PUBLISHED" },
-      });
-      const completedSessions = await prisma.sessionCompletion.count({
-        where: { enrollmentId: enrollment.id },
-      });
-      const progress = totalSessions > 0
-        ? Math.round((completedSessions / totalSessions) * 100 * 10) / 10
-        : 0;
+      const { progress, completedSessions, totalSessions } = await calculateEnrollmentProgress(enrollment.id, session.courseId);
 
       return NextResponse.json({
         data: existing,
@@ -80,22 +80,7 @@ export async function POST(
       },
     });
 
-    // Recalcular progreso
-    const totalSessions = await prisma.session.count({
-      where: {
-        courseId: session.courseId,
-        status: "PUBLISHED",
-      },
-    });
-
-    const completedSessions = await prisma.sessionCompletion.count({
-      where: { enrollmentId: enrollment.id },
-    });
-
-    const progress =
-      totalSessions > 0
-        ? Math.round((completedSessions / totalSessions) * 100 * 10) / 10
-        : 0;
+    const { progress, completedSessions, totalSessions } = await calculateEnrollmentProgress(enrollment.id, session.courseId);
 
     const updated = await prisma.enrollment.update({
       where: { id: enrollment.id },

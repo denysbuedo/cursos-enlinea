@@ -22,15 +22,15 @@ export async function GET(
   const session = await getSession();
   let isEnrolled = false;
   if (session) {
-    const enrollment = await prisma.enrollment.findUnique({
+    const enrollment = await prisma.enrollment.findFirst({
       where: {
-        userId_courseId: {
-          userId: session.userId,
-          courseId: course.id,
-        },
+        userId: session.userId,
+        courseId: course.id,
+        status: "ACTIVE",
       },
+      orderBy: { createdAt: "desc" },
     });
-    isEnrolled = !!enrollment && enrollment.status === "ACTIVE";
+    isEnrolled = !!enrollment;
   }
 
   const sessions = await prisma.session.findMany({
@@ -75,38 +75,78 @@ export async function POST(
     }
 
     const body = await request.json();
-    const { sessionId, title, description, keywords, sessionType, preview, videoUrl, videoPlatform, order } = body;
+    const {
+      sessionId,
+      moduleId,
+      title,
+      description,
+      keywords,
+      sessionType,
+      preview,
+      videoUrl,
+      videoPlatform,
+      durationMinutes,
+      resources,
+      practicePrompt,
+      order,
+    } = body;
 
     if (!title) return NextResponse.json({ error: "Falta title" }, { status: 400 });
 
+    if (moduleId) {
+      const courseModule = await prisma.courseModule.findFirst({
+        where: { id: moduleId, courseId: course.id },
+        select: { id: true },
+      });
+      if (!courseModule) {
+        return NextResponse.json({ error: "Módulo no encontrado para este curso" }, { status: 404 });
+      }
+    }
+
     let result;
     if (sessionId) {
+      const existingSession = await prisma.session.findFirst({
+        where: { id: sessionId, courseId: course.id },
+        select: { id: true },
+      });
+      if (!existingSession) {
+        return NextResponse.json({ error: "Sesión no encontrada para este curso" }, { status: 404 });
+      }
+
       result = await prisma.session.update({
         where: { id: sessionId },
         data: {
+          moduleId: moduleId || null,
           title, description: description || {},
           keywords: keywords || [],
           sessionType: sessionType || "RECORDED",
           preview: preview !== undefined ? preview : false,
           videoUrl, videoPlatform,
+          durationMinutes: durationMinutes ? Number(durationMinutes) : null,
+          resources: resources || null,
+          practicePrompt: practicePrompt || {},
           order: order || 1,
           status: "PUBLISHED",
         },
       });
     } else {
       const maxOrder = await prisma.session.findFirst({
-        where: { courseId: course.id },
+        where: { courseId: course.id, ...(moduleId ? { moduleId } : {}) },
         orderBy: { order: "desc" },
         select: { order: true },
       });
       result = await prisma.session.create({
         data: {
           courseId: course.id,
+          moduleId: moduleId || null,
           title, description: description || {},
           keywords: keywords || [],
           sessionType: sessionType || "RECORDED",
           preview: preview !== undefined ? preview : false,
           videoUrl, videoPlatform,
+          durationMinutes: durationMinutes ? Number(durationMinutes) : null,
+          resources: resources || null,
+          practicePrompt: practicePrompt || {},
           order: order || (maxOrder ? maxOrder.order + 1 : 1),
           status: "PUBLISHED",
         },
@@ -114,7 +154,7 @@ export async function POST(
     }
 
     return NextResponse.json({ data: result }, { status: sessionId ? 200 : 201 });
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: "Error del servidor" }, { status: 500 });
   }
 }

@@ -2,6 +2,7 @@ import { getLangFromParams, getDictionary } from "@/lib/i18n";
 import { getSession } from "@/lib/auth";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
+import { APP_DESCRIPTION, APP_NAME, APP_URL } from "@/lib/app-config";
 
 export async function generateMetadata({
   params,
@@ -10,11 +11,8 @@ export async function generateMetadata({
 }) {
   const { lang } = await params;
   return {
-    title: { es: "EdPlatform", en: "EdPlatform" }[lang as "es" | "en"] || "EdPlatform",
-    description:
-      lang === "en"
-        ? "Online Course Platform with Verifiable Certificates"
-        : "Plataforma de Cursos Online con Certificados Verificables",
+    title: APP_NAME,
+    description: lang === "en" ? APP_DESCRIPTION.en : APP_DESCRIPTION.es,
   };
 }
 
@@ -42,10 +40,9 @@ export default async function LangLayout({
           __html: JSON.stringify({
             "@context": "https://schema.org",
             "@type": "EducationalOrganization",
-            name: "EdPlatform",
-            url: process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
-            description:
-              "Plataforma de educación en línea con certificados digitales verificables Open Badges 3.0 y W3C Verifiable Credentials.",
+            name: APP_NAME,
+            url: APP_URL,
+            description: APP_DESCRIPTION.es,
             knowsLanguage: ["es", "en"],
           }),
         }}

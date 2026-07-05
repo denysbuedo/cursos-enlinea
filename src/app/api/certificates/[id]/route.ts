@@ -4,6 +4,8 @@ import type { Prisma } from "@prisma/client";
 import { requireAuth } from "@/lib/auth";
 import { generateOpenBadge } from "@/lib/crypto/badge";
 import { randomUUID } from "crypto";
+import { APP_NAME, APP_URL } from "@/lib/app-config";
+import { calculateEnrollmentProgress } from "@/lib/progress";
 
 // POST /api/certificates/[enrollmentId]
 export async function POST(
@@ -35,10 +37,25 @@ export async function POST(
       );
     }
 
+    const { progress } = await calculateEnrollmentProgress(enrollment.id, enrollment.courseId);
+    if (progress !== enrollment.progress) {
+      await prisma.enrollment.update({
+        where: { id: enrollment.id },
+        data: { progress },
+      });
+    }
+
     // Verificar progreso 100%
-    if (enrollment.progress < 100) {
+    if (progress < 100) {
       return NextResponse.json(
-        { error: "Debes completar todas las sesiones primero", progress: enrollment.progress },
+        { error: "Debes completar todas las sesiones primero", progress },
+        { status: 400 }
+      );
+    }
+
+    if (enrollment.course.certificateAvailable === false) {
+      return NextResponse.json(
+        { error: "Este curso no ofrece certificado" },
         { status: 400 }
       );
     }
@@ -81,8 +98,8 @@ export async function POST(
 
     // Generar badgeId único
     const badgeId = `badge-${randomUUID()}`;
-    const verificationUrl = `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/es/verify/${badgeId}`;
-    const issuerUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+    const verificationUrl = `${APP_URL}/es/verify/${badgeId}`;
+    const issuerUrl = APP_URL;
 
     const courseTitle =
       (enrollment.course.title as { es?: string }).es ||
@@ -93,6 +110,7 @@ export async function POST(
       (enrollment.course.description as { es?: string }).es ||
       (enrollment.course.description as { en?: string }).en ||
       "";
+    const criteriaNarrative = `Completar el 100% del curso "${courseTitle}" y aprobar la evaluación final con un puntaje mínimo de ${evaluation.passingScore}%.`;
 
     // Generar Open Badge firmado (si hay clave EdDSA configurada)
     let credentialSubject: Record<string, unknown> = {};
@@ -105,8 +123,8 @@ export async function POST(
         studentId: enrollment.user.id,
         courseName: courseTitle,
         courseDescription,
-        criteriaNarrative: `Completar el 100% del curso "${courseTitle}" y aprobar la evaluación final con un puntaje mínimo del 80%.`,
-        issuerName: process.env.NEXT_PUBLIC_APP_NAME || "EdPlatform",
+        criteriaNarrative,
+        issuerName: APP_NAME,
         issuerUrl,
         verificationUrl,
         issuedAt: new Date(),
@@ -124,11 +142,16 @@ export async function POST(
           type: ["Achievement"],
           name: courseTitle,
           description: courseDescription,
+          criteria: criteriaNarrative,
+          result: {
+            score: attempt.score,
+            passingScore: evaluation.passingScore,
+          },
         },
       };
       issuerProfile = {
         id: issuerUrl,
-        name: process.env.NEXT_PUBLIC_APP_NAME || "EdPlatform",
+        name: APP_NAME,
         url: issuerUrl,
       };
     }
@@ -142,7 +165,7 @@ export async function POST(
         verificationUrl,
         credentialSubject: credentialSubject as Prisma.JsonObject,
         issuerProfile: issuerProfile as Prisma.JsonObject,
-        criteriaNarrative: `Completar el 100% del curso "${courseTitle}" y aprobar la evaluación final.`,
+        criteriaNarrative,
       },
       include: {
         enrollment: {

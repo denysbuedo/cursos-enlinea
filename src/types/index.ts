@@ -38,13 +38,26 @@ export interface CourseWithSessions {
   currency: "CUP" | "USD" | "EUR";
   instructorId: string;
   sessions: Session[];
+  modules?: CourseModule[];
   _count?: { enrollments: number };
+}
+
+// ─── Course Module ──────────────────────────────
+export interface CourseModule {
+  id: string;
+  courseId: string;
+  title: { es: string; en: string };
+  description?: { es: string; en: string };
+  order: number;
+  status: "DRAFT" | "SCHEDULED" | "PUBLISHED" | "ARCHIVED";
+  sessions?: Session[];
 }
 
 // ─── Session ─────────────────────────────────────
 export interface Session {
   id: string;
   courseId: string;
+  moduleId?: string;
   title: { es: string; en: string };
   description: { es: string; en: string };
   keywords: string[];

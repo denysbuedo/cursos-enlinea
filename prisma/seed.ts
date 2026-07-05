@@ -16,6 +16,8 @@ async function main() {
   await prisma.certificate.deleteMany();
   await prisma.enrollment.deleteMany();
   await prisma.session.deleteMany();
+  await prisma.courseModule.deleteMany();
+  await prisma.courseEdition.deleteMany();
   await prisma.course.deleteMany();
   await prisma.refreshToken.deleteMany();
   await prisma.user.deleteMany();
@@ -93,25 +95,96 @@ async function main() {
 
   console.log(`  ✅ Cursos: 3`);
 
+  await prisma.courseEdition.create({
+    data: {
+      courseId: course1.id,
+      name: { es: "Edición inicial", en: "Initial edition" },
+      status: "PUBLISHED",
+      isDefault: true,
+    },
+  });
+
+  const course2Edition = await prisma.courseEdition.create({
+    data: {
+      courseId: course2.id,
+      name: { es: "Edición inicial", en: "Initial edition" },
+      status: "PUBLISHED",
+      isDefault: true,
+    },
+  });
+
+  await prisma.courseEdition.create({
+    data: {
+      courseId: course3.id,
+      name: { es: "Edición inicial", en: "Initial edition" },
+      status: "PUBLISHED",
+      isDefault: true,
+    },
+  });
+
+  console.log("  ✅ Ediciones: 3");
+
+  // ─── Módulos ──────────────────────────────────
+  const course1Module1 = await prisma.courseModule.create({
+    data: {
+      courseId: course1.id,
+      order: 1,
+      status: "PUBLISHED",
+      title: { es: "Estrategia y posicionamiento", en: "Strategy and positioning" },
+      description: {
+        es: "Fundamentos para planificar y posicionar campañas digitales.",
+        en: "Foundations for planning and positioning digital campaigns.",
+      },
+    },
+  });
+
+  const course2Module1 = await prisma.courseModule.create({
+    data: {
+      courseId: course2.id,
+      order: 1,
+      status: "PUBLISHED",
+      title: { es: "Fundamentos web", en: "Web foundations" },
+      description: {
+        es: "Bases de HTML y CSS para construir páginas modernas.",
+        en: "HTML and CSS basics for building modern pages.",
+      },
+    },
+  });
+
+  const course3Module1 = await prisma.courseModule.create({
+    data: {
+      courseId: course3.id,
+      order: 1,
+      status: "PUBLISHED",
+      title: { es: "Contexto y oportunidades", en: "Context and opportunities" },
+      description: {
+        es: "Panorama del entorno digital y oportunidades de negocio.",
+        en: "Overview of the digital environment and business opportunities.",
+      },
+    },
+  });
+
+  console.log("  ✅ Módulos: 3");
+
   // ─── Sesiones ────────────────────────────────
   const sessionsData = [
-    { courseId: course1.id, order: 1, preview: true, videoPlatform: "YOUTUBE", sessionType: "RECORDED" as const,
+    { courseId: course1.id, moduleId: course1Module1.id, order: 1, preview: true, videoPlatform: "YOUTUBE", sessionType: "RECORDED" as const,
       title: { es: "Fundamentos del Marketing Digital", en: "Digital Marketing Fundamentals" },
       description: { es: "Conceptos clave del marketing digital moderno.", en: "Key concepts of modern digital marketing." },
       keywords: ["marketing", "digital", "fundamentos"] },
-    { courseId: course1.id, order: 2, preview: false, videoPlatform: "VIMEO", sessionType: "RECORDED" as const,
+    { courseId: course1.id, moduleId: course1Module1.id, order: 2, preview: false, videoPlatform: "VIMEO", sessionType: "RECORDED" as const,
       title: { es: "SEO y Posicionamiento Web", en: "SEO and Web Positioning" },
       description: { es: "Técnicas avanzadas de SEO on-page y off-page.", en: "Advanced on-page and off-page SEO techniques." },
       keywords: ["SEO", "posicionamiento", "búsqueda"] },
-    { courseId: course2.id, order: 1, preview: true, videoPlatform: "YOUTUBE", sessionType: "RECORDED" as const,
+    { courseId: course2.id, moduleId: course2Module1.id, order: 1, preview: true, videoPlatform: "YOUTUBE", sessionType: "RECORDED" as const,
       title: { es: "HTML: Estructura de Páginas Web", en: "HTML: Web Page Structure" },
       description: { es: "Aprende las bases de HTML5.", en: "Learn HTML5 fundamentals." },
       keywords: ["HTML", "web", "estructura"] },
-    { courseId: course2.id, order: 2, preview: false, videoPlatform: "YOUTUBE", sessionType: "RECORDED" as const,
+    { courseId: course2.id, moduleId: course2Module1.id, order: 2, preview: false, videoPlatform: "YOUTUBE", sessionType: "RECORDED" as const,
       title: { es: "CSS: Estilos y Diseño Responsive", en: "CSS: Styling and Responsive Design" },
       description: { es: "Domina CSS3 y diseño adaptable.", en: "Master CSS3 and responsive design." },
       keywords: ["CSS", "diseño", "responsive"] },
-    { courseId: course3.id, order: 1, preview: true, videoPlatform: "YOUTUBE", sessionType: "LIVE" as const,
+    { courseId: course3.id, moduleId: course3Module1.id, order: 1, preview: true, videoPlatform: "YOUTUBE", sessionType: "LIVE" as const,
       title: { es: "El Ecosistema Digital Cubano", en: "The Cuban Digital Ecosystem" },
       description: { es: "Panorama actual del entorno digital en Cuba.", en: "Current overview of the digital environment in Cuba." },
       keywords: ["Cuba", "digital", "ecosistema"] },
@@ -133,6 +206,7 @@ async function main() {
     data: {
       userId: student.id,
       courseId: course2.id,
+      editionId: course2Edition.id,
       admissionType: "CALL_SYSTEM",
       progress: 50.0,
     },
@@ -148,7 +222,7 @@ async function main() {
         es: "1. Abre la app EnZona\n2. Transfiere el monto indicado a la cuenta configurada\n3. Toma captura de pantalla del comprobante\n4. Sube la imagen aquí",
         en: "1. Open EnZona app\n2. Transfer the indicated amount to the configured account\n3. Take a screenshot of the receipt\n4. Upload the image here",
       },
-      accountInfo: { phoneNumber: "+53 5XXXXXXX", concept: "Pago curso EdPlatform" },
+      accountInfo: { phoneNumber: "+53 5XXXXXXX", concept: "Pago curso Aprendizaje Digital" },
       geoRestriction: "CU",
     },
     {

@@ -37,13 +37,14 @@ export default async function VerifyBadgePage({
     <div className="container mx-auto py-10 px-4 max-w-2xl">
       <div className={`rounded-xl border p-8 ${certificate.isRevoked ? "border-[#c0392b] bg-[#c0392b]/5" : "border-[#b9f8cf] bg-[#f0fdf4]"}`}>
         <h1 className="text-2xl font-bold mb-2">
-          {certificate.isRevoked ? "❌ Certificado Revocado" : "✅ Certificado Válido"}
+          {certificate.isRevoked ? "Certificado revocado" : "Certificado válido"}
         </h1>
         <div className="space-y-2 mt-6">
           <p><strong>Estudiante:</strong> {studentName}</p>
           <p><strong>Curso:</strong> {courseTitle}</p>
           <p><strong>Emitido:</strong> {new Date(certificate.issuedAt).toLocaleDateString("es-ES", { dateStyle: "long" })}</p>
           <p><strong>Badge ID:</strong> {badgeId}</p>
+          <p><strong>Criterio:</strong> {certificate.criteriaNarrative}</p>
           {certificate.isRevoked && (
             <p className="text-black"><strong>Razón de revocación:</strong> {certificate.revocationReason || "No especificada"}</p>
           )}

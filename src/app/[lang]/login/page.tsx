@@ -31,7 +31,13 @@ export default function LoginPage() {
       });
 
       if (!res.ok) {
-        const data = await res.json();
+        const text = await res.text();
+        let data: { error?: string } = {};
+        try {
+          data = text ? JSON.parse(text) : {};
+        } catch {
+          data = {};
+        }
         throw new Error(data.error || "Error");
       }
 
@@ -57,7 +63,8 @@ export default function LoginPage() {
           : "Accede a tus cursos y certificados."}
       </p>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form action="/api/auth/login" method="post" onSubmit={handleSubmit} className="space-y-4">
+        <input type="hidden" name="redirectTo" value={`/${lang}/dashboard`} />
         {error && (
           <div className="p-3 rounded-lg bg-destructive/10 text-destructive text-sm text-center">
             {error}
@@ -70,6 +77,7 @@ export default function LoginPage() {
           </label>
           <input
             id="email"
+            name="email"
             type="email"
             required
             value={email}
@@ -85,6 +93,7 @@ export default function LoginPage() {
           </label>
           <input
             id="password"
+            name="password"
             type="password"
             required
             minLength={6}

@@ -31,6 +31,7 @@ export default function CheckoutPage() {
   const lang = getLangFromParams(params);
   const dict = getDictionary(lang);
   const courseSlug = searchParams.get("course");
+  const editionId = searchParams.get("edition");
 
   const [methods, setMethods] = useState<PaymentMethod[]>([]);
   const [selectedMethod, setSelectedMethod] = useState("");
@@ -42,6 +43,7 @@ export default function CheckoutPage() {
   const [coursePrice, setCoursePrice] = useState<number>();
   const [courseCurrency, setCourseCurrency] = useState<string>();
   const [courseTitle, setCourseTitle] = useState("");
+  const [editionTitle, setEditionTitle] = useState("");
   const [enrollmentId, setEnrollmentId] = useState<string | null>(null);
 
   const t = (es: string, en: string) => (lang === "en" ? en : es);
@@ -53,6 +55,7 @@ export default function CheckoutPage() {
     }
 
     async function init() {
+      const translate = (es: string, en: string) => (lang === "en" ? en : es);
       setLoading(true);
       try {
         // 1. Obtener instrucciones de pago
@@ -67,11 +70,10 @@ export default function CheckoutPage() {
           const enrollRes = await fetch("/api/enrollments", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ courseSlug }),
+            body: JSON.stringify({ courseSlug, editionId }),
           });
 
           if (enrollRes.ok) {
-            const enrollData = await enrollRes.json();
             router.push(`/${lang}/courses/${courseSlug}`);
             return;
           }
@@ -84,7 +86,7 @@ export default function CheckoutPage() {
 
           // Si no autorizado, redirigir a login
           if (enrollRes.status === 401) {
-            router.push(`/${lang}/login?redirect=/${lang}/checkout?course=${courseSlug}`);
+            router.push(`/${lang}/login?redirect=/${lang}/checkout?course=${courseSlug}${editionId ? `&edition=${editionId}` : ""}`);
             return;
           }
         }
@@ -97,14 +99,20 @@ export default function CheckoutPage() {
         const courseRes = await fetch(`/api/courses/${courseSlug}`);
         if (courseRes.ok) {
           const course = await courseRes.json();
-          setCourseTitle(t(course.title.es, course.title.en));
+          setCourseTitle(translate(course.title.es, course.title.en));
+          const selectedEdition = editionId
+            ? course.editions?.find((edition: { id: string }) => edition.id === editionId)
+            : course.editions?.find((edition: { isDefault: boolean }) => edition.isDefault) || course.editions?.[0];
+          if (selectedEdition) {
+            setEditionTitle(translate(selectedEdition.name.es, selectedEdition.name.en));
+          }
         }
 
         // 3. Crear enrollment si no existe
         const enrollRes = await fetch("/api/enrollments", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ courseSlug }),
+          body: JSON.stringify({ courseSlug, editionId }),
         });
         if (enrollRes.ok) {
           const enrollData = await enrollRes.json();
@@ -114,25 +122,25 @@ export default function CheckoutPage() {
           setEnrollmentId(enrollData.enrollment?.id || null);
         } else if (enrollRes.status === 401) {
           router.push(
-            `/${lang}/login?redirect=/${lang}/checkout?course=${courseSlug}`
+            `/${lang}/login?redirect=/${lang}/checkout?course=${courseSlug}${editionId ? `&edition=${editionId}` : ""}`
           );
           return;
         } else {
           const errData = await enrollRes.json().catch(() => ({}));
           setError(
             errData.error ||
-              t("Error al crear la matrícula", "Error creating enrollment")
+              translate("Error al crear la matrícula", "Error creating enrollment")
           );
         }
       } catch {
-        setError(t("Error al cargar", "Error loading"));
+        setError(translate("Error al cargar", "Error loading"));
       } finally {
         setLoading(false);
       }
     }
 
     init();
-  }, [courseSlug, lang, router]);
+  }, [courseSlug, editionId, lang, router]);
 
   const selected = methods.find((m) => m.method === selectedMethod);
 
@@ -235,6 +243,11 @@ export default function CheckoutPage() {
         {dict.payments.title}
         {courseTitle && `: ${courseTitle}`}
       </h1>
+      {editionTitle && (
+        <p className="mb-4 text-sm text-[#7b8fa1]">
+          {t("Edición", "Edition")}: <span className="font-medium text-black">{editionTitle}</span>
+        </p>
+      )}
 
       {/* Compliance disclaimer */}
       <div className="flex items-start gap-2 p-3 rounded-lg bg-[#e8ecf1]/50 text-xs text-[#7b8fa1] mb-8">

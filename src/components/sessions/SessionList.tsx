@@ -7,8 +7,19 @@ import {
   Radio,
   Calendar,
   CheckCircle2,
+  Clock,
+  ExternalLink,
+  FileText,
   Loader2,
 } from "lucide-react";
+
+interface SessionResource {
+  id: string;
+  title: string;
+  url: string;
+  type: string;
+  source: "EXTERNAL" | "REPOSITORY" | "LOCAL_UPLOAD";
+}
 
 interface SessionItem {
   id: string;
@@ -17,6 +28,9 @@ interface SessionItem {
   sessionType: "RECORDED" | "LIVE" | "HYBRID";
   preview: boolean;
   videoPlatform?: string;
+  durationMinutes?: number | null;
+  resources?: SessionResource[] | null;
+  practicePrompt?: { es?: string; en?: string } | null;
   scheduledAt?: string;
   order: number;
   status: string;
@@ -72,6 +86,10 @@ export function SessionList({
         const isLocked = !isEnrolled && !session.preview;
         const isCompleted = completedSessions?.includes(session.id);
         const isCompleting = completingSession === session.id;
+        const practicePrompt = lang === "en"
+          ? session.practicePrompt?.en || session.practicePrompt?.es
+          : session.practicePrompt?.es || session.practicePrompt?.en;
+        const resources = Array.isArray(session.resources) ? session.resources : [];
 
         return (
           <div
@@ -118,6 +136,12 @@ export function SessionList({
                     {t("Preview gratuito", "Free preview")}
                   </span>
                 )}
+                {session.durationMinutes && (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-[#eef2f6] px-2 py-0.5 text-xs text-[#52667a]">
+                    <Clock className="w-3 h-3" />
+                    {session.durationMinutes} {t("min", "min")}
+                  </span>
+                )}
                 {isCompleted && (
                   <span className="inline-flex items-center gap-1 rounded-full bg-[#d5f5e3] text-black dark:bg-green-900/30 dark:text-green-400 px-2 py-0.5 text-xs font-medium">
                     <CheckCircle2 className="w-3 h-3" />
@@ -141,6 +165,28 @@ export function SessionList({
                     { dateStyle: "medium", timeStyle: "short" }
                   )}
                 </p>
+              )}
+              {!isLocked && practicePrompt && (
+                <p className="text-xs text-[#52667a] mt-2 rounded-md bg-[#f7f9fb] px-3 py-2">
+                  <span className="font-medium">{t("Práctica:", "Practice:")}</span> {practicePrompt}
+                </p>
+              )}
+              {!isLocked && resources.length > 0 && (
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {resources.map((resource) => (
+                    <a
+                      key={resource.id}
+                      href={resource.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex max-w-full items-center gap-1 rounded-md border bg-white px-2.5 py-1.5 text-xs font-medium text-primary hover:bg-accent"
+                    >
+                      <FileText className="w-3.5 h-3.5 flex-shrink-0" />
+                      <span className="truncate">{resource.title}</span>
+                      <ExternalLink className="w-3 h-3 flex-shrink-0" />
+                    </a>
+                  ))}
+                </div>
               )}
             </div>
 

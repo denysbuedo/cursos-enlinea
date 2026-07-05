@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth";
+import { calculateEnrollmentProgress } from "@/lib/progress";
 
 // POST /api/evaluations/[id]/submit
 // Body: { answers: [{questionId, answer}] }
@@ -34,24 +35,32 @@ export async function POST(
     }
 
     // Verificar matrícula activa
-    const enrollment = await prisma.enrollment.findUnique({
+    const enrollment = await prisma.enrollment.findFirst({
       where: {
-        userId_courseId: {
-          userId,
-          courseId: evaluation.courseId,
-        },
+        userId,
+        courseId: evaluation.courseId,
+        status: "ACTIVE",
       },
+      orderBy: { createdAt: "desc" },
     });
 
-    if (!enrollment || enrollment.status !== "ACTIVE") {
+    if (!enrollment) {
       return NextResponse.json(
         { error: "No tienes acceso a esta evaluación" },
         { status: 403 }
       );
     }
 
+    const { progress } = await calculateEnrollmentProgress(enrollment.id, evaluation.courseId);
+    if (progress !== enrollment.progress) {
+      await prisma.enrollment.update({
+        where: { id: enrollment.id },
+        data: { progress },
+      });
+    }
+
     // Verificar progreso 100%
-    if (enrollment.progress < 100) {
+    if (progress < 100) {
       return NextResponse.json(
         {
           error:
@@ -80,10 +89,36 @@ export async function POST(
       );
     }
 
+    const attemptCount = await prisma.evaluationAttempt.count({
+      where: {
+        evaluationId,
+        enrollmentId: enrollment.id,
+      },
+    });
+
+    if (attemptCount >= evaluation.maxAttempts) {
+      return NextResponse.json(
+        {
+          error: "Has agotado los intentos disponibles para esta evaluación",
+          attemptCount,
+          maxAttempts: evaluation.maxAttempts,
+        },
+        { status: 409 }
+      );
+    }
+
     // Corregir respuestas (server-side — nunca se envían las correctas al cliente)
     const questions = evaluation.questions as Array<Record<string, unknown>>;
     let totalPoints = 0;
     let earnedPoints = 0;
+    const questionResults: Array<{
+      questionId: string;
+      correct: boolean;
+      points: number;
+      earnedPoints: number;
+      feedback?: unknown;
+      correctAnswer?: string;
+    }> = [];
 
     const answerMap = new Map(
       answers.map((a: { questionId: string; answer: string }) => [
@@ -99,15 +134,42 @@ export async function POST(
       const userAnswer = answerMap.get(q.id as string);
       const correct = q.correctAnswer as string;
 
-      if (!userAnswer) continue;
+      if (!userAnswer) {
+        questionResults.push({
+          questionId: q.id as string,
+          correct: false,
+          points,
+          earnedPoints: 0,
+          feedback: evaluation.showFeedback ? q.feedback : undefined,
+          correctAnswer: evaluation.showFeedback ? correct : undefined,
+        });
+        continue;
+      }
 
       // Normalizar comparación (case-insensitive, trim)
       const normalizedUser = String(userAnswer).trim().toLowerCase();
       const normalizedCorrect = String(correct).trim().toLowerCase();
 
-      if (normalizedUser === normalizedCorrect) {
+      const isMcq = q.type === "MCQ" && Array.isArray(q.options);
+      const matchesLocalizedOption = isMcq && (q.options as Array<Record<string, string>>).some((option) => {
+        const values = [option.es, option.en].filter(Boolean).map((value) =>
+          String(value).trim().toLowerCase()
+        );
+        return values.includes(normalizedUser) && values.includes(normalizedCorrect);
+      });
+
+      const isCorrect = normalizedUser === normalizedCorrect || matchesLocalizedOption;
+      if (isCorrect) {
         earnedPoints += points;
       }
+      questionResults.push({
+        questionId: q.id as string,
+        correct: isCorrect,
+        points,
+        earnedPoints: isCorrect ? points : 0,
+        feedback: evaluation.showFeedback ? q.feedback : undefined,
+        correctAnswer: evaluation.showFeedback ? correct : undefined,
+      });
     }
 
     const score =
@@ -134,6 +196,10 @@ export async function POST(
         passingScore: evaluation.passingScore,
         totalPoints,
         earnedPoints,
+        attemptCount: attemptCount + 1,
+        remainingAttempts: Math.max(0, evaluation.maxAttempts - attemptCount - 1),
+        maxAttempts: evaluation.maxAttempts,
+        feedback: evaluation.showFeedback ? questionResults : [],
         submittedAt: attempt.submittedAt,
       },
     });

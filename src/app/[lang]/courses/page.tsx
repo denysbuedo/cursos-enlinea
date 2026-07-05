@@ -56,6 +56,7 @@ export default function CoursesPage() {
   }, [currency, pricingModel, search, page]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchCourses();
   }, [fetchCourses]);
 

@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { Upload, X, FileText, Image as ImageIcon, Check } from "lucide-react";
+import Image from "next/image";
+import { Upload, X, FileText, Check } from "lucide-react";
 
 interface ProofUploadProps {
   onFileSelected: (file: File | null) => void;
@@ -98,9 +99,12 @@ export function ProofUpload({
               </span>
             </div>
           ) : file?.type.startsWith("image/") ? (
-            <img
+            <Image
               src={preview!}
               alt="Preview"
+              width={640}
+              height={256}
+              unoptimized
               className="w-full max-h-64 object-contain bg-[#e8ecf1]/30"
             />
           ) : file?.type === "application/pdf" ? (

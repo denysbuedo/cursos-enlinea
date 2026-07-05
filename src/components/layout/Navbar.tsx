@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { LogOut, GraduationCap, Menu, X } from "lucide-react";
 import { useState } from "react";
 import type { getDictionary } from "@/lib/i18n";
+import { APP_NAME } from "@/lib/app-config";
 
 type Dict = ReturnType<typeof getDictionary>;
 
@@ -31,12 +32,15 @@ export function Navbar({ lang, dict, session }: { lang: string; dict: Dict; sess
       <nav className="container mx-auto flex h-16 items-center justify-between px-4">
         <Link href={`/${lang}`} className="flex items-center gap-2.5 text-white font-bold text-lg">
           <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-white/15"><GraduationCap className="w-5 h-5" /></div>
-          <span className="hidden sm:inline">EdPlatform</span>
+          <span className="hidden sm:inline">{APP_NAME}</span>
         </Link>
 
         <div className="hidden md:flex items-center gap-1">
           <Link href={`/${lang}/courses`} className={linkClass("/courses")}>{dict.nav.courses}</Link>
           <Link href={`/${lang}/dashboard`} className={linkClass("/dashboard")}>{dict.nav.dashboard}</Link>
+          {(session?.role === "ADMIN" || session?.role === "INSTRUCTOR") && (
+            <Link href={`/${lang}/dashboard/cms`} className="text-sm font-medium text-white/80 hover:text-white px-3 py-1.5 rounded-lg hover:bg-white/10 transition-colors">CMS</Link>
+          )}
           {session?.role === "ADMIN" && (
             <Link href={`/${lang}/dashboard/admin`} className="text-sm font-medium text-amber-300 hover:text-amber-200 px-3 py-1.5 rounded-lg hover:bg-white/10 transition-colors">{dict.nav.admin}</Link>
           )}
@@ -60,6 +64,7 @@ export function Navbar({ lang, dict, session }: { lang: string; dict: Dict; sess
         <div className="md:hidden bg-[#0a3d62] border-t border-white/10 px-4 py-3 space-y-1">
           <Link href={`/${lang}/courses`} className="block px-3 py-2.5 rounded-lg text-white/80 hover:bg-white/10" onClick={() => setMobileOpen(false)}>{dict.nav.courses}</Link>
           <Link href={`/${lang}/dashboard`} className="block px-3 py-2.5 rounded-lg text-white/80 hover:bg-white/10" onClick={() => setMobileOpen(false)}>{dict.nav.dashboard}</Link>
+          {(session?.role === "ADMIN" || session?.role === "INSTRUCTOR") && <Link href={`/${lang}/dashboard/cms`} className="block px-3 py-2.5 rounded-lg text-white/80 hover:bg-white/10" onClick={() => setMobileOpen(false)}>CMS</Link>}
           {session?.role === "ADMIN" && <Link href={`/${lang}/dashboard/admin`} className="block px-3 py-2.5 rounded-lg text-amber-300 hover:bg-white/10" onClick={() => setMobileOpen(false)}>{dict.nav.admin}</Link>}
         </div>
       )}

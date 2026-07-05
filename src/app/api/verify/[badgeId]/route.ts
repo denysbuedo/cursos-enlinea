@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { rateLimit, RATE_LIMITS } from "@/lib/rate-limit";
+import { APP_NAME } from "@/lib/app-config";
 
 export async function GET(
   request: NextRequest,
@@ -47,7 +48,7 @@ export async function GET(
   // El issuerProfile contiene los metadatos del emisor
   const issuerProfile = certificate.issuerProfile as Record<string, unknown> | null;
   const issuerId = (issuerProfile as Record<string, unknown>)?.id || "";
-  const issuerName = (issuerProfile as Record<string, unknown>)?.name || "EdPlatform";
+  const issuerName = (issuerProfile as Record<string, unknown>)?.name || APP_NAME;
   const issuerUrl = (issuerProfile as Record<string, unknown>)?.url || "";
 
   const credentialSubject = certificate.credentialSubject as Record<string, unknown>;
@@ -85,6 +86,7 @@ export async function GET(
       course:
         (certificate.enrollment.course.title as { es?: string })?.es ||
         (certificate.enrollment.course.title as { en?: string })?.en,
+      criteria: certificate.criteriaNarrative,
       issuedAt: certificate.issuedAt,
       badgeId: certificate.badgeId,
       credential,

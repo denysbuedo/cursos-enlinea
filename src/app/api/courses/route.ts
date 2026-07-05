@@ -5,6 +5,51 @@ import { rateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 
 // Bugfix #2: búsqueda case-insensitive con ILIKE
 
+function localizedTextHasSpanish(value: unknown) {
+  return Boolean(
+    value &&
+      typeof value === "object" &&
+      "es" in value &&
+      typeof value.es === "string" &&
+      value.es.trim()
+  );
+}
+
+async function validatePublishableCourse(
+  courseId: string | undefined,
+  data: {
+    slug?: string;
+    title: unknown;
+    description: unknown;
+    pricingModel?: string;
+    price?: number | null;
+  }
+) {
+  const missing: string[] = [];
+
+  if (!data.slug?.trim() || !localizedTextHasSpanish(data.title) || !localizedTextHasSpanish(data.description)) {
+    missing.push("Ficha básica completa");
+  }
+
+  if (data.pricingModel === "PAID" && (!data.price || Number(data.price) <= 0)) {
+    missing.push("Precio válido para curso pago");
+  }
+
+  if (!courseId) {
+    missing.push("Al menos una sesión publicada con video");
+  } else {
+    const [publishedEditions, videoSessions] = await Promise.all([
+      prisma.courseEdition.count({ where: { courseId, status: "PUBLISHED" } }),
+      prisma.session.count({ where: { courseId, status: "PUBLISHED", videoUrl: { not: null } } }),
+    ]);
+
+    if (publishedEditions < 1) missing.push("Al menos una edición publicada");
+    if (videoSessions < 1) missing.push("Al menos una sesión publicada con video");
+  }
+
+  return missing;
+}
+
 export async function GET(request: NextRequest) {
   // Rate limiting
   const ip = request.headers.get("x-forwarded-for") || "unknown";
@@ -60,7 +105,7 @@ export async function GET(request: NextRequest) {
       include: {
         _count: { select: { enrollments: true, sessions: true } },
         sessions: {
-          where: { preview: true },
+          where: { preview: true, status: "PUBLISHED" },
           select: { id: true },
           take: 1,
         },
@@ -89,7 +134,28 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { id, slug, title, description, pricingModel, price, currency, visibility, status } = body;
+    const {
+      id,
+      slug,
+      title,
+      description,
+      learningObjectives,
+      targetAudience,
+      requirements,
+      competencies,
+      estimatedHours,
+      weeklyHours,
+      level,
+      language,
+      certificateAvailable,
+      selfPaced,
+      pricingModel,
+      price,
+      currency,
+      visibility,
+      status,
+    } = body;
+    const nextPrice = pricingModel === "FREE" ? null : Number(price || 0);
 
     if (!slug || !title || !description) {
       return NextResponse.json({ error: "Faltan campos: slug, title, description" }, { status: 400 });
@@ -97,33 +163,107 @@ export async function POST(request: NextRequest) {
 
     let result;
     if (id) {
+      const existing = await prisma.course.findUnique({
+        where: { id },
+        select: { id: true, instructorId: true, status: true },
+      });
+      if (!existing) return NextResponse.json({ error: "Curso no encontrado" }, { status: 404 });
+      if (session.role !== "ADMIN" && existing.instructorId !== session.userId) {
+        return NextResponse.json({ error: "No eres el instructor de este curso" }, { status: 403 });
+      }
+      const nextStatus = status || existing.status;
+
+      if (nextStatus === "PUBLISHED") {
+        const missing = await validatePublishableCourse(id, {
+          slug,
+          title,
+          description,
+          pricingModel: pricingModel || "FREE",
+          price: nextPrice,
+        });
+        if (missing.length) {
+          return NextResponse.json({ error: "Curso no publicable", missing }, { status: 400 });
+        }
+      }
+
       result = await prisma.course.update({
         where: { id },
         data: {
           slug, title, description,
+          learningObjectives: learningObjectives || null,
+          targetAudience: targetAudience || null,
+          requirements: requirements || null,
+          competencies: competencies || null,
+          estimatedHours: estimatedHours ? Number(estimatedHours) : null,
+          weeklyHours: weeklyHours ? Number(weeklyHours) : null,
+          level: level || null,
+          language: language || "es",
+          certificateAvailable: certificateAvailable !== undefined ? Boolean(certificateAvailable) : true,
+          selfPaced: selfPaced !== undefined ? Boolean(selfPaced) : true,
           pricingModel: pricingModel || "FREE",
-          price: price || null,
+          price: nextPrice,
           currency: currency || "USD",
           visibility: visibility || "PUBLIC",
-          status: status || "PUBLISHED",
+          status: nextStatus,
         },
       });
+
+      if (existing.status !== result.status) {
+        await prisma.auditLog.create({
+          data: {
+            action: "COURSE_STATUS_UPDATED",
+            entity: "Course",
+            entityId: result.id,
+            userId: session.userId,
+            metadata: { previousStatus: existing.status, status: result.status },
+          },
+        });
+      }
     } else {
+      const nextStatus = status || "DRAFT";
+      if (nextStatus === "PUBLISHED") {
+        const missing = await validatePublishableCourse(undefined, {
+          slug,
+          title,
+          description,
+          pricingModel: pricingModel || "FREE",
+          price: nextPrice,
+        });
+        return NextResponse.json({ error: "Curso no publicable", missing }, { status: 400 });
+      }
+
       result = await prisma.course.create({
         data: {
           slug, title, description,
+          learningObjectives: learningObjectives || null,
+          targetAudience: targetAudience || null,
+          requirements: requirements || null,
+          competencies: competencies || null,
+          estimatedHours: estimatedHours ? Number(estimatedHours) : null,
+          weeklyHours: weeklyHours ? Number(weeklyHours) : null,
+          level: level || null,
+          language: language || "es",
+          certificateAvailable: certificateAvailable !== undefined ? Boolean(certificateAvailable) : true,
+          selfPaced: selfPaced !== undefined ? Boolean(selfPaced) : true,
           pricingModel: pricingModel || "FREE",
-          price: price || null,
+          price: nextPrice,
           currency: currency || "USD",
           visibility: visibility || "PUBLIC",
-          status: status || "PUBLISHED",
+          status: nextStatus,
           instructorId: session.userId,
+          editions: {
+            create: {
+              name: { es: "Edición inicial", en: "Initial edition" },
+              status: "PUBLISHED",
+              isDefault: true,
+            },
+          },
         },
       });
     }
 
     return NextResponse.json({ data: result }, { status: id ? 200 : 201 });
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: "Error del servidor" }, { status: 500 });
   }
 }

@@ -24,8 +24,22 @@ export async function GET(
       OR: [{ id }, { slug: id }],
     },
     include: {
-      sessions: {
+      modules: {
         orderBy: { order: "asc" },
+        include: {
+          sessions: {
+            where: { status: "PUBLISHED" },
+            orderBy: { order: "asc" },
+          },
+        },
+      },
+      editions: {
+        where: { status: "PUBLISHED" },
+        orderBy: [{ isDefault: "desc" }, { startsAt: "asc" }, { createdAt: "asc" }],
+      },
+      sessions: {
+        where: { status: "PUBLISHED" },
+        orderBy: [{ moduleId: "asc" }, { order: "asc" }],
       },
       _count: {
         select: { enrollments: true },
@@ -40,18 +54,17 @@ export async function GET(
     return NextResponse.json({ error: "Curso no encontrado" }, { status: 404 });
   }
 
-  // Verificar si el usuario actual está matriculado
+  // Verificar si el usuario actual está matriculado o puede gestionar el curso
   let isEnrolled = false;
   let enrollmentStatus: string | null = null;
   const session = await getSession();
   if (session) {
-    const enrollment = await prisma.enrollment.findUnique({
+    const enrollment = await prisma.enrollment.findFirst({
       where: {
-        userId_courseId: {
-          userId: session.userId,
-          courseId: course.id,
-        },
+        userId: session.userId,
+        courseId: course.id,
       },
+      orderBy: { createdAt: "desc" },
     });
     if (enrollment) {
       enrollmentStatus = enrollment.status;
@@ -59,14 +72,32 @@ export async function GET(
     }
   }
 
+  const canManage =
+    Boolean(session) &&
+    (session?.role === "ADMIN" || (session?.role === "INSTRUCTOR" && course.instructorId === session.userId));
+  const canViewPublicCourse = course.status === "PUBLISHED" && course.visibility === "PUBLIC";
+  const canViewEnrolledCourse = course.status === "PUBLISHED" && course.visibility === "ENROLLED_ONLY" && isEnrolled;
+
+  if (!canManage && !canViewPublicCourse && !canViewEnrolledCourse) {
+    return NextResponse.json({ error: "Curso no encontrado" }, { status: 404 });
+  }
+
   // Si no está matriculado, solo devolver sesiones preview
   const sessions = isEnrolled
     ? course.sessions
     : course.sessions.filter((s) => s.preview);
 
+  const modules = course.modules.map((module) => ({
+    ...module,
+    sessions: isEnrolled
+      ? module.sessions
+      : module.sessions.filter((s) => s.preview),
+  })).filter((module) => module.sessions.length > 0 || isEnrolled);
+
   return NextResponse.json({
     ...course,
     sessions,
+    modules,
     isEnrolled,
     enrollmentStatus,
     _count: course._count,

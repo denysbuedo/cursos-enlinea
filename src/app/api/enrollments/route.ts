@@ -10,7 +10,7 @@ export async function POST(request: NextRequest) {
   try {
     const { userId } = await requireAuth();
 
-    const { courseSlug } = await request.json();
+    const { courseSlug, editionId } = await request.json();
 
     if (!courseSlug) {
       return NextResponse.json(
@@ -30,13 +30,43 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Verificar que no esté ya matriculado
-    const existing = await prisma.enrollment.findUnique({
-      where: {
-        userId_courseId: {
-          userId,
-          courseId: course.id,
+    const selectedEdition = editionId
+      ? await prisma.courseEdition.findFirst({
+          where: { id: editionId, courseId: course.id, status: "PUBLISHED" },
+        })
+      : await prisma.courseEdition.findFirst({
+          where: { courseId: course.id, status: "PUBLISHED" },
+          orderBy: [{ isDefault: "desc" }, { createdAt: "asc" }],
+        });
+
+    if (editionId && !selectedEdition) {
+      return NextResponse.json(
+        { error: "Edición no encontrada o no disponible" },
+        { status: 404 }
+      );
+    }
+
+    if (selectedEdition?.capacity) {
+      const enrollmentCount = await prisma.enrollment.count({
+        where: {
+          editionId: selectedEdition.id,
+          status: { in: ["ACTIVE", "PENDING_PAYMENT"] },
         },
+      });
+      if (enrollmentCount >= selectedEdition.capacity) {
+        return NextResponse.json(
+          { error: "La edición seleccionada no tiene cupos disponibles" },
+          { status: 409 }
+        );
+      }
+    }
+
+    // Verificar que no esté ya matriculado en esta edición
+    const existing = await prisma.enrollment.findFirst({
+      where: {
+        userId,
+        courseId: course.id,
+        editionId: selectedEdition?.id || null,
       },
     });
 
@@ -51,6 +81,7 @@ export async function POST(request: NextRequest) {
       data: {
         userId,
         courseId: course.id,
+        editionId: selectedEdition?.id,
         status: course.pricingModel === "FREE" ? "ACTIVE" : "PENDING_PAYMENT",
         admissionType: course.pricingModel === "FREE" ? "CALL_SYSTEM" : "COMMERCIAL",
       },

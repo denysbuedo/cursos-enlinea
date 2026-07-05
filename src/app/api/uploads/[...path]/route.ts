@@ -12,6 +12,10 @@ const MIME_TYPES: Record<string, string> = {
   ".webp": "image/webp",
   ".gif": "image/gif",
   ".pdf": "application/pdf",
+  ".mp4": "video/mp4",
+  ".webm": "video/webm",
+  ".mov": "video/quicktime",
+  ".m4v": "video/mp4",
 };
 
 export async function GET(
@@ -34,6 +38,7 @@ export async function GET(
   return new NextResponse(buffer, {
     headers: {
       "Content-Type": contentType,
+      "Accept-Ranges": "bytes",
       "Cache-Control": "public, max-age=3600",
     },
   });

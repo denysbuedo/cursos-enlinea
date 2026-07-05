@@ -14,6 +14,7 @@ Plataforma web de educación en línea con **certificados digitales verificables
 - [Flujos de Negocio](#-flujos-de-negocio)
 - [Seguridad](#-seguridad)
 - [Accesibilidad y SEO](#-accesibilidad-y-seo)
+- [Cierre de etapa MOOC](docs/cierre-etapa-mooc.md)
 
 ---
 
@@ -30,6 +31,9 @@ Plataforma web de educación en línea con **certificados digitales verificables
 | 🏆 F6 | ✅ | Open Badges 3.0, firma EdDSA, PDF certificados, revocación |
 | ♿ F7 | ✅ | SEO (OG/Twitter/schema.org), sitemap, ARIA labels, semantic HTML |
 | 🚀 F8 | ✅ | Documentación completa, build verificado |
+| 🎓 MOOC R1 | ✅ | CMS académico, ficha MOOC, módulos, videos, materiales, evaluación automática, feedback, intentos y certificado verificable |
+
+Documento de corte funcional: [docs/cierre-etapa-mooc.md](docs/cierre-etapa-mooc.md).
 
 ---
 

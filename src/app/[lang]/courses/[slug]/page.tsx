@@ -1,14 +1,14 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { getDictionary, getLangFromParams } from "@/lib/i18n";
 import { SessionList } from "@/components/sessions/SessionList";
 import { EvaluationForm } from "@/components/evaluations/EvaluationForm";
+import { resolveVideoRender } from "@/lib/video";
 import {
   BookOpen,
-  Users,
   Globe,
   Clock,
   CheckCircle2,
@@ -22,17 +22,55 @@ interface CourseDetail {
   slug: string;
   title: { es: string; en: string };
   description: { es: string; en: string };
+  learningObjectives?: { es?: string[]; en?: string[] } | null;
+  targetAudience?: { es?: string[]; en?: string[] } | null;
+  requirements?: { es?: string[]; en?: string[] } | null;
+  competencies?: { es?: string[]; en?: string[] } | null;
+  estimatedHours?: number | null;
+  weeklyHours?: number | null;
+  level?: string | null;
+  language?: string | null;
+  certificateAvailable?: boolean;
+  selfPaced?: boolean;
   pricingModel: string;
   price?: number;
   currency: string;
   visibility: string;
   status: string;
   sessions: SessionItem[];
+  modules?: ModuleItem[];
+  editions?: CourseEditionItem[];
   isEnrolled: boolean;
   enrollmentStatus?: string | null;
   _count: { enrollments: number };
   instructor?: { name: string };
   createdAt: string;
+}
+
+interface CourseEditionItem {
+  id: string;
+  name: { es: string; en: string };
+  startsAt?: string | null;
+  endsAt?: string | null;
+  capacity?: number | null;
+  isDefault: boolean;
+}
+
+interface ModuleItem {
+  id: string;
+  title: { es: string; en: string };
+  description?: { es: string; en: string };
+  order: number;
+  status: string;
+  sessions: SessionItem[];
+}
+
+interface SessionResource {
+  id: string;
+  title: string;
+  url: string;
+  type: string;
+  source: "EXTERNAL" | "REPOSITORY" | "LOCAL_UPLOAD";
 }
 
 interface SessionItem {
@@ -45,6 +83,9 @@ interface SessionItem {
   preview: boolean;
   videoUrl?: string;
   videoPlatform?: string;
+  durationMinutes?: number | null;
+  resources?: SessionResource[] | null;
+  practicePrompt?: { es?: string; en?: string } | null;
   scheduledAt?: string;
   order: number;
   status: string;
@@ -70,6 +111,41 @@ const currencySymbol: Record<string, string> = {
   EUR: "€",
 };
 
+function localizedList(value: { es?: string[]; en?: string[] } | null | undefined, lang: string) {
+  const primary = lang === "en" ? value?.en : value?.es;
+  const fallback = lang === "en" ? value?.es : value?.en;
+  return Array.isArray(primary) && primary.length > 0 ? primary : Array.isArray(fallback) ? fallback : [];
+}
+
+function VideoPlayer({ session, lang }: { session: SessionItem; lang: string }) {
+  const render = resolveVideoRender(session.videoUrl, session.videoPlatform);
+  const t = (es: string, en: string) => (lang === "en" ? en : es);
+
+  if (!render) return null;
+
+  return (
+    <div className="overflow-hidden rounded-lg border bg-black">
+      {render.type === "external" ? (
+        <iframe
+          src={render.embedUrl}
+          title={t(session.title.es, session.title.en)}
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          allowFullScreen
+          className="aspect-video w-full"
+        />
+      ) : render.type === "file" ? (
+        <video src={render.url} controls preload="metadata" className="aspect-video w-full bg-black" />
+      ) : (
+        <div className="p-4">
+          <a href={render.url} target="_blank" rel="noopener noreferrer" className="text-sm text-white underline">
+            {t("Abrir video", "Open video")}
+          </a>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function CourseDetailPage() {
   const params = useParams<{ lang: string; slug: string }>();
   const lang = getLangFromParams(params);
@@ -77,6 +153,7 @@ export default function CourseDetailPage() {
   const { slug } = params;
 
   const [course, setCourse] = useState<CourseDetail | null>(null);
+  const [selectedEditionId, setSelectedEditionId] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -88,7 +165,6 @@ export default function CourseDetailPage() {
   const [showEvaluation, setShowEvaluation] = useState(false);
   const [loadingEval, setLoadingEval] = useState(false);
   const [noEvalAvailable, setNoEvalAvailable] = useState(false);
-  const [evalPassed, setEvalPassed] = useState(false);
   const [evalResult, setEvalResult] = useState<{ score: number; passed: boolean } | null>(null);
 
   // Certificate state
@@ -100,46 +176,49 @@ export default function CourseDetailPage() {
 
   const t = (es: string, en: string) => (lang === "en" ? en : es);
 
-  const fetchCourse = useCallback(async () => {
-    setLoading(true);
-    try {
-      const res = await fetch(`/api/courses/${slug}`);
-      if (!res.ok) { setError(true); return; }
-      const data = await res.json();
-      setCourse(data);
+  useEffect(() => {
+    async function fetchCourse() {
+      setLoading(true);
+      try {
+        const res = await fetch(`/api/courses/${slug}`);
+        if (!res.ok) { setError(true); return; }
+        const data = await res.json();
+        setCourse(data);
+        const defaultEdition = data.editions?.find((edition: CourseEditionItem) => edition.isDefault) || data.editions?.[0];
+        if (defaultEdition) setSelectedEditionId(defaultEdition.id);
 
-      if (data.isEnrolled) {
-        const enrollRes = await fetch("/api/enrollments/me");
-        if (enrollRes.ok) {
-          const enrollData = await enrollRes.json();
-          const enrollment = enrollData.data?.find(
-            (e: { course: { slug: string } }) => e.course.slug === slug
-          );
-          if (enrollment) {
-            setProgress(enrollment.progress || 0);
-            setEnrollmentId(enrollment.id);
-            // Cargar sesiones ya completadas
-            if (enrollment.completions) {
-              setCompletedSessions(
-                enrollment.completions.map((c: { sessionId: string }) => c.sessionId)
-              );
-            }
-            // Verificar si ya tiene certificado
-            if (enrollment.certificate) {
-              setCertificate(enrollment.certificate);
-              setEvalResult({ score: 100, passed: true });
+        if (data.isEnrolled) {
+          const enrollRes = await fetch("/api/enrollments/me");
+          if (enrollRes.ok) {
+            const enrollData = await enrollRes.json();
+            const enrollment = enrollData.data?.find(
+              (e: { course: { slug: string } }) => e.course.slug === slug
+            );
+            if (enrollment) {
+              setProgress(enrollment.progress || 0);
+              setEnrollmentId(enrollment.id);
+              // Cargar sesiones ya completadas
+              if (enrollment.completions) {
+                setCompletedSessions(
+                  enrollment.completions.map((c: { sessionId: string }) => c.sessionId)
+                );
+              }
+              // Verificar si ya tiene certificado
+              if (enrollment.certificate) {
+                setCertificate(enrollment.certificate);
+                setEvalResult({ score: 100, passed: true });
+              }
             }
           }
         }
+      } catch {
+        setError(true);
+      } finally {
+        setLoading(false);
       }
-    } catch {
-      setError(true);
-    } finally {
-      setLoading(false);
     }
+    fetchCourse();
   }, [slug]);
-
-  useEffect(() => { fetchCourse(); }, [fetchCourse]);
 
   const handleMarkComplete = async (sessionId: string) => {
     setCompletingSession(sessionId);
@@ -167,7 +246,6 @@ export default function CourseDetailPage() {
       if (!res.ok) { const err = await res.json(); throw new Error(err.error || "Error"); }
       const data = await res.json();
       if (data.alreadyPassed) {
-        setEvalPassed(true);
         setEvalResult({ score: data.bestScore, passed: true });
       }
       setEvaluation(data.data);
@@ -239,6 +317,19 @@ export default function CourseDetailPage() {
 
   const isFree = course.pricingModel === "FREE";
   const allComplete = progress >= 100;
+  const featuredSession = course.isEnrolled
+    ? course.modules?.flatMap((module) => module.sessions).find((session) => session.videoUrl) || course.sessions.find((session) => session.videoUrl)
+    : course.sessions.find((session) => session.preview && session.videoUrl);
+  const checkoutHref = `/${lang}/checkout?course=${course.slug}${selectedEditionId ? `&edition=${selectedEditionId}` : ""}`;
+  const objectives = localizedList(course.learningObjectives, lang);
+  const audience = localizedList(course.targetAudience, lang);
+  const requirements = localizedList(course.requirements, lang);
+  const competencies = localizedList(course.competencies, lang);
+  const levelLabel: Record<string, string> = {
+    BEGINNER: t("Principiante", "Beginner"),
+    INTERMEDIATE: t("Intermedio", "Intermediate"),
+    ADVANCED: t("Avanzado", "Advanced"),
+  };
 
   return (
     <div className="container mx-auto py-10 px-4 max-w-4xl">
@@ -279,6 +370,75 @@ export default function CourseDetailPage() {
             <p className="text-[#7b8fa1] leading-relaxed">{t(course.description.es, course.description.en)}</p>
           </div>
 
+          <section className="rounded-xl border p-5">
+            <h2 className="mb-4 text-xl font-semibold">{t("Ficha del curso", "Course profile")}</h2>
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {course.estimatedHours && (
+                <div className="rounded-md bg-accent/50 p-3">
+                  <p className="text-xs text-[#7b8fa1]">{t("Duración estimada", "Estimated duration")}</p>
+                  <p className="font-medium">{course.estimatedHours} {t("horas", "hours")}</p>
+                </div>
+              )}
+              {course.weeklyHours && (
+                <div className="rounded-md bg-accent/50 p-3">
+                  <p className="text-xs text-[#7b8fa1]">{t("Esfuerzo semanal", "Weekly effort")}</p>
+                  <p className="font-medium">{course.weeklyHours} {t("horas", "hours")}</p>
+                </div>
+              )}
+              {course.level && (
+                <div className="rounded-md bg-accent/50 p-3">
+                  <p className="text-xs text-[#7b8fa1]">{t("Nivel", "Level")}</p>
+                  <p className="font-medium">{levelLabel[course.level] || course.level}</p>
+                </div>
+              )}
+              <div className="rounded-md bg-accent/50 p-3">
+                <p className="text-xs text-[#7b8fa1]">{t("Ritmo", "Pace")}</p>
+                <p className="font-medium">{course.selfPaced !== false ? t("Autodirigido", "Self-paced") : t("Por edición", "Cohort-based")}</p>
+              </div>
+              <div className="rounded-md bg-accent/50 p-3">
+                <p className="text-xs text-[#7b8fa1]">{t("Idioma", "Language")}</p>
+                <p className="font-medium">{(course.language || "es").toUpperCase()}</p>
+              </div>
+              <div className="rounded-md bg-accent/50 p-3">
+                <p className="text-xs text-[#7b8fa1]">{t("Certificado", "Certificate")}</p>
+                <p className="font-medium">{course.certificateAvailable !== false ? t("Disponible", "Available") : t("No disponible", "Not available")}</p>
+              </div>
+            </div>
+
+            <div className="mt-5 grid gap-5 md:grid-cols-2">
+              {[
+                { title: t("Qué aprenderás", "What you will learn"), items: objectives },
+                { title: t("A quién va dirigido", "Who this is for"), items: audience },
+                { title: t("Requisitos", "Requirements"), items: requirements },
+                { title: t("Competencias", "Competencies"), items: competencies },
+              ].filter((section) => section.items.length > 0).map((section) => (
+                <div key={section.title}>
+                  <h3 className="mb-2 text-sm font-semibold">{section.title}</h3>
+                  <ul className="space-y-1 text-sm text-[#506478]">
+                    {section.items.map((item) => (
+                      <li key={item} className="flex gap-2">
+                        <CheckCircle2 className="mt-0.5 h-4 w-4 flex-shrink-0 text-primary" />
+                        <span>{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          {featuredSession && (
+            <section className="space-y-3">
+              <div>
+                <h2 className="text-xl font-semibold">{t("Video", "Video")}</h2>
+                <p className="text-sm text-[#7b8fa1]">
+                  {t(featuredSession.title.es, featuredSession.title.en)}
+                </p>
+              </div>
+              <VideoPlayer session={featuredSession} lang={lang} />
+            </section>
+          )}
+
           {/* Progress bar */}
           {course.isEnrolled && (
             <div className="rounded-xl border p-5">
@@ -295,15 +455,43 @@ export default function CourseDetailPage() {
           {/* Sessions */}
           <div>
             <h2 className="text-xl font-semibold mb-4">{dict.courses.sessions} ({course.sessions.length})</h2>
-            <SessionList
-              sessions={course.sessions}
-              isEnrolled={course.isEnrolled}
-              lang={lang}
-              courseId={course.id}
-              onMarkComplete={course.isEnrolled ? handleMarkComplete : undefined}
-              completingSession={completingSession}
-              completedSessions={completedSessions}
-            />
+            {course.modules && course.modules.length > 0 ? (
+              <div className="space-y-6">
+                {course.modules.map((module) => (
+                  <section key={module.id} className="space-y-3">
+                    <div>
+                      <h3 className="font-semibold">
+                        {module.order}. {t(module.title.es, module.title.en)}
+                      </h3>
+                      {module.description && (
+                        <p className="mt-1 text-sm text-[#7b8fa1]">
+                          {t(module.description.es, module.description.en)}
+                        </p>
+                      )}
+                    </div>
+                    <SessionList
+                      sessions={module.sessions}
+                      isEnrolled={course.isEnrolled}
+                      lang={lang}
+                      courseId={course.id}
+                      onMarkComplete={course.isEnrolled ? handleMarkComplete : undefined}
+                      completingSession={completingSession}
+                      completedSessions={completedSessions}
+                    />
+                  </section>
+                ))}
+              </div>
+            ) : (
+              <SessionList
+                sessions={course.sessions}
+                isEnrolled={course.isEnrolled}
+                lang={lang}
+                courseId={course.id}
+                onMarkComplete={course.isEnrolled ? handleMarkComplete : undefined}
+                completingSession={completingSession}
+                completedSessions={completedSessions}
+              />
+            )}
           </div>
 
           {/* Evaluation section */}
@@ -314,7 +502,9 @@ export default function CourseDetailPage() {
                 <div className="flex-1">
                   <h3 className="font-semibold">{dict.dashboard.elegible}</h3>
                   <p className="text-sm text-[#7b8fa1] mt-1 mb-4">
-                    {t("Has completado todas las sesiones. Realiza la evaluación para obtener tu certificado.", "You have completed all sessions. Take the evaluation to earn your certificate.")}
+                    {course.certificateAvailable === false
+                      ? t("Has completado todas las sesiones. Este curso no ofrece certificado.", "You have completed all sessions. This course does not offer a certificate.")
+                      : t("Has completado todas las sesiones. Realiza la evaluación para obtener tu certificado.", "You have completed all sessions. Take the evaluation to earn your certificate.")}
                   </p>
 
                   {certificate ? (
@@ -338,7 +528,7 @@ export default function CourseDetailPage() {
                         </a>
                       </div>
                     </div>
-                  ) : evalResult?.passed ? (
+                  ) : evalResult?.passed && course.certificateAvailable !== false ? (
                     // Aprobó pero aún no tiene certificado
                     <div className="space-y-3">
                       <div className="flex items-center gap-2 text-black font-medium">
@@ -350,6 +540,11 @@ export default function CourseDetailPage() {
                         {issuingCert ? <Loader2 className="w-4 h-4 animate-spin" /> : <Award className="w-4 h-4" />}
                         {t("Emitir certificado", "Issue certificate")}
                       </button>
+                    </div>
+                  ) : evalResult?.passed ? (
+                    <div className="flex items-center gap-2 text-black font-medium">
+                      <CheckCircle2 className="w-5 h-5" />
+                      {t(`¡Aprobado con ${evalResult.score}%!`, `Passed with ${evalResult.score}%!`)}
                     </div>
                   ) : noEvalAvailable ? (
                     <div className="p-3 rounded-lg bg-[#e8ecf1] text-sm text-[#506478]">
@@ -382,11 +577,41 @@ export default function CourseDetailPage() {
           )}
 
           {/* Action button */}
-          {!course.isEnrolled && course.enrollmentStatus !== "PENDING_PAYMENT" && !isFree && (
+          {!course.isEnrolled && course.enrollmentStatus !== "PENDING_PAYMENT" && course.editions && course.editions.length > 0 && (
+            <section className="rounded-xl border p-5">
+              <h2 className="text-lg font-semibold mb-3">{t("Selecciona edición", "Select edition")}</h2>
+              <div className="space-y-2">
+                {course.editions.map((edition) => (
+                  <label key={edition.id} className={`flex cursor-pointer items-start gap-3 rounded-lg border p-3 text-sm hover:bg-accent ${selectedEditionId === edition.id ? "border-primary bg-primary/5" : ""}`}>
+                    <input
+                      type="radio"
+                      name="edition"
+                      checked={selectedEditionId === edition.id}
+                      onChange={() => setSelectedEditionId(edition.id)}
+                      className="mt-1"
+                    />
+                    <span>
+                      <span className="block font-medium">
+                        {t(edition.name.es, edition.name.en)}
+                        {edition.isDefault && <span className="ml-2 text-xs text-primary">{t("por defecto", "default")}</span>}
+                      </span>
+                      <span className="text-xs text-[#7b8fa1]">
+                        {edition.startsAt ? new Date(edition.startsAt).toLocaleDateString(lang === "en" ? "en-US" : "es-ES") : t("Inicio abierto", "Open start")}
+                        {edition.endsAt ? ` - ${new Date(edition.endsAt).toLocaleDateString(lang === "en" ? "en-US" : "es-ES")}` : ""}
+                        {edition.capacity ? ` · ${edition.capacity} ${t("cupos", "seats")}` : ""}
+                      </span>
+                    </span>
+                  </label>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {!course.isEnrolled && course.enrollmentStatus !== "PENDING_PAYMENT" && (
             <div className="pt-4">
-              <Link href={`/${lang}/checkout?course=${course.slug}`}
+              <Link href={checkoutHref}
                 className="inline-flex items-center rounded-lg bg-primary px-6 py-3 text-white font-medium hover:opacity-90 transition-opacity">
-                {dict.courses.enroll}
+                {isFree ? t("Matricularme", "Enroll") : dict.courses.enroll}
               </Link>
             </div>
           )}
@@ -417,6 +642,26 @@ export default function CourseDetailPage() {
               )}
             </div>
           </div>
+          {course.editions && course.editions.length > 0 && (
+            <div className="rounded-xl border p-6 space-y-3">
+              <h3 className="font-semibold">{t("Ediciones", "Editions")}</h3>
+              <div className="space-y-2">
+                {course.editions.map((edition) => (
+                  <div key={edition.id} className="rounded-lg bg-accent/40 p-3 text-sm">
+                    <p className="font-medium">
+                      {t(edition.name.es, edition.name.en)}
+                      {edition.isDefault && <span className="ml-2 text-xs text-primary">{t("por defecto", "default")}</span>}
+                    </p>
+                    <p className="text-xs text-[#7b8fa1]">
+                      {edition.startsAt ? new Date(edition.startsAt).toLocaleDateString(lang === "en" ? "en-US" : "es-ES") : t("Inicio abierto", "Open start")}
+                      {edition.endsAt ? ` - ${new Date(edition.endsAt).toLocaleDateString(lang === "en" ? "en-US" : "es-ES")}` : ""}
+                      {edition.capacity ? ` · ${edition.capacity} ${t("cupos", "seats")}` : ""}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </aside>
       </div>
     </div>

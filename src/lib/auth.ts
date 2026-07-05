@@ -36,7 +36,7 @@ export async function verifyAccessToken(token: string) {
 // ─── Refresh Token ──────────────────────────────
 
 export async function createRefreshToken(userId: string): Promise<string> {
-  const token = await new SignJWT({ sub: userId })
+  const token = await new SignJWT({ sub: userId, jti: crypto.randomUUID() })
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
     .setExpirationTime(`${REFRESH_TOKEN_EXP_DAYS}d`)
@@ -77,7 +77,7 @@ export async function setAuthCookies(accessToken: string, refreshToken: string) 
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "strict",
-    path: "/api/auth/refresh",
+    path: "/",
     maxAge: REFRESH_TOKEN_EXP_DAYS * 24 * 60 * 60,
   });
 }
@@ -86,6 +86,13 @@ export async function clearAuthCookies() {
   const cookieStore = await cookies();
   cookieStore.delete("access_token");
   cookieStore.delete("refresh_token");
+  cookieStore.set("refresh_token", "", {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "strict",
+    path: "/api/auth/refresh",
+    maxAge: 0,
+  });
 }
 
 // ─── Session Helpers ────────────────────────────

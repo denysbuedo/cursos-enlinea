@@ -1,6 +1,7 @@
 import { getLangFromParams, getDictionary } from "@/lib/i18n";
 import Link from "next/link";
 import { GraduationCap, ShieldCheck, Globe, Award, ArrowRight } from "lucide-react";
+import { APP_NAME } from "@/lib/app-config";
 
 export default async function HomePage({ params }: { params: Promise<{ lang: string }> }) {
   const { lang } = await params;
@@ -28,7 +29,7 @@ export default async function HomePage({ params }: { params: Promise<{ lang: str
       </section>
 
       <section className="py-20">
-        <div className="container mx-auto px-4 text-center mb-16"><h2 className="text-3xl font-bold text-foreground">{t("¿Por qué elegir EdPlatform?","Why choose EdPlatform?")}</h2></div>
+        <div className="container mx-auto px-4 text-center mb-16"><h2 className="text-3xl font-bold text-foreground">{t(`¿Por qué elegir ${APP_NAME}?`,`Why choose ${APP_NAME}?`)}</h2></div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto px-4">
           {[{icon:GraduationCap,title:t("Cursos Bilingües","Bilingual Courses"),desc:t("Contenido en español e inglés con sesiones grabadas, en vivo e híbridas.","Content in Spanish and English with recorded, live, and hybrid sessions.")},{icon:ShieldCheck,title:t("Certificados Verificables","Verifiable Certificates"),desc:t("Open Badges 3.0 con firma criptográfica EdDSA.","Open Badges 3.0 with EdDSA cryptographic signature.")},{icon:Globe,title:t("Pagos Georresistentes","Geo-Resistant Payments"),desc:t("Múltiples métodos de pago para contextos con restricciones.","Multiple payment methods for restricted contexts.")}].map(f=><div key={f.title} className="flex flex-col items-center text-center p-8 rounded-2xl bg-card border border-border hover:shadow-lg transition-all duration-300"><div className="flex items-center justify-center w-14 h-14 rounded-xl bg-primary/10 text-primary mb-5"><f.icon className="w-6 h-6" /></div><h3 className="text-lg font-semibold mb-3">{f.title}</h3><p className="text-muted-foreground text-sm leading-relaxed">{f.desc}</p></div>)}
         </div>

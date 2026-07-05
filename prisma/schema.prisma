@@ -1,5 +1,6 @@
 generator client {
   provider = "prisma-client-js"
+  engineType = "binary"
 }
 
 datasource db {
@@ -89,6 +90,16 @@ model Course {
   slug          String        @unique
   title         Json
   description   Json
+  learningObjectives Json?
+  targetAudience Json?
+  requirements  Json?
+  competencies  Json?
+  estimatedHours Int?
+  weeklyHours   Int?
+  level         String?
+  language      String        @default("es")
+  certificateAvailable Boolean @default(true)
+  selfPaced     Boolean       @default(true)
   visibility    Visibility    @default(PUBLIC)
   status        CourseStatus  @default(DRAFT)
   pricingModel  String        @default("FREE")
@@ -99,6 +110,8 @@ model Course {
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
   sessions      Session[]
+  modules       CourseModule[]
+  editions      CourseEdition[]
   enrollments   Enrollment[]
   certificates  Certificate[]
   evaluations   Evaluation[]
@@ -107,9 +120,45 @@ model Course {
   @@index([instructorId])
 }
 
+model CourseEdition {
+  id          String       @id @default(uuid())
+  courseId    String
+  name        Json
+  startsAt    DateTime?
+  endsAt      DateTime?
+  capacity    Int?
+  status      CourseStatus @default(PUBLISHED)
+  isDefault   Boolean      @default(false)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  course      Course       @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  enrollments Enrollment[]
+
+  @@index([courseId, status])
+  @@index([courseId, isDefault])
+}
+
+model CourseModule {
+  id          String       @id @default(uuid())
+  courseId    String
+  title       Json
+  description Json?
+  order       Int
+  status      CourseStatus @default(DRAFT)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  course   Course    @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  sessions Session[]
+
+  @@index([courseId, order])
+}
+
 model Session {
   id            String       @id @default(uuid())
   courseId      String
+  moduleId      String?
   title         Json
   description   Json
   keywords      String[]
@@ -117,13 +166,18 @@ model Session {
   preview       Boolean      @default(false)
   videoUrl      String?
   videoPlatform String?
+  durationMinutes Int?
+  resources     Json?
+  practicePrompt Json?
   scheduledAt   DateTime?
   order         Int
   status        CourseStatus @default(DRAFT)
   course        Course       @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  module        CourseModule? @relation(fields: [moduleId], references: [id], onDelete: SetNull)
   completions   SessionCompletion[]
 
   @@index([courseId, order])
+  @@index([moduleId, order])
   @@index([preview])
 }
 
@@ -131,6 +185,7 @@ model Enrollment {
   id            String        @id @default(uuid())
   userId        String
   courseId      String
+  editionId     String?
   status        String        @default("ACTIVE")
   progress      Float         @default(0.0)
   admissionType String        @default("COMMERCIAL")
@@ -138,14 +193,15 @@ model Enrollment {
   updatedAt     DateTime      @updatedAt
   user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   course        Course        @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  edition       CourseEdition? @relation(fields: [editionId], references: [id], onDelete: SetNull)
   payments      Payment[]
   certificate   Certificate?
   completions   SessionCompletion[]
   evalAttempts  EvaluationAttempt[]
 
-  @@unique([userId, courseId])
   @@index([userId])
   @@index([courseId, status])
+  @@index([editionId])
 }
 
 model Payment {
@@ -236,7 +292,9 @@ model Evaluation {
   title         Json    // {es: "...", en: "..."}
   description   Json?   // {es: "...", en: "..."}
   passingScore  Float   @default(80.0)
-  questions     Json    // [{id, type:"MCQ"|"TRUEFALSE"|"SHORT", question:{es,en}, options:[{es,en}], correctAnswer, points}]
+  maxAttempts   Int     @default(3)
+  showFeedback  Boolean @default(true)
+  questions     Json    // [{id, type:"MCQ"|"TRUEFALSE"|"SHORT", question:{es,en}, options:[{es,en}], correctAnswer, feedback:{es,en}, points}]
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 

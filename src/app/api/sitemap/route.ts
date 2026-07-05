@@ -7,7 +7,7 @@ export async function GET() {
   const courses = await prisma.course.findMany({
     where: { status: "PUBLISHED", visibility: "PUBLIC" },
     select: { slug: true, updatedAt: true },
-  });
+  }).catch(() => []);
 
   const staticRoutes = ["", "/courses", "/verify"].flatMap((route) =>
     ["es", "en"].map((lang) => ({

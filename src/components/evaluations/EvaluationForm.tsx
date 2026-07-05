@@ -25,6 +25,17 @@ interface EvaluationResult {
   passingScore: number;
   totalPoints: number;
   earnedPoints: number;
+  attemptCount?: number;
+  remainingAttempts?: number;
+  maxAttempts?: number;
+  feedback?: Array<{
+    questionId: string;
+    correct: boolean;
+    points: number;
+    earnedPoints: number;
+    feedback?: { es?: string; en?: string };
+    correctAnswer?: string;
+  }>;
 }
 
 interface EvaluationFormProps {
@@ -86,49 +97,91 @@ export function EvaluationForm({
   };
 
   if (result) {
+    const feedbackByQuestion = new Map((result.feedback || []).map((item) => [item.questionId, item]));
     return (
-      <div className="rounded-xl border p-8 text-center">
-        {result.passed ? (
-          <>
-            <Award className="w-16 h-16 mx-auto text-amber-500 mb-4" />
-            <h3 className="text-2xl font-bold text-black mb-2">
-              {t("¡Aprobado!", "Passed!")}
-            </h3>
-            <p className="text-[#7b8fa1] mb-4">
+      <div className="rounded-xl border p-6">
+        <div className="text-center">
+          {result.passed ? (
+            <>
+              <Award className="w-16 h-16 mx-auto text-amber-500 mb-4" />
+              <h3 className="text-2xl font-bold text-black mb-2">
+                {t("¡Aprobado!", "Passed!")}
+              </h3>
+            </>
+          ) : (
+            <>
+              <XCircle className="w-16 h-16 mx-auto text-black mb-4" />
+              <h3 className="text-2xl font-bold text-black mb-2">
+                {t("No aprobado", "Not passed")}
+              </h3>
+            </>
+          )}
+          <p className="text-[#7b8fa1] mb-2">
+            {t(
+              `Obtuviste ${result.score}% (mínimo requerido: ${result.passingScore}%)`,
+              `You scored ${result.score}% (minimum required: ${result.passingScore}%)`
+            )}
+          </p>
+          <p className="text-sm text-[#7b8fa1]">
+            {t(
+              `${result.earnedPoints} de ${result.totalPoints} puntos`,
+              `${result.earnedPoints} out of ${result.totalPoints} points`
+            )}
+          </p>
+          {typeof result.remainingAttempts === "number" && !result.passed && (
+            <p className="mt-2 text-sm text-[#7b8fa1]">
               {t(
-                `Has obtenido ${result.score}% (mínimo requerido: ${result.passingScore}%)`,
-                `You scored ${result.score}% (minimum required: ${result.passingScore}%)`
+                `Intentos restantes: ${result.remainingAttempts}`,
+                `Remaining attempts: ${result.remainingAttempts}`
               )}
             </p>
-            <p className="text-sm text-[#7b8fa1]">
-              {t(
-                `${result.earnedPoints} de ${result.totalPoints} puntos`,
-                `${result.earnedPoints} out of ${result.totalPoints} points`
-              )}
-            </p>
-          </>
-        ) : (
-          <>
-            <XCircle className="w-16 h-16 mx-auto text-black mb-4" />
-            <h3 className="text-2xl font-bold text-black mb-2">
-              {t("No aprobado", "Not passed")}
-            </h3>
-            <p className="text-[#7b8fa1] mb-4">
-              {t(
-                `Obtuviste ${result.score}% — necesitas al menos ${result.passingScore}%. Puedes intentarlo de nuevo.`,
-                `You scored ${result.score}% — you need at least ${result.passingScore}%. You can try again.`
-              )}
-            </p>
-            <button
-              onClick={() => {
-                setResult(null);
-                setAnswers({});
-              }}
-              className="text-primary hover:underline text-sm"
-            >
-              {t("Intentar de nuevo", "Try again")}
-            </button>
-          </>
+          )}
+        </div>
+
+        {result.feedback && result.feedback.length > 0 && (
+          <div className="mt-6 space-y-3 text-left">
+            {evaluation.questions.map((question, index) => {
+              const item = feedbackByQuestion.get(question.id);
+              if (!item) return null;
+              const feedbackText = lang === "en"
+                ? item.feedback?.en || item.feedback?.es
+                : item.feedback?.es || item.feedback?.en;
+              return (
+                <div key={question.id} className="rounded-lg border p-4">
+                  <div className="flex items-start gap-2">
+                    {item.correct ? (
+                      <CheckCircle2 className="mt-0.5 h-4 w-4 flex-shrink-0 text-green-700" />
+                    ) : (
+                      <XCircle className="mt-0.5 h-4 w-4 flex-shrink-0 text-red-700" />
+                    )}
+                    <div>
+                      <p className="text-sm font-medium">
+                        {index + 1}. {t(question.question.es, question.question.en)}
+                      </p>
+                      <p className="mt-1 text-xs text-[#7b8fa1]">
+                        {item.earnedPoints}/{item.points} {t("puntos", "points")}
+                      </p>
+                      {feedbackText && (
+                        <p className="mt-2 text-sm text-[#52667a]">{feedbackText}</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {!result.passed && (result.remainingAttempts ?? 1) > 0 && (
+          <button
+            onClick={() => {
+              setResult(null);
+              setAnswers({});
+            }}
+            className="mx-auto mt-6 block text-primary hover:underline text-sm"
+          >
+            {t("Intentar de nuevo", "Try again")}
+          </button>
         )}
       </div>
     );

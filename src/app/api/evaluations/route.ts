@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth";
+import { calculateEnrollmentProgress } from "@/lib/progress";
 
 // GET /api/evaluations?courseSlug=xxx
 // Devuelve la evaluación sin las respuestas correctas
@@ -30,28 +31,36 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const enrollment = await prisma.enrollment.findUnique({
+    const enrollment = await prisma.enrollment.findFirst({
       where: {
-        userId_courseId: {
-          userId,
-          courseId: course.id,
-        },
+        userId,
+        courseId: course.id,
+        status: "ACTIVE",
       },
+      orderBy: { createdAt: "desc" },
     });
 
-    if (!enrollment || enrollment.status !== "ACTIVE") {
+    if (!enrollment) {
       return NextResponse.json(
         { error: "No estás matriculado en este curso" },
         { status: 403 }
       );
     }
 
+    const { progress } = await calculateEnrollmentProgress(enrollment.id, course.id);
+    if (progress !== enrollment.progress) {
+      await prisma.enrollment.update({
+        where: { id: enrollment.id },
+        data: { progress },
+      });
+    }
+
     // Verificar progreso 100%
-    if (enrollment.progress < 100) {
+    if (progress < 100) {
       return NextResponse.json(
         {
           error: "Debes completar todas las sesiones antes de la evaluación",
-          progress: enrollment.progress,
+          progress,
         },
         { status: 400 }
       );
@@ -86,10 +95,30 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // Eliminar respuestas correctas antes de enviar al cliente
+    const attemptCount = await prisma.evaluationAttempt.count({
+      where: {
+        evaluationId: evaluation.id,
+        enrollmentId: enrollment.id,
+      },
+    });
+
+    if (attemptCount >= evaluation.maxAttempts) {
+      return NextResponse.json(
+        {
+          error: "Has agotado los intentos disponibles para esta evaluación",
+          attemptCount,
+          maxAttempts: evaluation.maxAttempts,
+        },
+        { status: 409 }
+      );
+    }
+
+    // Eliminar respuestas correctas y feedback antes de enviar al cliente
     const safeQuestions = (evaluation.questions as Array<Record<string, unknown>>).map(
       (q) => {
-        const { correctAnswer, ...safe } = q;
+        const safe = { ...q };
+        delete safe.correctAnswer;
+        delete safe.feedback;
         return safe;
       }
     );
@@ -100,6 +129,8 @@ export async function GET(request: NextRequest) {
         questions: safeQuestions,
       },
       alreadyPassed: false,
+      attemptCount,
+      remainingAttempts: evaluation.maxAttempts - attemptCount,
     });
   } catch (error) {
     if (error instanceof Error && error.message === "UNAUTHORIZED") {
