@@ -1,0 +1,279 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Manual de usuario v1 - Plataforma MOOC</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --text: #17202a;
+      --muted: #52667a;
+      --line: #d8e0e8;
+      --soft: #f5f7fa;
+      --primary: #1f6feb;
+    }
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      color: var(--text);
+      background: white;
+      line-height: 1.55;
+    }
+    main {
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 36px 22px 64px;
+    }
+    h1, h2, h3 {
+      line-height: 1.2;
+      margin: 0 0 12px;
+    }
+    h1 {
+      font-size: 34px;
+      margin-bottom: 8px;
+    }
+    h2 {
+      border-top: 1px solid var(--line);
+      margin-top: 34px;
+      padding-top: 24px;
+      font-size: 23px;
+    }
+    h3 {
+      margin-top: 22px;
+      font-size: 18px;
+    }
+    p, li {
+      font-size: 15px;
+    }
+    .meta {
+      color: var(--muted);
+      margin-bottom: 28px;
+    }
+    .toc {
+      background: var(--soft);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 18px 20px;
+      margin: 24px 0 32px;
+    }
+    .toc a {
+      color: var(--primary);
+      text-decoration: none;
+    }
+    .toc ol {
+      columns: 2;
+      padding-left: 20px;
+      margin: 0;
+    }
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      margin: 14px 0 22px;
+      font-size: 14px;
+    }
+    th, td {
+      border: 1px solid var(--line);
+      padding: 10px;
+      text-align: left;
+      vertical-align: top;
+    }
+    th {
+      background: var(--soft);
+    }
+    code {
+      background: var(--soft);
+      border: 1px solid var(--line);
+      border-radius: 4px;
+      padding: 2px 5px;
+      font-family: Consolas, Monaco, monospace;
+      font-size: 13px;
+    }
+    pre {
+      background: var(--soft);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 14px;
+      overflow-x: auto;
+    }
+    .note {
+      background: #fff8e1;
+      border: 1px solid #f0d98c;
+      border-radius: 8px;
+      padding: 12px 14px;
+    }
+    @media print {
+      .toc { break-inside: avoid; }
+      h2 { break-after: avoid; }
+      a { color: inherit; }
+      main { max-width: none; padding: 16mm; }
+    }
+  </style>
+</head>
+<body>
+<main>
+  <h1>Manual de usuario v1</h1>
+  <p class="meta">Plataforma de aprendizaje en línea orientada a cursos tipo MOOC. Fecha de corte: 2026-07-05.</p>
+
+  <section class="toc">
+    <strong>Contenido</strong>
+    <ol>
+      <li><a href="#acceso">Acceso al sistema</a></li>
+      <li><a href="#usuarios">Usuarios de prueba</a></li>
+      <li><a href="#roles">Roles</a></li>
+      <li><a href="#catalogo">Catálogo y matrícula</a></li>
+      <li><a href="#estudiante">Experiencia del estudiante</a></li>
+      <li><a href="#videos">Videos</a></li>
+      <li><a href="#materiales">Materiales complementarios</a></li>
+      <li><a href="#evaluaciones">Evaluaciones</a></li>
+      <li><a href="#certificados">Certificados</a></li>
+      <li><a href="#cms">CMS académico</a></li>
+      <li><a href="#ediciones">Ediciones</a></li>
+      <li><a href="#modulos">Módulos</a></li>
+      <li><a href="#sesiones">Sesiones</a></li>
+      <li><a href="#banco">Banco de preguntas</a></li>
+      <li><a href="#analitica">Analítica MOOC</a></li>
+      <li><a href="#admin">Panel de administración</a></li>
+      <li><a href="#limitaciones">Estado y limitaciones</a></li>
+    </ol>
+  </section>
+
+  <h2 id="acceso">1. Acceso al sistema</h2>
+  <p>La plataforma usa rutas por idioma: <code>/es</code> para español y <code>/en</code> para inglés.</p>
+  <ul>
+    <li>Catálogo: <code>/es/courses</code></li>
+    <li>Login: <code>/es/login</code></li>
+    <li>Panel personal: <code>/es/dashboard</code></li>
+    <li>CMS académico: <code>/es/dashboard/cms</code></li>
+    <li>Administración: <code>/es/dashboard/admin</code></li>
+  </ul>
+
+  <h2 id="usuarios">2. Usuarios de prueba</h2>
+  <table>
+    <thead><tr><th>Rol</th><th>Email</th><th>Contraseña</th></tr></thead>
+    <tbody>
+      <tr><td>Administrador</td><td><code>admin@edplatform.com</code></td><td><code>password123</code></td></tr>
+      <tr><td>Instructor</td><td><code>profesor@edplatform.com</code></td><td><code>password123</code></td></tr>
+      <tr><td>Estudiante</td><td><code>alumno@edplatform.com</code></td><td><code>password123</code></td></tr>
+      <tr><td>Estudiante EN</td><td><code>student@edplatform.com</code></td><td><code>password123</code></td></tr>
+    </tbody>
+  </table>
+
+  <h2 id="roles">3. Roles</h2>
+  <h3>Administrador</h3>
+  <p>Gestiona pagos, usuarios, roles, certificados, auditoría y cursos desde el CMS.</p>
+  <h3>Instructor</h3>
+  <p>Gestiona sus cursos, ediciones, módulos, sesiones, videos, materiales, evaluaciones, banco de preguntas y analítica.</p>
+  <h3>Estudiante</h3>
+  <p>Consulta el catálogo, se matricula, completa sesiones, realiza evaluaciones, recibe feedback y emite certificados si cumple criterios.</p>
+
+  <h2 id="catalogo">4. Catálogo y matrícula</h2>
+  <ol>
+    <li>Entrar a <code>/es/courses</code>.</li>
+    <li>Buscar o seleccionar un curso.</li>
+    <li>Revisar ficha, requisitos, duración, competencias y certificado disponible.</li>
+    <li>Seleccionar edición si aplica.</li>
+    <li>Matricularse.</li>
+  </ol>
+  <p>Los cursos gratuitos permiten acceso directo. Los cursos pagos pueden requerir pago y verificación administrativa.</p>
+
+  <h2 id="estudiante">5. Experiencia del estudiante</h2>
+  <p>El estudiante ve módulos, sesiones, videos, materiales, actividades, progreso, evaluación y certificado.</p>
+  <h3>Completar una sesión</h3>
+  <ol>
+    <li>Abrir el curso.</li>
+    <li>Revisar la sesión.</li>
+    <li>Ver el video o recurso principal.</li>
+    <li>Consultar materiales complementarios.</li>
+    <li>Pulsar <strong>Completar</strong>.</li>
+  </ol>
+  <p>El progreso se recalcula automáticamente. Solo cuentan sesiones publicadas.</p>
+
+  <h2 id="videos">6. Videos</h2>
+  <p>Las sesiones pueden usar YouTube, Vimeo, enlace externo o video subido a la plataforma. Se recomienda usar plataformas externas cuando el video ya exista allí y reservar la subida local para contenido propio o cerrado.</p>
+
+  <h2 id="materiales">7. Materiales complementarios</h2>
+  <p>Cada sesión puede incluir PDF, lecturas, diapositivas, datasets, enlaces externos, objetos de aprendizaje en repositorios o archivos subidos.</p>
+
+  <h2 id="evaluaciones">8. Evaluaciones</h2>
+  <p>La evaluación soporta selección múltiple, verdadero/falso y respuesta corta.</p>
+  <ul>
+    <li>Nota mínima.</li>
+    <li>Límite de intentos.</li>
+    <li>Retroalimentación inmediata.</li>
+    <li>Aleatorización de preguntas y opciones.</li>
+    <li>Corrección automática del lado servidor.</li>
+  </ul>
+  <p>Las respuestas correctas no se envían al navegador antes del envío.</p>
+
+  <h2 id="certificados">9. Certificados</h2>
+  <p>Para emitir certificado, el estudiante necesita matrícula activa, progreso 100%, curso con certificado habilitado, evaluación aprobada y no tener certificado previo para esa matrícula.</p>
+  <p>La verificación pública se consulta en <code>/es/verify/{badgeId}</code> o mediante JSON-LD en <code>/api/verify/{badgeId}</code>.</p>
+
+  <h2 id="cms">10. CMS académico</h2>
+  <p>Ruta: <code>/es/dashboard/cms</code>.</p>
+  <h3>Crear curso</h3>
+  <ol>
+    <li>Entrar como administrador o instructor.</li>
+    <li>Abrir el CMS académico.</li>
+    <li>Pulsar <strong>Nuevo</strong>.</li>
+    <li>Completar ficha, objetivos, público, requisitos, competencias, duración, nivel, idioma, precio y visibilidad.</li>
+    <li>Guardar.</li>
+  </ol>
+  <h3>Publicar curso</h3>
+  <p>El CMS exige ficha básica completa, al menos una edición publicada, al menos una sesión publicada con video y precio válido si el curso es pago.</p>
+
+  <h2 id="ediciones">11. Ediciones</h2>
+  <p>Una edición representa una cohorte o versión de un curso. Permite definir fechas, cupo, edición por defecto y matrículas manuales.</p>
+
+  <h2 id="modulos">12. Módulos</h2>
+  <p>Los módulos organizan el contenido. Permiten agrupar sesiones y definir orden académico.</p>
+
+  <h2 id="sesiones">13. Sesiones</h2>
+  <p>Desde la pestaña Sesiones se crean clases, se asocian a módulos, se agregan videos, duración, descripción, práctica y materiales complementarios. Las sesiones archivadas dejan de mostrarse a estudiantes.</p>
+
+  <h2 id="banco">14. Banco de preguntas</h2>
+  <p>Ruta: <code>CMS Académico &gt; Banco</code>.</p>
+  <p>Cada pregunta puede tener tipo, texto bilingüe, opciones, respuesta correcta, feedback, puntos, etiquetas, dificultad, tema y módulo asociado.</p>
+  <h3>Guardar preguntas</h3>
+  <ol>
+    <li>Crear preguntas en Evaluación.</li>
+    <li>Ir a Banco.</li>
+    <li>Pulsar <strong>Guardar evaluación como banco</strong>.</li>
+  </ol>
+  <h3>Usar preguntas del banco</h3>
+  <ol>
+    <li>Ir a Banco.</li>
+    <li>Definir filtros opcionales: cantidad, etiqueta, dificultad, módulo o tema.</li>
+    <li>Pulsar <strong>Usar banco en evaluación</strong>.</li>
+  </ol>
+
+  <h2 id="analitica">15. Analítica MOOC</h2>
+  <p>Ruta: <code>CMS Académico &gt; Analítica</code>.</p>
+  <p>Muestra matrículas, progreso promedio, finalización, aprobación, certificados, intentos, mejor nota promedio y desglose por edición.</p>
+
+  <h2 id="admin">16. Panel de administración</h2>
+  <p>Ruta: <code>/es/dashboard/admin</code>.</p>
+  <p>Permite gestionar pagos, instrucciones de pago, usuarios, certificados y auditoría.</p>
+
+  <h2 id="limitaciones">17. Estado actual y limitaciones</h2>
+  <p>La versión actual es funcional para operación local y validación de producto.</p>
+  <ul>
+    <li>Queda pendiente importación/exportación masiva de banco de preguntas.</li>
+    <li>Queda pendiente analítica histórica con series temporales.</li>
+    <li>Queda pendiente configurar almacenamiento externo definitivo en producción.</li>
+    <li>Queda pendiente CI/CD completo.</li>
+    <li>Queda pendiente refinamiento visual del CMS y permisos más granulares.</li>
+  </ul>
+
+  <h2>18. Validación técnica</h2>
+  <pre><code>npx prisma migrate status
+npm run lint
+npm run build
+npm run test:e2e:local</code></pre>
+  <p>Resultado esperado: <code>Database schema is up to date</code> y <code>5 passed</code>.</p>
+
+  <p class="note">Nota: la base local fue limpiada para quedar con usuarios base y sin cursos demo ni registros de prueba.</p>
+</main>
+</body>
+</html>

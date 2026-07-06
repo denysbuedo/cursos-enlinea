@@ -16,6 +16,7 @@ Plataforma web de educación en línea con **certificados digitales verificables
 - [Accesibilidad y SEO](#-accesibilidad-y-seo)
 - [Cierre de etapa MOOC](docs/cierre-etapa-mooc.md)
 - [Manual de usuario v1](docs/manual-usuario-v1.md)
+- [Manual de usuario v1 HTML](docs/manual-usuario-v1.html)
 
 ---
 
