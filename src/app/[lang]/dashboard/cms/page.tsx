@@ -11,7 +11,7 @@ type LocalizedText = { es: string; en: string };
 type LocalizedListText = { es: string; en: string };
 type SessionType = "RECORDED" | "LIVE" | "HYBRID";
 type QuestionType = "MCQ" | "TRUEFALSE" | "SHORT";
-type CmsSection = "course" | "analytics" | "editions" | "modules" | "sessions" | "evaluation";
+type CmsSection = "course" | "analytics" | "editions" | "modules" | "sessions" | "questionBank" | "evaluation";
 
 interface CmsSession {
   id: string;
@@ -46,6 +46,7 @@ interface CmsCourse {
   targetAudience?: { es?: string[]; en?: string[] } | null;
   requirements?: { es?: string[]; en?: string[] } | null;
   competencies?: { es?: string[]; en?: string[] } | null;
+  questionBank?: CmsQuestion[] | null;
   estimatedHours?: number | null;
   weeklyHours?: number | null;
   level?: string | null;
@@ -85,6 +86,7 @@ interface CmsQuestion {
   correctAnswer: string;
   feedback: LocalizedText;
   points: number;
+  tags?: string[];
 }
 
 interface CmsEvaluation {
@@ -94,6 +96,8 @@ interface CmsEvaluation {
   passingScore: number;
   maxAttempts?: number;
   showFeedback?: boolean;
+  shuffleQuestions?: boolean;
+  shuffleOptions?: boolean;
   questions: CmsQuestion[];
 }
 
@@ -156,6 +160,8 @@ interface EvaluationFormState {
   passingScore: string;
   maxAttempts: string;
   showFeedback: boolean;
+  shuffleQuestions: boolean;
+  shuffleOptions: boolean;
   questions: CmsQuestion[];
 }
 
@@ -229,6 +235,7 @@ function createQuestion(type: QuestionType = "MCQ"): CmsQuestion {
     correctAnswer: type === "TRUEFALSE" ? "true" : "",
     feedback: { ...emptyText },
     points: 1,
+    tags: [],
   };
 }
 
@@ -258,6 +265,7 @@ export default function CmsPage() {
   const [uploadingResource, setUploadingResource] = useState(false);
   const [loadingEnrollments, setLoadingEnrollments] = useState(false);
   const [loadingAnalytics, setLoadingAnalytics] = useState(false);
+  const [loadingQuestionBank, setLoadingQuestionBank] = useState(false);
   const [error, setError] = useState("");
   const [activeSection, setActiveSection] = useState<CmsSection>("course");
   const [selectedEditionId, setSelectedEditionId] = useState("");
@@ -268,6 +276,7 @@ export default function CmsPage() {
   const [studentResults, setStudentResults] = useState<CmsUser[]>([]);
   const [searchingStudents, setSearchingStudents] = useState(false);
   const [analytics, setAnalytics] = useState<CourseAnalytics | null>(null);
+  const [questionBank, setQuestionBank] = useState<CmsQuestion[]>([]);
   const [resourceForm, setResourceForm] = useState({
     title: "",
     url: "",
@@ -336,6 +345,8 @@ export default function CmsPage() {
     passingScore: "80",
     maxAttempts: "3",
     showFeedback: true,
+    shuffleQuestions: true,
+    shuffleOptions: true,
     questions: [createQuestion()],
   });
 
@@ -365,6 +376,7 @@ export default function CmsPage() {
     { id: "editions", label: t("Ediciones", "Editions"), icon: Layers, disabled: !selectedCourse },
     { id: "modules", label: t("Módulos", "Modules"), icon: Layers, disabled: !selectedCourse },
     { id: "sessions", label: t("Sesiones", "Sessions"), icon: Video, disabled: !selectedCourse },
+    { id: "questionBank", label: t("Banco", "Bank"), icon: BookOpen, disabled: !selectedCourse },
     { id: "evaluation", label: t("Evaluación", "Evaluation"), icon: Award, disabled: !selectedCourse },
   ];
 
@@ -373,6 +385,7 @@ export default function CmsPage() {
     setSelectedEditionId("");
     setEditionEnrollments([]);
     setAnalytics(null);
+    setQuestionBank([]);
     setActiveSection("course");
     setCourseForm({
       id: "",
@@ -572,6 +585,25 @@ export default function CmsPage() {
     }
   }
 
+  async function loadQuestionBank(courseId = selectedCourseId) {
+    if (!courseId) return;
+    setLoadingQuestionBank(true);
+    setError("");
+    try {
+      const res = await fetch(`/api/courses/${courseId}/question-bank`);
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || "Error");
+      }
+      const json = await res.json();
+      setQuestionBank(Array.isArray(json.data) ? json.data : []);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : t("No se pudo cargar el banco de preguntas.", "Could not load question bank."));
+    } finally {
+      setLoadingQuestionBank(false);
+    }
+  }
+
   useEffect(() => {
     loadCourses();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -583,6 +615,7 @@ export default function CmsPage() {
     setSelectedEditionId("");
     setEditionEnrollments([]);
     setAnalytics(null);
+    setQuestionBank(Array.isArray(course.questionBank) ? course.questionBank : []);
     setActiveSection("course");
     setCourseForm({
       id: course.id,
@@ -611,8 +644,10 @@ export default function CmsPage() {
       passingScore: String(evaluation?.passingScore || 80),
       maxAttempts: String(evaluation?.maxAttempts || 3),
       showFeedback: evaluation?.showFeedback !== false,
+      shuffleQuestions: evaluation?.shuffleQuestions !== false,
+      shuffleOptions: evaluation?.shuffleOptions !== false,
       questions: evaluation?.questions?.length
-        ? evaluation.questions.map((question) => ({ ...question, feedback: question.feedback || { ...emptyText } }))
+        ? evaluation.questions.map((question) => ({ ...question, feedback: question.feedback || { ...emptyText }, tags: question.tags || [] }))
         : [createQuestion()],
     });
   }
@@ -941,6 +976,8 @@ export default function CmsPage() {
           passingScore: Number(evaluationForm.passingScore || 80),
           maxAttempts: Number(evaluationForm.maxAttempts || 3),
           showFeedback: evaluationForm.showFeedback,
+          shuffleQuestions: evaluationForm.shuffleQuestions,
+          shuffleOptions: evaluationForm.shuffleOptions,
           questions: evaluationForm.questions,
         }),
       });
@@ -954,6 +991,48 @@ export default function CmsPage() {
     } finally {
       setSaving(false);
     }
+  }
+
+  async function saveQuestionBankFromEvaluation() {
+    if (!selectedCourse) return;
+    setSaving(true);
+    setError("");
+    try {
+      const res = await fetch(`/api/courses/${selectedCourse.id}/question-bank`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ questions: evaluationForm.questions }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || "Error");
+      }
+      const json = await res.json();
+      setQuestionBank(Array.isArray(json.data) ? json.data : []);
+      await loadCourses(selectedCourse.id);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : t("No se pudo guardar el banco.", "Could not save question bank."));
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  function loadBankIntoEvaluation() {
+    if (questionBank.length === 0) {
+      setError(t("El banco de preguntas está vacío.", "Question bank is empty."));
+      return;
+    }
+    setError("");
+    setEvaluationForm((prev) => ({
+      ...prev,
+      questions: questionBank.map((question) => ({
+        ...question,
+        id: `q-${Date.now()}-${question.id}`,
+        feedback: question.feedback || { ...emptyText },
+        tags: question.tags || [],
+      })),
+    }));
+    setActiveSection("evaluation");
   }
 
   function renderAnalyticsCards(summary: AnalyticsSummary) {
@@ -1107,6 +1186,9 @@ export default function CmsPage() {
                       setActiveSection(section.id);
                       if (section.id === "analytics" && selectedCourseId) {
                         loadAnalytics(selectedCourseId);
+                      }
+                      if (section.id === "questionBank" && selectedCourseId) {
+                        loadQuestionBank(selectedCourseId);
                       }
                     }}
                     disabled={section.disabled}
@@ -1808,6 +1890,52 @@ export default function CmsPage() {
               </section>
               )}
 
+              {activeSection === "questionBank" && (
+              <section className="rounded-lg border bg-white p-5">
+                <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex items-center gap-2">
+                    <BookOpen className="h-5 w-5 text-primary" />
+                    <h2 className="font-semibold">{t("Banco de preguntas", "Question bank")}</h2>
+                  </div>
+                  <button onClick={() => loadQuestionBank(selectedCourse.id)} disabled={loadingQuestionBank} className="inline-flex items-center gap-2 rounded-md border px-3 py-1.5 text-xs hover:bg-accent disabled:opacity-50">
+                    {loadingQuestionBank ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
+                    {t("Actualizar", "Refresh")}
+                  </button>
+                </div>
+                <div className="grid gap-3 md:grid-cols-3">
+                  <div className="rounded-md border p-4">
+                    <p className="text-xs text-[#7b8fa1]">{t("Preguntas reutilizables", "Reusable questions")}</p>
+                    <p className="mt-1 text-2xl font-semibold">{questionBank.length}</p>
+                  </div>
+                  <button onClick={saveQuestionBankFromEvaluation} disabled={saving || evaluationForm.questions.length === 0} className="inline-flex items-center justify-center gap-2 rounded-md border p-4 text-sm font-medium hover:bg-accent disabled:opacity-50">
+                    <Save className="h-4 w-4" />
+                    {t("Guardar evaluación como banco", "Save evaluation as bank")}
+                  </button>
+                  <button onClick={loadBankIntoEvaluation} disabled={questionBank.length === 0} className="inline-flex items-center justify-center gap-2 rounded-md bg-primary p-4 text-sm font-medium text-white disabled:opacity-50">
+                    <Plus className="h-4 w-4" />
+                    {t("Usar banco en evaluación", "Use bank in evaluation")}
+                  </button>
+                </div>
+                <div className="mt-5 space-y-2">
+                  {questionBank.length === 0 ? (
+                    <div className="rounded-md border border-dashed p-6 text-center text-sm text-[#7b8fa1]">
+                      {t("El banco está vacío. Crea preguntas en Evaluación y guárdalas aquí para reutilizarlas.", "The bank is empty. Create questions in Evaluation and save them here for reuse.")}
+                    </div>
+                  ) : questionBank.map((question, index) => (
+                    <div key={question.id || index} className="rounded-md border p-3 text-sm">
+                      <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                        <p className="font-medium">{index + 1}. {t(question.question.es, question.question.en)}</p>
+                        <span className="text-xs text-[#7b8fa1]">{question.type} · {question.points} pt</span>
+                      </div>
+                      {question.tags && question.tags.length > 0 && (
+                        <p className="mt-1 text-xs text-[#7b8fa1]">{question.tags.join(", ")}</p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </section>
+              )}
+
               {activeSection === "evaluation" && (
               <section className="rounded-lg border bg-white p-5">
                 <div className="mb-4 flex items-center gap-2">
@@ -1830,6 +1958,14 @@ export default function CmsPage() {
                   <label className="flex items-center gap-2 text-sm">
                     <input type="checkbox" checked={evaluationForm.showFeedback} onChange={(e) => setEvaluationForm({ ...evaluationForm, showFeedback: e.target.checked })} />
                     {t("Mostrar retroalimentación inmediata", "Show immediate feedback")}
+                  </label>
+                  <label className="flex items-center gap-2 text-sm">
+                    <input type="checkbox" checked={evaluationForm.shuffleQuestions} onChange={(e) => setEvaluationForm({ ...evaluationForm, shuffleQuestions: e.target.checked })} />
+                    {t("Aleatorizar preguntas", "Shuffle questions")}
+                  </label>
+                  <label className="flex items-center gap-2 text-sm">
+                    <input type="checkbox" checked={evaluationForm.shuffleOptions} onChange={(e) => setEvaluationForm({ ...evaluationForm, shuffleOptions: e.target.checked })} />
+                    {t("Aleatorizar opciones", "Shuffle options")}
                   </label>
                 </div>
 
@@ -1873,6 +2009,7 @@ export default function CmsPage() {
                         <input className="rounded-md border px-3 py-2 text-sm" placeholder="Puntos" value={question.points} onChange={(e) => updateQuestion(questionIndex, { points: Number(e.target.value || 1) })} />
                         <input className="rounded-md border px-3 py-2 text-sm" placeholder="Pregunta ES" value={question.question.es} onChange={(e) => updateQuestion(questionIndex, { question: { ...question.question, es: e.target.value } })} />
                         <input className="rounded-md border px-3 py-2 text-sm" placeholder="Question EN" value={question.question.en} onChange={(e) => updateQuestion(questionIndex, { question: { ...question.question, en: e.target.value } })} />
+                        <input className="rounded-md border px-3 py-2 text-sm md:col-span-2" placeholder={t("Etiquetas separadas por coma", "Comma-separated tags")} value={(question.tags || []).join(", ")} onChange={(e) => updateQuestion(questionIndex, { tags: e.target.value.split(",").map((tag) => tag.trim()).filter(Boolean) })} />
                       </div>
 
                       {question.type === "MCQ" && (

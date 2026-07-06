@@ -270,9 +270,12 @@ El endpoint `/api/evaluations?courseSlug=...` exige:
 - usuario autenticado;
 - matrícula activa;
 - progreso de 100%;
-- evaluación existente para el curso.
+- evaluación existente para el curso;
+- intentos disponibles.
 
 Las respuestas correctas se eliminan antes de enviar las preguntas al cliente.
+
+La evaluación puede entregar preguntas y opciones en orden aleatorio mediante `shuffleQuestions` y `shuffleOptions`. La corrección no depende del orden: el servidor evalúa por `questionId` contra las respuestas correctas almacenadas.
 
 El submit ocurre en `/api/evaluations/[id]/submit`. La corrección es server-side:
 
@@ -282,6 +285,8 @@ El submit ocurre en `/api/evaluations/[id]/submit`. La corrección es server-sid
 - marca `passed` si alcanza `passingScore`.
 
 Por defecto, el seed usa `passingScore = 80`.
+
+El endpoint `/api/courses/[id]/question-bank` permite a administradores e instructores mantener un banco básico de preguntas reutilizables por curso. En esta versión el banco se guarda como JSON en `Course.questionBank` y puede reutilizarse para poblar la evaluación final.
 
 ### 9. Certificados
 

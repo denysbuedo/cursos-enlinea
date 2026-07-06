@@ -3,6 +3,37 @@ import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth";
 import { calculateEnrollmentProgress } from "@/lib/progress";
 
+function shuffle<T>(items: T[]) {
+  const copy = [...items];
+  for (let index = copy.length - 1; index > 0; index -= 1) {
+    const swapIndex = Math.floor(Math.random() * (index + 1));
+    [copy[index], copy[swapIndex]] = [copy[swapIndex], copy[index]];
+  }
+  return copy;
+}
+
+function safeQuestions(evaluation: {
+  questions: unknown;
+  shuffleQuestions: boolean;
+  shuffleOptions: boolean;
+}) {
+  let questions = Array.isArray(evaluation.questions)
+    ? (evaluation.questions as Array<Record<string, unknown>>)
+    : [];
+
+  questions = questions.map((q) => {
+    const safe = { ...q };
+    delete safe.correctAnswer;
+    delete safe.feedback;
+    if (safe.type === "MCQ" && Array.isArray(safe.options) && evaluation.shuffleOptions) {
+      safe.options = shuffle(safe.options);
+    }
+    return safe;
+  });
+
+  return evaluation.shuffleQuestions ? shuffle(questions) : questions;
+}
+
 // GET /api/evaluations?courseSlug=xxx
 // Devuelve la evaluación sin las respuestas correctas
 export async function GET(request: NextRequest) {
@@ -88,7 +119,10 @@ export async function GET(request: NextRequest) {
 
     if (previousAttempt) {
       return NextResponse.json({
-        data: evaluation,
+        data: {
+          ...evaluation,
+          questions: safeQuestions(evaluation),
+        },
         alreadyPassed: true,
         bestScore: previousAttempt.score,
         message: "Ya has aprobado esta evaluación",
@@ -113,20 +147,10 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Eliminar respuestas correctas y feedback antes de enviar al cliente
-    const safeQuestions = (evaluation.questions as Array<Record<string, unknown>>).map(
-      (q) => {
-        const safe = { ...q };
-        delete safe.correctAnswer;
-        delete safe.feedback;
-        return safe;
-      }
-    );
-
     return NextResponse.json({
       data: {
         ...evaluation,
-        questions: safeQuestions,
+        questions: safeQuestions(evaluation),
       },
       alreadyPassed: false,
       attemptCount,

@@ -21,6 +21,8 @@ La plataforma ya no es solo un LMS básico ni un prototipo documental. En esta e
 - evaluación automática;
 - retroalimentación inmediata;
 - límite de intentos;
+- banco básico de preguntas reutilizables;
+- aleatorización de preguntas y opciones;
 - certificación verificable;
 - pruebas E2E mínimas de flujos críticos.
 
@@ -106,6 +108,8 @@ La evaluación soporta:
 - nota mínima;
 - límite de intentos;
 - retroalimentación inmediata por pregunta;
+- banco reutilizable de preguntas por curso;
+- aleatorización de preguntas y opciones al entregar la evaluación;
 - corrección del lado servidor.
 
 Las respuestas correctas y la retroalimentación no se envían al cliente antes de responder. Solo se devuelven después del envío, si la evaluación tiene feedback activado.
@@ -158,14 +162,16 @@ Implementado y probado localmente:
 - evaluación automática;
 - feedback;
 - límite de intentos;
+- banco básico de preguntas reutilizables;
+- aleatorización de preguntas y opciones;
 - emisión y verificación de certificado.
 
 Sigue siendo diseño o pendiente:
 
 - analítica avanzada MOOC;
 - cohortes masivas con filtros históricos y series temporales;
-- banco de preguntas reutilizable;
-- aleatorización de preguntas;
+- editor avanzado de banco de preguntas;
+- selección aleatoria por dificultad, etiqueta o módulo;
 - importación masiva de contenidos;
 - almacenamiento externo real tipo S3/R2/MinIO para producción;
 - moderación/comunidad;
@@ -187,6 +193,7 @@ Las APIs críticas de la etapa funcionan de extremo a extremo en local y están 
 - creación de usuario admin;
 - progreso;
 - analítica básica por curso;
+- banco básico de preguntas;
 - evaluación;
 - certificado;
 - verificación de certificado.
@@ -296,8 +303,8 @@ La suite crítica valida:
 
 Prioridad alta:
 
-- banco de preguntas reutilizable;
-- aleatorización de preguntas y opciones;
+- editor avanzado de banco de preguntas;
+- selección aleatoria por dificultad/etiqueta;
 - reportes históricos con series temporales;
 - exportación de analítica MOOC;
 - configurar bucket externo definitivo para videos, materiales y comprobantes;

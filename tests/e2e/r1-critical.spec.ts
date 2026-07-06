@@ -207,6 +207,21 @@ test.describe("R1 critical flows", () => {
     });
     expectOk(evaluationResponse);
 
+    const questionBankResponse = await postFromPage(page, `/api/courses/${course.id}/question-bank`, {
+      questions: [
+        {
+          type: "TRUEFALSE",
+          question: { es: "Un MOOC debe poder evaluarse automáticamente.", en: "A MOOC should support automatic grading." },
+          correctAnswer: "true",
+          feedback: { es: "Correcto: la automatización permite escalar.", en: "Correct: automation enables scale." },
+          points: 1,
+          tags: ["mooc", "evaluacion"],
+        },
+      ],
+    });
+    expectOk(questionBankResponse);
+    expect(questionBankResponse.json.data).toHaveLength(1);
+
     const analyticsResponse = await page.evaluate(async (courseId) => {
       const response = await fetch(`/api/courses/${courseId}/analytics`);
       const text = await response.text();

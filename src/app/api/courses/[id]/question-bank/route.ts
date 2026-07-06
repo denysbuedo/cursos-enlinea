@@ -11,12 +11,13 @@ type QuestionInput = {
   correctAnswer?: string;
   feedback?: { es?: string; en?: string };
   points?: number;
+  tags?: string[];
 };
 
 async function getEditableCourse(courseIdOrSlug: string, userId: string, role: string) {
   const course = await prisma.course.findFirst({
     where: { OR: [{ id: courseIdOrSlug }, { slug: courseIdOrSlug }] },
-    select: { id: true, instructorId: true },
+    select: { id: true, instructorId: true, questionBank: true, evaluations: { take: 1, select: { questions: true } } },
   });
 
   if (!course) return null;
@@ -27,9 +28,7 @@ async function getEditableCourse(courseIdOrSlug: string, userId: string, role: s
 }
 
 function validateQuestions(questions: QuestionInput[]) {
-  if (!Array.isArray(questions) || questions.length === 0) {
-    return "La evaluación debe tener al menos una pregunta";
-  }
+  if (!Array.isArray(questions)) return "El banco debe ser una lista de preguntas";
 
   for (const [index, question] of questions.entries()) {
     if (!["MCQ", "TRUEFALSE", "SHORT"].includes(question.type)) {
@@ -49,6 +48,30 @@ function validateQuestions(questions: QuestionInput[]) {
   return null;
 }
 
+function normalizeQuestions(questions: QuestionInput[]) {
+  return questions.map((question, index) => ({
+    id: question.id || `bank-${Date.now()}-${index + 1}`,
+    type: question.type,
+    question: {
+      es: question.question?.es || question.question?.en || "",
+      en: question.question?.en || question.question?.es || "",
+    },
+    options: question.type === "MCQ"
+      ? (question.options || []).map((option) => ({
+          es: option.es || option.en || "",
+          en: option.en || option.es || "",
+        }))
+      : [],
+    correctAnswer: question.correctAnswer?.trim() || "",
+    feedback: {
+      es: question.feedback?.es || question.feedback?.en || "",
+      en: question.feedback?.en || question.feedback?.es || "",
+    },
+    points: Number(question.points || 1),
+    tags: Array.isArray(question.tags) ? question.tags.map(String).filter(Boolean) : [],
+  }));
+}
+
 export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -63,11 +86,14 @@ export async function GET(
     const course = await getEditableCourse(id, session.userId, session.role);
     if (!course) return NextResponse.json({ error: "Curso no encontrado" }, { status: 404 });
 
-    const evaluation = await prisma.evaluation.findUnique({
-      where: { courseId: course.id },
-    });
+    const bank = Array.isArray(course.questionBank) ? course.questionBank : [];
+    const fallback = bank.length > 0
+      ? bank
+      : Array.isArray(course.evaluations[0]?.questions)
+        ? course.evaluations[0].questions
+        : [];
 
-    return NextResponse.json({ data: evaluation });
+    return NextResponse.json({ data: fallback, source: bank.length > 0 ? "BANK" : "EVALUATION" });
   } catch (error) {
     if (error instanceof Error && error.message === "UNAUTHORIZED") {
       return NextResponse.json({ error: "No autorizado" }, { status: 401 });
@@ -94,64 +120,20 @@ export async function POST(
     if (!course) return NextResponse.json({ error: "Curso no encontrado" }, { status: 404 });
 
     const body = await request.json();
-    const { title, description, passingScore, maxAttempts, showFeedback, shuffleQuestions, shuffleOptions, questions } = body;
-
-    if (!title?.es && !title?.en) {
-      return NextResponse.json({ error: "Falta título de evaluación" }, { status: 400 });
-    }
-
+    const questions = body.questions as QuestionInput[];
     const questionError = validateQuestions(questions);
     if (questionError) {
       return NextResponse.json({ error: questionError }, { status: 400 });
     }
 
-    const normalizedQuestions = (questions as QuestionInput[]).map((question, index) => ({
-      id: question.id || `q${index + 1}`,
-      type: question.type,
-      question: {
-        es: question.question?.es || question.question?.en || "",
-        en: question.question?.en || question.question?.es || "",
-      },
-      options: question.type === "MCQ"
-        ? (question.options || []).map((option) => ({
-            es: option.es || option.en || "",
-            en: option.en || option.es || "",
-          }))
-        : undefined,
-      correctAnswer: question.correctAnswer?.trim(),
-      feedback: {
-        es: question.feedback?.es || question.feedback?.en || "",
-        en: question.feedback?.en || question.feedback?.es || "",
-      },
-      points: Number(question.points || 1),
-    }));
-
-    const evaluation = await prisma.evaluation.upsert({
-      where: { courseId: course.id },
-      update: {
-        title,
-        description: description || {},
-        passingScore: Number(passingScore || 80),
-        maxAttempts: Math.max(1, Number(maxAttempts || 3)),
-        showFeedback: showFeedback !== false,
-        shuffleQuestions: shuffleQuestions !== false,
-        shuffleOptions: shuffleOptions !== false,
-        questions: normalizedQuestions as Prisma.InputJsonValue,
-      },
-      create: {
-        courseId: course.id,
-        title,
-        description: description || {},
-        passingScore: Number(passingScore || 80),
-        maxAttempts: Math.max(1, Number(maxAttempts || 3)),
-        showFeedback: showFeedback !== false,
-        shuffleQuestions: shuffleQuestions !== false,
-        shuffleOptions: shuffleOptions !== false,
-        questions: normalizedQuestions as Prisma.InputJsonValue,
-      },
+    const normalizedQuestions = normalizeQuestions(questions);
+    const updated = await prisma.course.update({
+      where: { id: course.id },
+      data: { questionBank: normalizedQuestions as Prisma.InputJsonValue },
+      select: { questionBank: true },
     });
 
-    return NextResponse.json({ data: evaluation });
+    return NextResponse.json({ data: updated.questionBank });
   } catch (error) {
     if (error instanceof Error && error.message === "UNAUTHORIZED") {
       return NextResponse.json({ error: "No autorizado" }, { status: 401 });

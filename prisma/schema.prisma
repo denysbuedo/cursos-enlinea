@@ -94,6 +94,7 @@ model Course {
   targetAudience Json?
   requirements  Json?
   competencies  Json?
+  questionBank  Json?
   estimatedHours Int?
   weeklyHours   Int?
   level         String?
@@ -294,6 +295,8 @@ model Evaluation {
   passingScore  Float   @default(80.0)
   maxAttempts   Int     @default(3)
   showFeedback  Boolean @default(true)
+  shuffleQuestions Boolean @default(true)
+  shuffleOptions Boolean @default(true)
   questions     Json    // [{id, type:"MCQ"|"TRUEFALSE"|"SHORT", question:{es,en}, options:[{es,en}], correctAnswer, feedback:{es,en}, points}]
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
