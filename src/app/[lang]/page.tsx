@@ -1,5 +1,6 @@
 import { getLangFromParams } from "@/lib/i18n";
 import { APP_NAME } from "@/lib/app-config";
+import heroImage from "@/assets/mooc-hero-institucional.png";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -86,7 +87,7 @@ export default async function HomePage({
           <div className="visual-panel overflow-hidden rounded-lg p-3">
             <div className="relative aspect-[4/3] overflow-hidden rounded-md bg-white">
               <Image
-                src="/images/mooc-hero-institucional.png"
+                src={heroImage}
                 alt={t(
                   "Ambiente universitario moderno con aprendizaje en línea",
                   "Modern university setting with online learning",
