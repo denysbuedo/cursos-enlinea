@@ -1,0 +1,484 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Propuesta MOOC piloto para probar la plataforma</title>
+  <style>
+    :root {
+      --blue: #0b5f9e;
+      --text: #1f2933;
+      --muted: #607080;
+      --line: #d7dee5;
+      --soft: #f6f8fa;
+      --white: #ffffff;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--soft);
+      color: var(--text);
+      font-family: Arial, Helvetica, sans-serif;
+      line-height: 1.55;
+    }
+    main {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 36px 22px 70px;
+    }
+    header {
+      border-top: 8px solid var(--blue);
+      background: var(--white);
+      border-radius: 8px;
+      padding: 28px;
+      border: 1px solid var(--line);
+    }
+    h1, h2, h3 {
+      line-height: 1.2;
+      margin: 0 0 12px;
+    }
+    h1 { font-size: 34px; }
+    h2 {
+      margin-top: 34px;
+      padding-top: 24px;
+      border-top: 1px solid var(--line);
+      font-size: 24px;
+      color: var(--blue);
+    }
+    h3 {
+      margin-top: 24px;
+      font-size: 18px;
+    }
+    p { margin: 0 0 12px; }
+    ul, ol { margin-top: 8px; }
+    li { margin-bottom: 7px; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 14px 0 24px;
+      background: var(--white);
+      border: 1px solid var(--line);
+    }
+    th, td {
+      border: 1px solid var(--line);
+      padding: 10px 12px;
+      vertical-align: top;
+      text-align: left;
+      font-size: 14px;
+    }
+    th {
+      background: #e9f2f8;
+      color: var(--blue);
+    }
+    code {
+      background: #e9f2f8;
+      color: var(--blue);
+      padding: 2px 5px;
+      border-radius: 4px;
+    }
+    .card {
+      background: var(--white);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 18px;
+      margin: 16px 0;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+    .muted { color: var(--muted); }
+    .tag {
+      display: inline-block;
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--blue);
+      padding: 4px 8px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      margin: 0 6px 6px 0;
+    }
+    .note {
+      border-left: 4px solid var(--blue);
+      background: #e9f2f8;
+      padding: 14px 16px;
+      border-radius: 6px;
+      margin: 18px 0;
+    }
+    @media print {
+      body { background: #fff; }
+      main { max-width: none; padding: 0; }
+      header, .card, table { break-inside: avoid; }
+    }
+    @media (max-width: 760px) {
+      .grid { grid-template-columns: 1fr; }
+      h1 { font-size: 28px; }
+    }
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <p class="muted">Documento de producto y carga inicial para validación funcional</p>
+    <h1>Propuesta MOOC piloto: Diseño y Producción de Cursos MOOC</h1>
+    <p>
+      Este documento define un curso completo para cargar en la plataforma y probar el flujo de extremo a extremo:
+      ficha pública, edición, módulos, sesiones, videos, materiales, banco de preguntas, evaluación automática,
+      matrícula, progreso y certificado.
+    </p>
+    <p>
+      El curso está diseñado para ser realista, institucional y fácil de implementar con contenidos externos,
+      usando videos públicos o de prueba y materiales enlazados desde repositorios.
+    </p>
+  </header>
+
+  <h2>1. Datos generales del curso</h2>
+  <table>
+    <tr><th>Campo CMS</th><th>Valor propuesto</th></tr>
+    <tr><td>Título ES</td><td>Diseño y Producción de Cursos MOOC</td></tr>
+    <tr><td>Título EN</td><td>MOOC Design and Production</td></tr>
+    <tr><td>Slug</td><td><code>diseno-produccion-cursos-mooc</code></td></tr>
+    <tr><td>Descripción ES</td><td>Curso introductorio para diseñar, producir y publicar experiencias de aprendizaje autónomas en formato MOOC, con módulos breves, recursos digitales, evaluación automática y certificación.</td></tr>
+    <tr><td>Descripción EN</td><td>Introductory course to design, produce, and publish self-paced MOOC learning experiences with short modules, digital resources, automatic assessment, and certification.</td></tr>
+    <tr><td>Idioma</td><td>Español</td></tr>
+    <tr><td>Nivel</td><td>Básico</td></tr>
+    <tr><td>Horas estimadas</td><td>12</td></tr>
+    <tr><td>Horas semanales recomendadas</td><td>3</td></tr>
+    <tr><td>Modalidad</td><td>Autodirigido / self-paced</td></tr>
+    <tr><td>Certificado disponible</td><td>Sí</td></tr>
+    <tr><td>Modelo de precio</td><td>Gratis para prueba funcional</td></tr>
+    <tr><td>Visibilidad</td><td>Público</td></tr>
+    <tr><td>Estado</td><td>Publicado</td></tr>
+  </table>
+
+  <h2>2. Público objetivo</h2>
+  <ul>
+    <li>Profesores universitarios que necesitan transformar asignaturas o talleres en cursos abiertos en línea.</li>
+    <li>Diseñadores instruccionales que participan en proyectos de educación digital.</li>
+    <li>Equipos académicos responsables de producir contenidos para plataformas MOOC.</li>
+    <li>Directivos docentes que desean entender el flujo de creación y operación de un MOOC.</li>
+  </ul>
+
+  <h2>3. Requisitos de entrada</h2>
+  <ul>
+    <li>Conocimientos básicos de docencia o formación profesional.</li>
+    <li>Acceso a Internet y navegador actualizado.</li>
+    <li>Capacidad para visualizar videos y descargar documentos PDF.</li>
+    <li>No se requieren conocimientos técnicos de programación.</li>
+  </ul>
+
+  <h2>4. Objetivos de aprendizaje</h2>
+  <ol>
+    <li>Explicar qué diferencia a un MOOC de un LMS tradicional o de una simple colección de videos.</li>
+    <li>Definir una ficha de curso con resultados de aprendizaje, público objetivo, requisitos y dedicación estimada.</li>
+    <li>Organizar un curso en módulos, lecciones breves y recursos complementarios.</li>
+    <li>Diseñar actividades y evaluaciones automáticas con retroalimentación inmediata.</li>
+    <li>Preparar criterios de aprobación y emisión de certificados verificables.</li>
+    <li>Identificar métricas básicas para dar seguimiento a matrícula, progreso y finalización.</li>
+  </ol>
+
+  <h2>5. Competencias a desarrollar</h2>
+  <ul>
+    <li>Diseño pedagógico de experiencias MOOC.</li>
+    <li>Curaduría de recursos digitales externos y propios.</li>
+    <li>Producción de lecciones breves orientadas al aprendizaje autónomo.</li>
+    <li>Diseño de evaluación automática y bancos de preguntas.</li>
+    <li>Uso básico de analítica para seguimiento académico.</li>
+  </ul>
+
+  <h2>6. Ediciones del curso</h2>
+  <table>
+    <tr><th>Edición</th><th>Estado</th><th>Fechas</th><th>Capacidad</th><th>Uso para prueba</th></tr>
+    <tr>
+      <td>Edición abierta 2026</td>
+      <td>Abierta</td>
+      <td>Sin fecha de cierre</td>
+      <td>Sin límite</td>
+      <td>Edición por defecto para pruebas de matrícula, avance y certificado.</td>
+    </tr>
+    <tr>
+      <td>Cohorte piloto julio 2026</td>
+      <td>Borrador o programada</td>
+      <td>2026-07-15 a 2026-08-15</td>
+      <td>50</td>
+      <td>Sirve para probar múltiples ediciones y reportes por edición.</td>
+    </tr>
+  </table>
+
+  <h2>7. Estructura por módulos y sesiones</h2>
+
+  <div class="card">
+    <h3>Módulo 1. Fundamentos del modelo MOOC</h3>
+    <p class="muted">Objetivo: comprender qué es un MOOC y qué implicaciones tiene para el diseño educativo.</p>
+    <table>
+      <tr><th>Sesión</th><th>Tipo</th><th>Duración</th><th>Video recomendado</th><th>Materiales</th><th>Actividad</th></tr>
+      <tr>
+        <td>1.1 Qué es un MOOC</td>
+        <td>Grabada / preview</td>
+        <td>8 min</td>
+        <td>Video externo tipo YouTube: explicación introductoria sobre MOOCs. URL de prueba: <code>https://www.youtube.com/watch?v=eW3gMGqcZQc</code></td>
+        <td>PDF: Glosario MOOC. Enlace externo o archivo local.</td>
+        <td>Responder una pregunta de práctica: "¿Por qué un MOOC no es solo un curso publicado en Internet?"</td>
+      </tr>
+      <tr>
+        <td>1.2 Diferencias entre MOOC y LMS tradicional</td>
+        <td>Grabada</td>
+        <td>10 min</td>
+        <td>Video externo o video institucional corto de prueba.</td>
+        <td>Lectura: tabla comparativa MOOC vs LMS.</td>
+        <td>Identificar tres funciones que deben automatizarse en un MOOC.</td>
+      </tr>
+      <tr>
+        <td>1.3 Buenas prácticas internacionales</td>
+        <td>Grabada</td>
+        <td>9 min</td>
+        <td>Video externo sobre aprendizaje en línea escalable.</td>
+        <td>Enlace: lectura EDUCAUSE o resumen interno.</td>
+        <td>Marcar buenas prácticas aplicables a un curso propio.</td>
+      </tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3>Módulo 2. Diseño de la ficha académica del curso</h3>
+    <p class="muted">Objetivo: formular la información pública necesaria para registrar un curso en la plataforma.</p>
+    <table>
+      <tr><th>Sesión</th><th>Tipo</th><th>Duración</th><th>Video recomendado</th><th>Materiales</th><th>Actividad</th></tr>
+      <tr>
+        <td>2.1 Objetivos, público y requisitos</td>
+        <td>Grabada</td>
+        <td>8 min</td>
+        <td>Video propio o externo sobre resultados de aprendizaje.</td>
+        <td>Plantilla editable: ficha del curso.</td>
+        <td>Redactar dos objetivos de aprendizaje.</td>
+      </tr>
+      <tr>
+        <td>2.2 Duración, dedicación y nivel</td>
+        <td>Grabada</td>
+        <td>7 min</td>
+        <td>Video corto sobre planificación temporal.</td>
+        <td>Hoja de cálculo simple para estimación de horas.</td>
+        <td>Calcular horas totales y semanales de un curso ejemplo.</td>
+      </tr>
+      <tr>
+        <td>2.3 Criterios de aprobación y certificación</td>
+        <td>Grabada</td>
+        <td>10 min</td>
+        <td>Video sobre rúbricas y criterios de aprobación.</td>
+        <td>Documento: criterios de aprobación para MOOCs.</td>
+        <td>Definir nota mínima e intentos permitidos.</td>
+      </tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3>Módulo 3. Producción de contenidos y recursos</h3>
+    <p class="muted">Objetivo: preparar lecciones breves, videos y materiales complementarios reutilizables.</p>
+    <table>
+      <tr><th>Sesión</th><th>Tipo</th><th>Duración</th><th>Video recomendado</th><th>Materiales</th><th>Actividad</th></tr>
+      <tr>
+        <td>3.1 Lecciones breves y guion educativo</td>
+        <td>Grabada</td>
+        <td>9 min</td>
+        <td>Video externo sobre microlearning.</td>
+        <td>Plantilla de guion para video de 8 minutos.</td>
+        <td>Dividir una clase de 60 minutos en 5 lecciones breves.</td>
+      </tr>
+      <tr>
+        <td>3.2 Videos externos y videos subidos</td>
+        <td>Grabada</td>
+        <td>8 min</td>
+        <td>YouTube o video local de prueba.</td>
+        <td>Guía: cuándo enlazar y cuándo subir video.</td>
+        <td>Registrar una URL externa y probar vista previa.</td>
+      </tr>
+      <tr>
+        <td>3.3 Materiales complementarios</td>
+        <td>Grabada</td>
+        <td>7 min</td>
+        <td>Video sobre recursos de aprendizaje.</td>
+        <td>PDF, presentación, enlace externo y material local de prueba.</td>
+        <td>Agregar tres recursos con tipos y fuentes diferentes.</td>
+      </tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3>Módulo 4. Evaluación automática y banco de preguntas</h3>
+    <p class="muted">Objetivo: construir una evaluación final autocorregible y reutilizar preguntas por dificultad, tema y etiquetas.</p>
+    <table>
+      <tr><th>Sesión</th><th>Tipo</th><th>Duración</th><th>Video recomendado</th><th>Materiales</th><th>Actividad</th></tr>
+      <tr>
+        <td>4.1 Preguntas de selección múltiple</td>
+        <td>Grabada</td>
+        <td>8 min</td>
+        <td>Video sobre construcción de MCQ.</td>
+        <td>Lista de errores comunes al redactar preguntas.</td>
+        <td>Crear una pregunta MCQ con feedback.</td>
+      </tr>
+      <tr>
+        <td>4.2 Verdadero/falso y respuesta corta</td>
+        <td>Grabada</td>
+        <td>8 min</td>
+        <td>Video sobre autoevaluación.</td>
+        <td>Ejemplos de preguntas autocorregibles.</td>
+        <td>Crear preguntas de dos tipos distintos.</td>
+      </tr>
+      <tr>
+        <td>4.3 Banco de preguntas y aleatorización</td>
+        <td>Grabada</td>
+        <td>9 min</td>
+        <td>Video sobre bancos de preguntas.</td>
+        <td>Guía de etiquetas: mooc, evaluacion, contenidos, certificacion.</td>
+        <td>Guardar preguntas en banco y reutilizarlas por filtro.</td>
+      </tr>
+    </table>
+  </div>
+
+  <h2>8. Recursos complementarios sugeridos</h2>
+  <table>
+    <tr><th>Título</th><th>Tipo</th><th>Fuente</th><th>Uso</th></tr>
+    <tr><td>Plantilla de ficha MOOC</td><td>Documento DOCX/PDF</td><td>Subido a plataforma</td><td>Probar upload de recursos.</td></tr>
+    <tr><td>Glosario básico MOOC</td><td>PDF</td><td>Subido a plataforma</td><td>Probar descarga desde sesión.</td></tr>
+    <tr><td>Repositorio de recursos educativos abiertos</td><td>Enlace</td><td>Repositorio externo</td><td>Probar recurso externo.</td></tr>
+    <tr><td>Ejemplo de guion para video breve</td><td>Presentación</td><td>Subido o externo</td><td>Probar distintos tipos de archivo.</td></tr>
+  </table>
+
+  <h2>9. Evaluación final</h2>
+  <div class="grid">
+    <div class="card">
+      <h3>Configuración</h3>
+      <ul>
+        <li>Título: Evaluación final del curso</li>
+        <li>Nota mínima: 70%</li>
+        <li>Intentos permitidos: 3</li>
+        <li>Mostrar retroalimentación: Sí</li>
+        <li>Mezclar preguntas: Sí</li>
+        <li>Mezclar opciones: Sí</li>
+        <li>Certificado al aprobar: Sí</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>Etiquetas del banco</h3>
+      <span class="tag">mooc</span>
+      <span class="tag">diseno-instruccional</span>
+      <span class="tag">contenidos</span>
+      <span class="tag">evaluacion</span>
+      <span class="tag">certificacion</span>
+      <span class="tag">basico</span>
+    </div>
+  </div>
+
+  <h2>10. Banco inicial de preguntas</h2>
+  <table>
+    <tr><th>#</th><th>Tipo</th><th>Dificultad</th><th>Tema</th><th>Pregunta</th><th>Respuesta correcta</th><th>Feedback</th></tr>
+    <tr>
+      <td>1</td><td>MCQ</td><td>Básica</td><td>Modelo MOOC</td>
+      <td>¿Cuál es una característica esencial de un MOOC?</td>
+      <td>Permite aprendizaje autónomo y acceso masivo.</td>
+      <td>Un MOOC está diseñado para escalar y facilitar aprendizaje independiente.</td>
+    </tr>
+    <tr>
+      <td>2</td><td>Verdadero/Falso</td><td>Básica</td><td>Modelo MOOC</td>
+      <td>Un MOOC es simplemente una colección de videos en Internet.</td>
+      <td>Falso</td>
+      <td>Debe incluir objetivos, estructura, actividades, evaluación y seguimiento.</td>
+    </tr>
+    <tr>
+      <td>3</td><td>MCQ</td><td>Intermedia</td><td>Diseño</td>
+      <td>¿Qué información debe conocer el estudiante antes de matricularse?</td>
+      <td>Objetivos, requisitos, duración, dedicación y certificado.</td>
+      <td>La ficha pública reduce incertidumbre y mejora la decisión de matrícula.</td>
+    </tr>
+    <tr>
+      <td>4</td><td>MCQ</td><td>Intermedia</td><td>Contenidos</td>
+      <td>¿Cuál es una buena práctica para videos en un MOOC?</td>
+      <td>Dividir el contenido en videos breves de 5 a 15 minutos.</td>
+      <td>La fragmentación ayuda a mantener la atención y facilita el avance autónomo.</td>
+    </tr>
+    <tr>
+      <td>5</td><td>Verdadero/Falso</td><td>Básica</td><td>Evaluación</td>
+      <td>En un MOOC conviene depender principalmente de corrección manual del profesor.</td>
+      <td>Falso</td>
+      <td>La evaluación automática es clave para la escalabilidad del MOOC.</td>
+    </tr>
+    <tr>
+      <td>6</td><td>Respuesta corta</td><td>Intermedia</td><td>Certificación</td>
+      <td>¿Qué elemento permite comprobar la autenticidad de un certificado?</td>
+      <td>Código de verificación</td>
+      <td>El código o URL de verificación permite validar el certificado emitido.</td>
+    </tr>
+    <tr>
+      <td>7</td><td>MCQ</td><td>Avanzada</td><td>Analítica</td>
+      <td>¿Qué métrica ayuda a detectar abandono temprano?</td>
+      <td>Progreso promedio y sesiones completadas por estudiante.</td>
+      <td>El avance permite identificar puntos de abandono y mejorar el curso.</td>
+    </tr>
+    <tr>
+      <td>8</td><td>MCQ</td><td>Intermedia</td><td>Banco</td>
+      <td>¿Para qué sirven las etiquetas en un banco de preguntas?</td>
+      <td>Para filtrar y reutilizar preguntas por tema o criterio.</td>
+      <td>Las etiquetas facilitan selección aleatoria y mantenimiento del banco.</td>
+    </tr>
+  </table>
+
+  <h2>11. Pruebas funcionales que permite este curso</h2>
+  <table>
+    <tr><th>Flujo</th><th>Qué probar</th><th>Resultado esperado</th></tr>
+    <tr><td>Catálogo</td><td>Publicar el curso y verlo en <code>/es/courses</code>.</td><td>El curso aparece con título, descripción, precio gratis y sesiones.</td></tr>
+    <tr><td>Detalle del curso</td><td>Abrir el curso desde catálogo.</td><td>Se muestran ficha, módulos, lecciones, recursos y opción de matrícula.</td></tr>
+    <tr><td>Matrícula</td><td>Matricular un estudiante en la edición abierta.</td><td>Se crea enrollment y aparece en dashboard del estudiante.</td></tr>
+    <tr><td>Progreso</td><td>Marcar sesiones completadas.</td><td>El porcentaje de progreso aumenta.</td></tr>
+    <tr><td>Videos</td><td>Usar video externo y, opcionalmente, subir un video local.</td><td>La sesión renderiza o enlaza el video correctamente.</td></tr>
+    <tr><td>Materiales</td><td>Agregar recursos externos y archivos subidos.</td><td>Los recursos aparecen en la sesión y se pueden abrir/descargar.</td></tr>
+    <tr><td>Evaluación</td><td>Responder preguntas y enviar intento.</td><td>Se calcula nota, se muestra feedback y se registra intento.</td></tr>
+    <tr><td>Banco</td><td>Guardar preguntas y reutilizar por dificultad/tema/etiqueta.</td><td>La evaluación puede cargar preguntas desde el banco.</td></tr>
+    <tr><td>Certificado</td><td>Aprobar evaluación con 70% o más.</td><td>Se emite certificado verificable y descargable.</td></tr>
+    <tr><td>Analítica</td><td>Revisar dashboard CMS de analítica.</td><td>Se reflejan matrícula, progreso, intentos, aprobación y certificado.</td></tr>
+  </table>
+
+  <h2>12. Datos de prueba recomendados</h2>
+  <div class="card">
+    <h3>Usuarios</h3>
+    <ul>
+      <li>Administrador: crea curso, ediciones, módulos, sesiones, evaluación y revisa analítica.</li>
+      <li>Instructor: gestiona contenido académico y banco de preguntas.</li>
+      <li>Estudiante 1: se matricula, completa el curso y aprueba.</li>
+      <li>Estudiante 2: se matricula, deja progreso parcial y no obtiene certificado.</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h3>Escenarios mínimos</h3>
+    <ol>
+      <li>Crear el curso desde cero en CMS usando esta ficha.</li>
+      <li>Crear dos ediciones: una abierta y una piloto.</li>
+      <li>Crear 4 módulos y 12 sesiones.</li>
+      <li>Asignar al menos un video externo y un recurso por módulo.</li>
+      <li>Crear evaluación con 8 preguntas y guardar preguntas en banco.</li>
+      <li>Matricular estudiante, completar sesiones, enviar evaluación y emitir certificado.</li>
+      <li>Revisar analítica del curso y de la edición.</li>
+    </ol>
+  </div>
+
+  <h2>13. Criterios de aceptación del piloto</h2>
+  <ul>
+    <li>El curso puede crearse desde el CMS sin tocar directamente la base de datos.</li>
+    <li>El curso aparece correctamente en catálogo público.</li>
+    <li>El estudiante puede matricularse y ver el curso en su panel.</li>
+    <li>Las sesiones admiten videos externos y materiales complementarios.</li>
+    <li>La evaluación automática registra intentos y muestra retroalimentación.</li>
+    <li>El banco permite reutilizar preguntas por filtros básicos.</li>
+    <li>Al aprobar, se genera certificado verificable.</li>
+    <li>La analítica refleja datos de matrícula, progreso, aprobación e intentos.</li>
+  </ul>
+
+  <div class="note">
+    <strong>Recomendación:</strong> para la primera carga, usar videos externos de prueba y materiales simples.
+    Después de validar el flujo completo, sustituirlos por videos institucionales y documentos finales.
+  </div>
+</main>
+</body>
+</html>
