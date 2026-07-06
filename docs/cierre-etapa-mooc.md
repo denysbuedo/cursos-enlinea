@@ -17,6 +17,7 @@ La plataforma ya no es solo un LMS básico ni un prototipo documental. En esta e
 - videos externos o subidos;
 - materiales complementarios externos, de repositorio o subidos;
 - progreso por estudiante;
+- analítica básica por curso y edición;
 - evaluación automática;
 - retroalimentación inmediata;
 - límite de intentos;
@@ -153,6 +154,7 @@ Implementado y probado localmente:
 - videos por URL y subida local;
 - materiales por URL, repositorio y subida local;
 - progreso;
+- analítica MOOC básica;
 - evaluación automática;
 - feedback;
 - límite de intentos;
@@ -161,7 +163,7 @@ Implementado y probado localmente:
 Sigue siendo diseño o pendiente:
 
 - analítica avanzada MOOC;
-- cohortes masivas con métricas agregadas;
+- cohortes masivas con filtros históricos y series temporales;
 - banco de preguntas reutilizable;
 - aleatorización de preguntas;
 - importación masiva de contenidos;
@@ -184,6 +186,7 @@ Las APIs críticas de la etapa funcionan de extremo a extremo en local y están 
 - matrícula manual;
 - creación de usuario admin;
 - progreso;
+- analítica básica por curso;
 - evaluación;
 - certificado;
 - verificación de certificado.
@@ -295,8 +298,8 @@ Prioridad alta:
 
 - banco de preguntas reutilizable;
 - aleatorización de preguntas y opciones;
-- reportes de progreso por curso y edición;
-- dashboard de analítica MOOC;
+- reportes históricos con series temporales;
+- exportación de analítica MOOC;
 - configurar bucket externo definitivo para videos, materiales y comprobantes;
 - revisión de seguridad de subida de archivos;
 - migraciones formales en vez de depender de `db push`.

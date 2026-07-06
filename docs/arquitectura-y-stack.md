@@ -253,6 +253,16 @@ Cada sesión completada se registra en `SessionCompletion` con una restricción 
 
 El endpoint `/api/sessions/[id]/mark-complete` marca la sesión como completada y recalcula el progreso del enrollment. Cuando el progreso llega a 100%, la página de detalle habilita la evaluación.
 
+El endpoint `/api/courses/[id]/analytics` expone analítica básica para administradores e instructores propietarios del curso. Calcula métricas desde matrículas, progreso, intentos de evaluación y certificados:
+
+- matrículas totales y activas;
+- progreso promedio;
+- tasa de finalización;
+- tasa de aprobación;
+- certificados emitidos;
+- intentos de evaluación;
+- desglose por edición.
+
 ### 8. Evaluaciones
 
 El endpoint `/api/evaluations?courseSlug=...` exige:

@@ -207,6 +207,14 @@ test.describe("R1 critical flows", () => {
     });
     expectOk(evaluationResponse);
 
+    const analyticsResponse = await page.evaluate(async (courseId) => {
+      const response = await fetch(`/api/courses/${courseId}/analytics`);
+      const text = await response.text();
+      return { ok: response.ok, status: response.status, json: text ? JSON.parse(text) : null };
+    }, course.id);
+    expect(analyticsResponse.ok, `HTTP ${analyticsResponse.status} ${JSON.stringify(analyticsResponse.json)}`).toBeTruthy();
+    expect(analyticsResponse.json.data.overall.totalEnrollments).toBe(0);
+
     await page.reload();
     await expect(page.getByText(courseTitle)).toBeVisible();
 

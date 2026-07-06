@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { Award, BookOpen, ExternalLink, Eye, Layers, Loader2, Plus, Save, Trash2, Upload, Users, Video } from "lucide-react";
+import { Award, BarChart3, BookOpen, ExternalLink, Eye, Layers, Loader2, Plus, RefreshCw, Save, Trash2, Upload, Users, Video } from "lucide-react";
 import { getLangFromParams } from "@/lib/i18n";
 import { resolveVideoRender } from "@/lib/video";
 
@@ -11,7 +11,7 @@ type LocalizedText = { es: string; en: string };
 type LocalizedListText = { es: string; en: string };
 type SessionType = "RECORDED" | "LIVE" | "HYBRID";
 type QuestionType = "MCQ" | "TRUEFALSE" | "SHORT";
-type CmsSection = "course" | "editions" | "modules" | "sessions" | "evaluation";
+type CmsSection = "course" | "analytics" | "editions" | "modules" | "sessions" | "evaluation";
 
 interface CmsSession {
   id: string;
@@ -194,6 +194,32 @@ interface CmsUser {
   preferredLang?: string | null;
 }
 
+interface AnalyticsSummary {
+  totalEnrollments: number;
+  activeEnrollments: number;
+  pendingPayment: number;
+  suspended: number;
+  cancelled: number;
+  averageProgress: number;
+  completed: number;
+  completionRate: number;
+  passedEvaluations: number;
+  passRate: number;
+  certificatesIssued: number;
+  certificateRate: number;
+  revokedCertificates: number;
+  evaluationAttempts: number;
+  averageBestScore: number;
+}
+
+interface CourseAnalytics {
+  overall: AnalyticsSummary;
+  editions: Array<{
+    edition: CmsEdition;
+  } & AnalyticsSummary>;
+  withoutEdition: AnalyticsSummary | null;
+}
+
 function createQuestion(type: QuestionType = "MCQ"): CmsQuestion {
   return {
     id: `q-${Date.now()}`,
@@ -231,6 +257,7 @@ export default function CmsPage() {
   const [uploadingVideo, setUploadingVideo] = useState(false);
   const [uploadingResource, setUploadingResource] = useState(false);
   const [loadingEnrollments, setLoadingEnrollments] = useState(false);
+  const [loadingAnalytics, setLoadingAnalytics] = useState(false);
   const [error, setError] = useState("");
   const [activeSection, setActiveSection] = useState<CmsSection>("course");
   const [selectedEditionId, setSelectedEditionId] = useState("");
@@ -240,6 +267,7 @@ export default function CmsPage() {
   const [studentSearch, setStudentSearch] = useState("");
   const [studentResults, setStudentResults] = useState<CmsUser[]>([]);
   const [searchingStudents, setSearchingStudents] = useState(false);
+  const [analytics, setAnalytics] = useState<CourseAnalytics | null>(null);
   const [resourceForm, setResourceForm] = useState({
     title: "",
     url: "",
@@ -333,6 +361,7 @@ export default function CmsPage() {
   const videoPreview = resolveVideoRender(sessionForm.videoUrl, sessionForm.videoPlatform);
   const courseSections: Array<{ id: CmsSection; label: string; icon: typeof BookOpen; disabled?: boolean }> = [
     { id: "course", label: t("Curso", "Course"), icon: BookOpen },
+    { id: "analytics", label: t("Analítica", "Analytics"), icon: BarChart3, disabled: !selectedCourse },
     { id: "editions", label: t("Ediciones", "Editions"), icon: Layers, disabled: !selectedCourse },
     { id: "modules", label: t("Módulos", "Modules"), icon: Layers, disabled: !selectedCourse },
     { id: "sessions", label: t("Sesiones", "Sessions"), icon: Video, disabled: !selectedCourse },
@@ -340,6 +369,11 @@ export default function CmsPage() {
   ];
 
   function resetCourseForm() {
+    setSelectedCourseId("");
+    setSelectedEditionId("");
+    setEditionEnrollments([]);
+    setAnalytics(null);
+    setActiveSection("course");
     setCourseForm({
       id: "",
       slug: "",
@@ -519,6 +553,25 @@ export default function CmsPage() {
     }
   }
 
+  async function loadAnalytics(courseId = selectedCourseId) {
+    if (!courseId) return;
+    setLoadingAnalytics(true);
+    setError("");
+    try {
+      const res = await fetch(`/api/courses/${courseId}/analytics`);
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || "Error");
+      }
+      const json = await res.json();
+      setAnalytics(json.data || null);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : t("No se pudo cargar la analítica.", "Could not load analytics."));
+    } finally {
+      setLoadingAnalytics(false);
+    }
+  }
+
   useEffect(() => {
     loadCourses();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -529,6 +582,7 @@ export default function CmsPage() {
     setSelectedCourseId(course.id);
     setSelectedEditionId("");
     setEditionEnrollments([]);
+    setAnalytics(null);
     setActiveSection("course");
     setCourseForm({
       id: course.id,
@@ -902,6 +956,29 @@ export default function CmsPage() {
     }
   }
 
+  function renderAnalyticsCards(summary: AnalyticsSummary) {
+    const metrics = [
+      { label: t("Matrículas", "Enrollments"), value: summary.totalEnrollments, detail: `${summary.activeEnrollments} ${t("activas", "active")}` },
+      { label: t("Progreso promedio", "Average progress"), value: `${summary.averageProgress}%`, detail: `${summary.completed} ${t("completaron", "completed")}` },
+      { label: t("Finalización", "Completion"), value: `${summary.completionRate}%`, detail: `${summary.completed}/${summary.activeEnrollments}` },
+      { label: t("Aprobación", "Pass rate"), value: `${summary.passRate}%`, detail: `${summary.passedEvaluations} ${t("aprobados", "passed")}` },
+      { label: t("Certificados", "Certificates"), value: summary.certificatesIssued, detail: `${summary.certificateRate}% ${t("de activas", "of active")}` },
+      { label: t("Mejor nota prom.", "Avg. best score"), value: `${summary.averageBestScore}%`, detail: `${summary.evaluationAttempts} ${t("intentos", "attempts")}` },
+    ];
+
+    return (
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+        {metrics.map((metric) => (
+          <div key={metric.label} className="rounded-md border p-4">
+            <p className="text-xs text-[#7b8fa1]">{metric.label}</p>
+            <p className="mt-1 text-2xl font-semibold">{metric.value}</p>
+            <p className="mt-1 text-xs text-[#52667a]">{metric.detail}</p>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
   if (loading) {
     return (
       <div className="container mx-auto px-4 py-12 text-center">
@@ -1026,7 +1103,12 @@ export default function CmsPage() {
                 return (
                   <button
                     key={section.id}
-                    onClick={() => setActiveSection(section.id)}
+                    onClick={() => {
+                      setActiveSection(section.id);
+                      if (section.id === "analytics" && selectedCourseId) {
+                        loadAnalytics(selectedCourseId);
+                      }
+                    }}
                     disabled={section.disabled}
                     className={`inline-flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
                       activeSection === section.id ? "bg-primary text-white" : "border hover:bg-accent"
@@ -1115,6 +1197,113 @@ export default function CmsPage() {
 
           {selectedCourse && (
             <>
+              {activeSection === "analytics" && (
+              <section className="rounded-lg border bg-white p-5">
+                <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex items-center gap-2">
+                    <BarChart3 className="h-5 w-5 text-primary" />
+                    <h2 className="font-semibold">{t("Analítica MOOC", "MOOC analytics")}</h2>
+                  </div>
+                  <button
+                    onClick={() => loadAnalytics(selectedCourse.id)}
+                    disabled={loadingAnalytics}
+                    className="inline-flex items-center gap-2 rounded-md border px-3 py-1.5 text-xs hover:bg-accent disabled:opacity-50"
+                  >
+                    {loadingAnalytics ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
+                    {t("Actualizar", "Refresh")}
+                  </button>
+                </div>
+
+                {loadingAnalytics && !analytics ? (
+                  <div className="rounded-md border border-dashed p-8 text-center text-sm text-[#7b8fa1]">
+                    <Loader2 className="mx-auto mb-2 h-5 w-5 animate-spin" />
+                    {t("Cargando métricas...", "Loading metrics...")}
+                  </div>
+                ) : !analytics ? (
+                  <div className="rounded-md border border-dashed p-8 text-center text-sm text-[#7b8fa1]">
+                    {t("Aún no hay métricas disponibles para este curso.", "No metrics available for this course yet.")}
+                  </div>
+                ) : (
+                  <div className="space-y-6">
+                    {renderAnalyticsCards(analytics.overall)}
+
+                    <div className="grid gap-3 md:grid-cols-2">
+                      <div className="rounded-md border p-4">
+                        <p className="text-sm font-medium">{t("Estado de matrículas", "Enrollment status")}</p>
+                        <div className="mt-3 grid grid-cols-2 gap-2 text-sm">
+                          <span className="rounded-md bg-[#f7f9fb] px-3 py-2">{t("Pendientes", "Pending")} · {analytics.overall.pendingPayment}</span>
+                          <span className="rounded-md bg-[#f7f9fb] px-3 py-2">{t("Suspendidas", "Suspended")} · {analytics.overall.suspended}</span>
+                          <span className="rounded-md bg-[#f7f9fb] px-3 py-2">{t("Canceladas", "Cancelled")} · {analytics.overall.cancelled}</span>
+                          <span className="rounded-md bg-[#f7f9fb] px-3 py-2">{t("Revocados", "Revoked")} · {analytics.overall.revokedCertificates}</span>
+                        </div>
+                      </div>
+                      <div className="rounded-md border p-4">
+                        <p className="text-sm font-medium">{t("Lectura rápida", "Quick read")}</p>
+                        <p className="mt-2 text-sm text-[#52667a]">
+                          {t(
+                            `${analytics.overall.completionRate}% de los alumnos activos completó el curso y ${analytics.overall.passRate}% aprobó la evaluación.`,
+                            `${analytics.overall.completionRate}% of active learners completed the course and ${analytics.overall.passRate}% passed the evaluation.`
+                          )}
+                        </p>
+                        <p className="mt-2 text-sm text-[#52667a]">
+                          {t(
+                            `Se emitieron ${analytics.overall.certificatesIssued} certificados verificables.`,
+                            `${analytics.overall.certificatesIssued} verifiable certificates were issued.`
+                          )}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div>
+                      <h3 className="mb-3 text-sm font-semibold">{t("Por edición", "By edition")}</h3>
+                      {analytics.editions.length === 0 ? (
+                        <div className="rounded-md border border-dashed p-6 text-center text-sm text-[#7b8fa1]">
+                          {t("Este curso no tiene ediciones configuradas.", "This course has no configured editions.")}
+                        </div>
+                      ) : (
+                        <div className="overflow-x-auto rounded-md border">
+                          <table className="w-full text-left text-sm">
+                            <thead className="bg-[#f7f9fb] text-xs uppercase text-[#7b8fa1]">
+                              <tr>
+                                <th className="p-3">{t("Edición", "Edition")}</th>
+                                <th className="p-3">{t("Activos", "Active")}</th>
+                                <th className="p-3">{t("Progreso", "Progress")}</th>
+                                <th className="p-3">{t("Finalización", "Completion")}</th>
+                                <th className="p-3">{t("Aprobación", "Pass")}</th>
+                                <th className="p-3">{t("Certificados", "Certificates")}</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {analytics.editions.map((editionMetric) => (
+                                <tr key={editionMetric.edition.id} className="border-t">
+                                  <td className="p-3">
+                                    <p className="font-medium">{t(editionMetric.edition.name.es, editionMetric.edition.name.en)}</p>
+                                    <p className="text-xs text-[#7b8fa1]">{editionMetric.edition.status}{editionMetric.edition.isDefault ? ` · ${t("Defecto", "Default")}` : ""}</p>
+                                  </td>
+                                  <td className="p-3">{editionMetric.activeEnrollments}/{editionMetric.totalEnrollments}</td>
+                                  <td className="p-3">{editionMetric.averageProgress}%</td>
+                                  <td className="p-3">{editionMetric.completionRate}%</td>
+                                  <td className="p-3">{editionMetric.passRate}%</td>
+                                  <td className="p-3">{editionMetric.certificatesIssued}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      )}
+                    </div>
+
+                    {analytics.withoutEdition && (
+                      <div>
+                        <h3 className="mb-3 text-sm font-semibold">{t("Sin edición", "Without edition")}</h3>
+                        {renderAnalyticsCards(analytics.withoutEdition)}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </section>
+              )}
+
               {activeSection === "editions" && (
               <section className="rounded-lg border bg-white p-5">
                 <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
