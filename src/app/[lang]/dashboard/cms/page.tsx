@@ -706,14 +706,14 @@ export default function CmsPage() {
           price: courseForm.pricingModel === "FREE" ? null : Number(courseForm.price || 0),
           currency: courseForm.currency,
           visibility: courseForm.visibility,
-          status: courseForm.status,
+          status: courseForm.id ? courseForm.status : "DRAFT",
         }),
       });
       if (!res.ok) throw new Error();
       const json = await res.json();
       await loadCourses(json.data.id);
       setSelectedCourseId(json.data.id);
-      setCourseForm((prev) => ({ ...prev, id: json.data.id }));
+      setCourseForm((prev) => ({ ...prev, id: json.data.id, status: json.data.status || "DRAFT" }));
     } catch {
       setError(t("No se pudo guardar el curso.", "Could not save course."));
     } finally {
@@ -1265,7 +1265,13 @@ export default function CmsPage() {
             </div>
             <div className="grid gap-3 md:grid-cols-2">
               <input className="rounded-md border px-3 py-2 text-sm" placeholder="Slug" value={courseForm.slug} onChange={(e) => setCourseForm({ ...courseForm, slug: e.target.value })} />
-              <select className="rounded-md border px-3 py-2 text-sm" value={courseForm.status} onChange={(e) => setCourseForm({ ...courseForm, status: e.target.value })}>
+              <select
+                className="rounded-md border px-3 py-2 text-sm"
+                value={courseForm.id ? courseForm.status : "DRAFT"}
+                onChange={(e) => setCourseForm({ ...courseForm, status: e.target.value })}
+                disabled={!courseForm.id}
+                title={t("Primero guarda el curso como borrador. Luego podrás publicarlo cuando tenga sesiones con video.", "Save the course as a draft first. You can publish it after it has sessions with video.")}
+              >
                 <option value="DRAFT">Draft</option>
                 <option value="PUBLISHED">Published</option>
                 <option value="ARCHIVED">Archived</option>
