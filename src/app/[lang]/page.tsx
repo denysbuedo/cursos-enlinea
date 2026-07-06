@@ -69,7 +69,7 @@ export default async function HomePage({
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <Link
                 href={`/${locale}/courses`}
-                className="focus-ring inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#1b4967]"
+                className="focus-ring inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#084f85]"
               >
                 {t("Explorar cursos", "Explore courses")}
                 <ArrowRight className="h-4 w-4" />
@@ -93,7 +93,7 @@ export default async function HomePage({
                   {t("Continuar aprendizaje", "Continue learning")}
                 </h2>
               </div>
-              <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
+              <span className="rounded-full bg-accent px-3 py-1 text-xs font-semibold text-primary">
                 MOOC
               </span>
             </div>
@@ -129,7 +129,7 @@ export default async function HomePage({
                 t("Certificado verificable al aprobar", "Verifiable certificate after passing"),
               ].map((item) => (
                 <div key={item} className="flex items-center gap-3 rounded-md bg-white px-3 py-2 text-sm">
-                  <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                    <CheckCircle2 className="h-4 w-4 text-primary" />
                   <span>{item}</span>
                 </div>
               ))}

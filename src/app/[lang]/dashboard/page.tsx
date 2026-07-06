@@ -104,7 +104,7 @@ export default function DashboardPage() {
                   ? "When you enroll in a MOOC, this panel will show your next lesson, completion progress, attempts, and certificates."
                   : "Cuando te matricules en un MOOC, este panel mostrará tu próxima lección, progreso, intentos y certificados."}
               </p>
-              <Link href={`/${lang}/courses`} className="focus-ring mt-5 inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#1b4967]">
+              <Link href={`/${lang}/courses`} className="focus-ring mt-5 inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#084f85]">
                 {dict.nav.courses}
                 <ArrowRight className="h-4 w-4" />
               </Link>
@@ -117,7 +117,7 @@ export default function DashboardPage() {
               <div className="mt-4 space-y-3 text-sm text-muted-foreground">
                 {[t("Curso para continuar", "Course to continue"), t("Progreso por módulo", "Progress by module"), t("Certificados obtenidos", "Earned certificates")].map((item) => (
                   <div key={item} className="flex items-center gap-2">
-                    <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                    <CheckCircle2 className="h-4 w-4 text-primary" />
                     <span>{item}</span>
                   </div>
                 ))}
@@ -128,11 +128,11 @@ export default function DashboardPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {enrollments.map((e) => (
               <Link key={e.id} href={`/${lang}/courses/${e.course.slug}`} className="group flex flex-col overflow-hidden rounded-lg border border-border bg-white transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg">
-                <div className="h-1.5 bg-gradient-to-r from-primary/60 to-primary" />
+                <div className="h-1.5 bg-primary" />
                 <div className="p-5 flex-1">
                   <div className="flex items-start justify-between gap-3 mb-3">
                     <h3 className="font-semibold group-hover:text-primary transition-colors">{t(e.course.title.es, e.course.title.en)}</h3>
-                    {e.progress >= 100 && <Award className="w-5 h-5 text-amber-500 flex-shrink-0" />}
+                    {e.progress >= 100 && <Award className="w-5 h-5 text-primary flex-shrink-0" />}
                   </div>
                   <div className="mt-3 space-y-1.5">
                     <div className="flex justify-between text-xs text-muted-foreground"><span>{dict.courses.progress}</span><span>{Math.round(e.progress)}%</span></div>
