@@ -11,6 +11,7 @@ import {
   ClipboardCheck,
   Layers3,
   PlayCircle,
+  Settings2,
 } from "lucide-react";
 
 export default async function HomePage({
@@ -45,6 +46,30 @@ export default async function HomePage({
       text: t(
         "Banco de preguntas, intentos, retroalimentación y criterios de aprobación.",
         "Question bank, attempts, feedback, and passing criteria.",
+      ),
+    },
+    {
+      icon: BarChart3,
+      title: t("Analítica para operar", "Analytics for operations"),
+      text: t(
+        "Seguimiento de matrículas, progreso, aprobación, intentos y certificados por edición.",
+        "Track enrollments, progress, pass rates, attempts, and certificates by edition.",
+      ),
+    },
+    {
+      icon: Award,
+      title: t("Credenciales verificables", "Verifiable credentials"),
+      text: t(
+        "Certificados digitales con código de verificación y descarga en PDF.",
+        "Digital certificates with verification code and PDF download.",
+      ),
+    },
+    {
+      icon: Settings2,
+      title: t("Gestión académica", "Academic management"),
+      text: t(
+        "Crea cursos, ediciones, módulos, lecciones, materiales y bancos de preguntas desde el CMS.",
+        "Create courses, editions, modules, lessons, resources, and question banks from the CMS.",
       ),
     },
   ];
@@ -108,34 +133,14 @@ export default async function HomePage({
       <section className="container mx-auto px-4 pb-16">
         <div className="grid gap-4 md:grid-cols-3">
           {courseFlow.map((item) => (
-            <div key={item.title} className="rounded-lg border border-border bg-white p-5">
-              <item.icon className="h-6 w-6 text-primary" />
-              <h3 className="mt-4 font-semibold">{item.title}</h3>
-              <p className="mt-2 text-sm leading-6 text-muted-foreground">{item.text}</p>
+            <div key={item.title} className="rounded-lg border border-border bg-white p-6 shadow-sm">
+              <div className="flex h-14 w-14 items-center justify-center rounded-lg bg-accent text-primary">
+                <item.icon className="h-8 w-8" />
+              </div>
+              <h3 className="mt-5 text-lg font-semibold">{item.title}</h3>
+              <p className="mt-3 text-base leading-7 text-muted-foreground">{item.text}</p>
             </div>
           ))}
-        </div>
-        <div className="mt-5 grid gap-4 md:grid-cols-2">
-          <div className="rounded-lg border border-border bg-white p-5">
-            <BarChart3 className="h-6 w-6 text-primary" />
-            <h3 className="mt-4 font-semibold">{t("Analítica para operar", "Analytics for operations")}</h3>
-            <p className="mt-2 text-sm leading-6 text-muted-foreground">
-              {t(
-                "Seguimiento de matrículas, progreso, aprobación, intentos y certificados por edición.",
-                "Track enrollments, progress, pass rates, attempts, and certificates by edition.",
-              )}
-            </p>
-          </div>
-          <div className="rounded-lg border border-border bg-white p-5">
-            <Award className="h-6 w-6 text-primary" />
-            <h3 className="mt-4 font-semibold">{t("Credenciales verificables", "Verifiable credentials")}</h3>
-            <p className="mt-2 text-sm leading-6 text-muted-foreground">
-              {t(
-                "Certificados digitales con código de verificación y descarga en PDF.",
-                "Digital certificates with verification code and PDF download.",
-              )}
-            </p>
-          </div>
         </div>
       </section>
     </div>
