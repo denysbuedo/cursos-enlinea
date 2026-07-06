@@ -372,6 +372,17 @@ export default function CmsPage() {
   });
 
   const t = (es: string, en: string) => (lang === "en" ? en : es);
+  async function cmsFetch(input: RequestInfo | URL, init?: RequestInit) {
+    let response = await fetch(input, init);
+    if (response.status !== 401) return response;
+
+    const refresh = await fetch("/api/auth/refresh", { method: "POST" });
+    if (!refresh.ok) return response;
+
+    response = await fetch(input, init);
+    return response;
+  }
+
   const selectedCourse = courses.find((course) => course.id === selectedCourseId);
   const selectedEvaluation = selectedCourse?.evaluations?.[0];
   const selectedSessionCount =
@@ -830,7 +841,7 @@ export default function CmsPage() {
     setSaving(true);
     setError("");
     try {
-      const res = await fetch(`/api/courses/${selectedCourse.id}/sessions`, {
+      const res = await cmsFetch(`/api/courses/${selectedCourse.id}/sessions`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -841,11 +852,14 @@ export default function CmsPage() {
           order: sessionForm.order ? Number(sessionForm.order) : undefined,
         }),
       });
-      if (!res.ok) throw new Error();
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || t("No se pudo guardar la sesión.", "Could not save session."));
+      }
       resetSessionForm(sessionForm.moduleId);
       await loadCourses(selectedCourse.id);
-    } catch {
-      setError(t("No se pudo guardar la sesión.", "Could not save session."));
+    } catch (e) {
+      setError(e instanceof Error ? e.message : t("No se pudo guardar la sesión.", "Could not save session."));
     } finally {
       setSaving(false);
     }
@@ -858,7 +872,7 @@ export default function CmsPage() {
     try {
       const formData = new FormData();
       formData.append("file", file);
-      const res = await fetch(`/api/courses/${selectedCourse.id}/videos/upload`, {
+      const res = await cmsFetch(`/api/courses/${selectedCourse.id}/videos/upload`, {
         method: "POST",
         body: formData,
       });
@@ -886,7 +900,7 @@ export default function CmsPage() {
     try {
       const formData = new FormData();
       formData.append("file", file);
-      const res = await fetch(`/api/courses/${selectedCourse.id}/resources/upload`, {
+      const res = await cmsFetch(`/api/courses/${selectedCourse.id}/resources/upload`, {
         method: "POST",
         body: formData,
       });

@@ -154,7 +154,13 @@ export async function POST(
     }
 
     return NextResponse.json({ data: result }, { status: sessionId ? 200 : 201 });
-  } catch {
+  } catch (error) {
+    if (error instanceof Error && error.message === "UNAUTHORIZED") {
+      return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+    }
+    if (error instanceof Error && error.message === "FORBIDDEN") {
+      return NextResponse.json({ error: "Acceso denegado" }, { status: 403 });
+    }
     return NextResponse.json({ error: "Error del servidor" }, { status: 500 });
   }
 }
