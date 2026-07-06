@@ -87,6 +87,9 @@ interface CmsQuestion {
   feedback: LocalizedText;
   points: number;
   tags?: string[];
+  difficulty?: "BASIC" | "INTERMEDIATE" | "ADVANCED";
+  topic?: string;
+  moduleId?: string;
 }
 
 interface CmsEvaluation {
@@ -165,6 +168,14 @@ interface EvaluationFormState {
   questions: CmsQuestion[];
 }
 
+interface BankSelectionState {
+  count: string;
+  tag: string;
+  difficulty: string;
+  moduleId: string;
+  topic: string;
+}
+
 interface EditionFormState {
   editionId: string;
   name: LocalizedText;
@@ -236,6 +247,9 @@ function createQuestion(type: QuestionType = "MCQ"): CmsQuestion {
     feedback: { ...emptyText },
     points: 1,
     tags: [],
+    difficulty: "BASIC",
+    topic: "",
+    moduleId: "",
   };
 }
 
@@ -277,6 +291,13 @@ export default function CmsPage() {
   const [searchingStudents, setSearchingStudents] = useState(false);
   const [analytics, setAnalytics] = useState<CourseAnalytics | null>(null);
   const [questionBank, setQuestionBank] = useState<CmsQuestion[]>([]);
+  const [bankSelection, setBankSelection] = useState<BankSelectionState>({
+    count: "",
+    tag: "",
+    difficulty: "",
+    moduleId: "",
+    topic: "",
+  });
   const [resourceForm, setResourceForm] = useState({
     title: "",
     url: "",
@@ -647,7 +668,14 @@ export default function CmsPage() {
       shuffleQuestions: evaluation?.shuffleQuestions !== false,
       shuffleOptions: evaluation?.shuffleOptions !== false,
       questions: evaluation?.questions?.length
-        ? evaluation.questions.map((question) => ({ ...question, feedback: question.feedback || { ...emptyText }, tags: question.tags || [] }))
+        ? evaluation.questions.map((question) => ({
+            ...question,
+            feedback: question.feedback || { ...emptyText },
+            tags: question.tags || [],
+            difficulty: question.difficulty || "BASIC",
+            topic: question.topic || "",
+            moduleId: question.moduleId || "",
+          }))
         : [createQuestion()],
     });
   }
@@ -1022,14 +1050,33 @@ export default function CmsPage() {
       setError(t("El banco de preguntas está vacío.", "Question bank is empty."));
       return;
     }
+    const requestedCount = Number(bankSelection.count || 0);
+    let candidates = questionBank.filter((question) => {
+      const tagMatches = !bankSelection.tag.trim() || (question.tags || []).some((tag) => tag.toLowerCase() === bankSelection.tag.trim().toLowerCase());
+      const difficultyMatches = !bankSelection.difficulty || question.difficulty === bankSelection.difficulty;
+      const moduleMatches = !bankSelection.moduleId || question.moduleId === bankSelection.moduleId;
+      const topicMatches = !bankSelection.topic.trim() || (question.topic || "").toLowerCase().includes(bankSelection.topic.trim().toLowerCase());
+      return tagMatches && difficultyMatches && moduleMatches && topicMatches;
+    });
+    candidates = candidates.sort(() => Math.random() - 0.5);
+    if (requestedCount > 0) {
+      candidates = candidates.slice(0, requestedCount);
+    }
+    if (candidates.length === 0) {
+      setError(t("No hay preguntas que coincidan con esos filtros.", "No questions match those filters."));
+      return;
+    }
     setError("");
     setEvaluationForm((prev) => ({
       ...prev,
-      questions: questionBank.map((question) => ({
+      questions: candidates.map((question) => ({
         ...question,
         id: `q-${Date.now()}-${question.id}`,
         feedback: question.feedback || { ...emptyText },
         tags: question.tags || [],
+        difficulty: question.difficulty || "BASIC",
+        topic: question.topic || "",
+        moduleId: question.moduleId || "",
       })),
     }));
     setActiveSection("evaluation");
@@ -1916,6 +1963,23 @@ export default function CmsPage() {
                     {t("Usar banco en evaluación", "Use bank in evaluation")}
                   </button>
                 </div>
+                <div className="mt-4 grid gap-3 md:grid-cols-5">
+                  <input className="rounded-md border px-3 py-2 text-sm" placeholder={t("Cantidad", "Count")} value={bankSelection.count} onChange={(e) => setBankSelection({ ...bankSelection, count: e.target.value })} />
+                  <input className="rounded-md border px-3 py-2 text-sm" placeholder={t("Etiqueta", "Tag")} value={bankSelection.tag} onChange={(e) => setBankSelection({ ...bankSelection, tag: e.target.value })} />
+                  <select className="rounded-md border px-3 py-2 text-sm" value={bankSelection.difficulty} onChange={(e) => setBankSelection({ ...bankSelection, difficulty: e.target.value })}>
+                    <option value="">{t("Cualquier dificultad", "Any difficulty")}</option>
+                    <option value="BASIC">{t("Básica", "Basic")}</option>
+                    <option value="INTERMEDIATE">{t("Intermedia", "Intermediate")}</option>
+                    <option value="ADVANCED">{t("Avanzada", "Advanced")}</option>
+                  </select>
+                  <select className="rounded-md border px-3 py-2 text-sm" value={bankSelection.moduleId} onChange={(e) => setBankSelection({ ...bankSelection, moduleId: e.target.value })}>
+                    <option value="">{t("Cualquier módulo", "Any module")}</option>
+                    {selectedCourse.modules.map((module) => (
+                      <option key={module.id} value={module.id}>{module.order}. {t(module.title.es, module.title.en)}</option>
+                    ))}
+                  </select>
+                  <input className="rounded-md border px-3 py-2 text-sm" placeholder={t("Tema", "Topic")} value={bankSelection.topic} onChange={(e) => setBankSelection({ ...bankSelection, topic: e.target.value })} />
+                </div>
                 <div className="mt-5 space-y-2">
                   {questionBank.length === 0 ? (
                     <div className="rounded-md border border-dashed p-6 text-center text-sm text-[#7b8fa1]">
@@ -1927,9 +1991,9 @@ export default function CmsPage() {
                         <p className="font-medium">{index + 1}. {t(question.question.es, question.question.en)}</p>
                         <span className="text-xs text-[#7b8fa1]">{question.type} · {question.points} pt</span>
                       </div>
-                      {question.tags && question.tags.length > 0 && (
-                        <p className="mt-1 text-xs text-[#7b8fa1]">{question.tags.join(", ")}</p>
-                      )}
+                      <p className="mt-1 text-xs text-[#7b8fa1]">
+                        {[question.difficulty || "BASIC", question.topic, question.moduleId ? selectedCourse.modules.find((module) => module.id === question.moduleId)?.title.es : "", ...(question.tags || [])].filter(Boolean).join(" · ")}
+                      </p>
                     </div>
                   ))}
                 </div>
@@ -2009,6 +2073,18 @@ export default function CmsPage() {
                         <input className="rounded-md border px-3 py-2 text-sm" placeholder="Puntos" value={question.points} onChange={(e) => updateQuestion(questionIndex, { points: Number(e.target.value || 1) })} />
                         <input className="rounded-md border px-3 py-2 text-sm" placeholder="Pregunta ES" value={question.question.es} onChange={(e) => updateQuestion(questionIndex, { question: { ...question.question, es: e.target.value } })} />
                         <input className="rounded-md border px-3 py-2 text-sm" placeholder="Question EN" value={question.question.en} onChange={(e) => updateQuestion(questionIndex, { question: { ...question.question, en: e.target.value } })} />
+                        <select className="rounded-md border px-3 py-2 text-sm" value={question.difficulty || "BASIC"} onChange={(e) => updateQuestion(questionIndex, { difficulty: e.target.value as CmsQuestion["difficulty"] })}>
+                          <option value="BASIC">{t("Básica", "Basic")}</option>
+                          <option value="INTERMEDIATE">{t("Intermedia", "Intermediate")}</option>
+                          <option value="ADVANCED">{t("Avanzada", "Advanced")}</option>
+                        </select>
+                        <select className="rounded-md border px-3 py-2 text-sm" value={question.moduleId || ""} onChange={(e) => updateQuestion(questionIndex, { moduleId: e.target.value })}>
+                          <option value="">{t("Sin módulo asociado", "No linked module")}</option>
+                          {selectedCourse.modules.map((module) => (
+                            <option key={module.id} value={module.id}>{module.order}. {t(module.title.es, module.title.en)}</option>
+                          ))}
+                        </select>
+                        <input className="rounded-md border px-3 py-2 text-sm" placeholder={t("Tema", "Topic")} value={question.topic || ""} onChange={(e) => updateQuestion(questionIndex, { topic: e.target.value })} />
                         <input className="rounded-md border px-3 py-2 text-sm md:col-span-2" placeholder={t("Etiquetas separadas por coma", "Comma-separated tags")} value={(question.tags || []).join(", ")} onChange={(e) => updateQuestion(questionIndex, { tags: e.target.value.split(",").map((tag) => tag.trim()).filter(Boolean) })} />
                       </div>
 

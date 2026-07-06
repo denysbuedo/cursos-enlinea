@@ -286,7 +286,7 @@ El submit ocurre en `/api/evaluations/[id]/submit`. La corrección es server-sid
 
 Por defecto, el seed usa `passingScore = 80`.
 
-El endpoint `/api/courses/[id]/question-bank` permite a administradores e instructores mantener un banco básico de preguntas reutilizables por curso. En esta versión el banco se guarda como JSON en `Course.questionBank` y puede reutilizarse para poblar la evaluación final.
+El endpoint `/api/courses/[id]/question-bank` permite a administradores e instructores mantener un banco de preguntas reutilizables por curso. En esta versión el banco se guarda como JSON en `Course.questionBank`; cada pregunta puede incluir etiquetas, dificultad, tema y módulo asociado. El CMS puede poblar la evaluación final desde el banco aplicando cantidad y filtros por etiqueta, dificultad, tema o módulo.
 
 ### 9. Certificados
 

@@ -216,11 +216,16 @@ test.describe("R1 critical flows", () => {
           feedback: { es: "Correcto: la automatización permite escalar.", en: "Correct: automation enables scale." },
           points: 1,
           tags: ["mooc", "evaluacion"],
+          difficulty: "BASIC",
+          topic: "Escalabilidad",
+          moduleId: courseModule.id,
         },
       ],
     });
     expectOk(questionBankResponse);
     expect(questionBankResponse.json.data).toHaveLength(1);
+    expect(questionBankResponse.json.data[0].difficulty).toBe("BASIC");
+    expect(questionBankResponse.json.data[0].topic).toBe("Escalabilidad");
 
     const analyticsResponse = await page.evaluate(async (courseId) => {
       const response = await fetch(`/api/courses/${courseId}/analytics`);

@@ -11,6 +11,10 @@ type QuestionInput = {
   correctAnswer?: string;
   feedback?: { es?: string; en?: string };
   points?: number;
+  tags?: string[];
+  difficulty?: "BASIC" | "INTERMEDIATE" | "ADVANCED";
+  topic?: string;
+  moduleId?: string;
 };
 
 async function getEditableCourse(courseIdOrSlug: string, userId: string, role: string) {
@@ -124,6 +128,10 @@ export async function POST(
         en: question.feedback?.en || question.feedback?.es || "",
       },
       points: Number(question.points || 1),
+      tags: Array.isArray(question.tags) ? question.tags.map(String).filter(Boolean) : [],
+      difficulty: ["BASIC", "INTERMEDIATE", "ADVANCED"].includes(String(question.difficulty)) ? question.difficulty : "BASIC",
+      topic: String(question.topic || "").trim(),
+      moduleId: String(question.moduleId || "").trim(),
     }));
 
     const evaluation = await prisma.evaluation.upsert({
