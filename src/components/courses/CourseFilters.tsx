@@ -1,6 +1,6 @@
 "use client";
 
-import { Search } from "lucide-react";
+import { CircleDollarSign, ListFilter, Search } from "lucide-react";
 
 interface CourseFiltersProps {
   lang: string;
@@ -35,40 +35,48 @@ export function CourseFilters({
   const tl = (es: string, en: string) => (lang === "en" ? en : es);
 
   return (
-    <div className="flex flex-col sm:flex-row gap-4 mb-8">
-      <div className="relative flex-1">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+    <div className="mb-8 grid gap-3 rounded-lg border border-border bg-white p-3 shadow-sm sm:grid-cols-[1fr_auto_auto]">
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         <input
           type="text"
           placeholder={tl("Buscar cursos...", "Search courses...")}
           onChange={(e) => onSearch(e.target.value)}
-          className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-200 bg-white text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+          className="focus-ring w-full rounded-md border border-border bg-background py-2.5 pl-10 pr-4 text-sm text-foreground transition-colors placeholder:text-muted-foreground"
         />
       </div>
 
-      <select
-        value={selectedCurrency}
-        onChange={(e) => onCurrencyChange(e.target.value)}
-        className="px-4 py-2.5 rounded-lg border border-gray-200 bg-white text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
-      >
-        {currencies.map((c) => (
-          <option key={c.value} value={c.value}>
-            💰 {tl(c.labelEs, c.labelEn)}
-          </option>
-        ))}
-      </select>
+      <label className="relative block">
+        <CircleDollarSign className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <select
+          value={selectedCurrency}
+          onChange={(e) => onCurrencyChange(e.target.value)}
+          className="focus-ring w-full appearance-none rounded-md border border-border bg-background py-2.5 pl-10 pr-8 text-sm text-foreground transition-colors sm:w-36"
+          aria-label={tl("Filtrar por moneda", "Filter by currency")}
+        >
+          {currencies.map((c) => (
+            <option key={c.value} value={c.value}>
+              {tl(c.labelEs, c.labelEn)}
+            </option>
+          ))}
+        </select>
+      </label>
 
-      <select
-        value={selectedPricingModel}
-        onChange={(e) => onPricingModelChange(e.target.value)}
-        className="px-4 py-2.5 rounded-lg border border-gray-200 bg-white text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
-      >
-        {pricingModels.map((p) => (
-          <option key={p.value} value={p.value}>
-            📚 {tl(p.labelEs, p.labelEn)}
-          </option>
-        ))}
-      </select>
+      <label className="relative block">
+        <ListFilter className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <select
+          value={selectedPricingModel}
+          onChange={(e) => onPricingModelChange(e.target.value)}
+          className="focus-ring w-full appearance-none rounded-md border border-border bg-background py-2.5 pl-10 pr-8 text-sm text-foreground transition-colors sm:w-40"
+          aria-label={tl("Filtrar por precio", "Filter by price")}
+        >
+          {pricingModels.map((p) => (
+            <option key={p.value} value={p.value}>
+              {tl(p.labelEs, p.labelEn)}
+            </option>
+          ))}
+        </select>
+      </label>
     </div>
   );
 }

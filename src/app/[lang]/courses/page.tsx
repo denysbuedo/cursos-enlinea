@@ -5,6 +5,8 @@ import { useParams } from "next/navigation";
 import { getDictionary, getLangFromParams } from "@/lib/i18n";
 import { CourseCard } from "@/components/courses/CourseCard";
 import { CourseFilters } from "@/components/courses/CourseFilters";
+import { ArrowRight, BookOpenCheck, GraduationCap } from "lucide-react";
+import Link from "next/link";
 
 interface CourseData {
   id: string;
@@ -73,13 +75,22 @@ export default function CoursesPage() {
   const totalPages = Math.ceil(total / pageSize);
 
   return (
-    <div className="container mx-auto py-10 px-4">
-      <h1 className="text-3xl font-bold mb-2">{dict.courses.allCourses}</h1>
-      <p className="text-[#7b8fa1] mb-8">
-        {lang === "en"
-          ? "Browse our catalog of courses with verifiable certificates."
-          : "Explora nuestro catálogo de cursos con certificados verificables."}
-      </p>
+    <div className="app-surface min-h-[calc(100vh-8rem)]">
+      <div className="container mx-auto px-4 py-10">
+      <div className="mb-8 rounded-lg border border-border bg-white p-6 shadow-sm">
+        <div>
+          <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1 text-sm font-medium text-primary">
+            <GraduationCap className="h-4 w-4" />
+            {lang === "en" ? "MOOC catalog" : "Catálogo MOOC"}
+          </div>
+          <h1 className="text-3xl font-bold">{dict.courses.allCourses}</h1>
+          <p className="mt-2 max-w-2xl text-muted-foreground">
+            {lang === "en"
+              ? "Browse self-paced courses with short lessons, automatic assessment, and verifiable certificates."
+              : "Explora cursos autónomos con lecciones breves, evaluación automática y certificados verificables."}
+          </p>
+        </div>
+      </div>
 
       <CourseFilters
         lang={lang}
@@ -99,15 +110,29 @@ export default function CoursesPage() {
       {loading ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {Array.from({ length: 6 }).map((_, i) => (
-            <div
-              key={i}
-              className="h-64 rounded-xl border bg-[#e8ecf1] animate-pulse"
-            />
+            <div key={i} className="h-72 animate-pulse rounded-lg border border-border bg-white" />
           ))}
         </div>
       ) : courses.length === 0 ? (
-        <div className="text-center py-16">
-          <p className="text-lg text-[#7b8fa1]">{dict.common.noResults}</p>
+        <div className="rounded-lg border border-dashed border-border bg-white px-5 py-14 text-center">
+          <BookOpenCheck className="mx-auto mb-4 h-12 w-12 text-primary" />
+          <h2 className="text-xl font-semibold">
+            {lang === "en" ? "No courses published yet" : "Aún no hay cursos publicados"}
+          </h2>
+          <p className="mx-auto mt-2 max-w-xl text-sm leading-6 text-muted-foreground">
+            {lang === "en"
+              ? "The catalog is ready. Published MOOCs will appear here with their lessons, assessments, and certificates."
+              : "El catálogo está listo. Los MOOCs publicados aparecerán aquí con sus lecciones, evaluaciones y certificados."}
+          </p>
+          <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row">
+            <Link href={`/${lang}`} className="focus-ring inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#1b4967]">
+              {lang === "en" ? "Back to home" : "Volver al inicio"}
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+            <Link href={`/${lang}/dashboard`} className="focus-ring inline-flex items-center justify-center rounded-lg border border-border px-4 py-2.5 text-sm font-semibold hover:bg-accent">
+              {lang === "en" ? "Student dashboard" : "Panel del estudiante"}
+            </Link>
+          </div>
         </div>
       ) : (
         <>
@@ -134,7 +159,7 @@ export default function CoursesPage() {
               >
                 {lang === "en" ? "Previous" : "Anterior"}
               </button>
-              <span className="text-sm text-[#7b8fa1] px-4">
+              <span className="px-4 text-sm text-muted-foreground">
                 {page} / {totalPages}
               </span>
               <button
@@ -148,6 +173,7 @@ export default function CoursesPage() {
           )}
         </>
       )}
+      </div>
     </div>
   );
 }
