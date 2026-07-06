@@ -24,7 +24,12 @@ export async function GET(
 ) {
   const { path: pathParts } = await params;
   const filePath = pathParts.join("/");
-  const fullPath = path.join(process.cwd(), "uploads", filePath);
+  const uploadsRoot = path.resolve(process.cwd(), "uploads");
+  const fullPath = path.resolve(uploadsRoot, filePath);
+
+  if (fullPath !== uploadsRoot && !fullPath.startsWith(`${uploadsRoot}${path.sep}`)) {
+    return NextResponse.json({ error: "Ruta inválida" }, { status: 400 });
+  }
 
   if (!existsSync(fullPath)) {
     return NextResponse.json({ error: "Archivo no encontrado" }, { status: 404 });

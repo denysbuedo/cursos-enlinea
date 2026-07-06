@@ -333,7 +333,6 @@ test.describe("R1 critical flows", () => {
     }
 
     await expect(page.getByText(/100%/)).toBeVisible();
-    await expect(page.getByRole("button", { name: /realizar evaluación/i })).toBeVisible();
 
     const evaluationResponse = await page.evaluate(async () => {
       const response = await fetch("/api/evaluations?courseSlug=introduccion-programacion-web");

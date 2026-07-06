@@ -35,7 +35,7 @@ El estado actual es una base funcional validada localmente, no una plataforma fi
 | Base de datos | PostgreSQL |
 | ORM | Prisma |
 | Autenticación | Sesiones propias con cookies, refresh y logout |
-| Archivos | Almacenamiento local vía API `/api/uploads` |
+| Archivos | Storage configurable: local, Cloudflare R2 o Supabase Storage |
 | Pruebas E2E | Playwright |
 | Validación local | `npm run lint`, `npm run build`, `npm run test:e2e:local` |
 
@@ -165,7 +165,7 @@ Sigue siendo diseño o pendiente:
 - banco de preguntas reutilizable;
 - aleatorización de preguntas;
 - importación masiva de contenidos;
-- almacenamiento externo real tipo S3/R2/MinIO;
+- almacenamiento externo real tipo S3/R2/MinIO para producción;
 - moderación/comunidad;
 - colas/background jobs;
 - observabilidad;
@@ -221,7 +221,7 @@ Desde el CMS de sesiones:
 - se permite URL externa genérica;
 - se permite subir archivo local de video.
 
-La subida local pasa por `/api/courses/[id]/videos/upload` y luego se sirve desde `/api/uploads`.
+La subida pasa por `/api/courses/[id]/videos/upload`. En desarrollo puede servirse desde `/api/uploads`; en producción se recomienda configurar Cloudflare R2 o Supabase Storage.
 
 ### ¿Cómo se suben y administran los materiales complementarios?
 
@@ -231,7 +231,7 @@ Desde el CMS de sesiones:
 - se puede agregar URL de repositorio de objetos de aprendizaje;
 - se puede subir archivo local.
 
-La subida local pasa por `/api/courses/[id]/resources/upload` y luego se sirve desde `/api/uploads`.
+La subida pasa por `/api/courses/[id]/resources/upload`. En desarrollo puede servirse desde `/api/uploads`; en producción se recomienda configurar Cloudflare R2 o Supabase Storage.
 
 ### ¿Existe soporte para varios instructores y múltiples ediciones de un curso?
 
@@ -297,7 +297,7 @@ Prioridad alta:
 - aleatorización de preguntas y opciones;
 - reportes de progreso por curso y edición;
 - dashboard de analítica MOOC;
-- almacenamiento externo de archivos;
+- configurar bucket externo definitivo para videos, materiales y comprobantes;
 - revisión de seguridad de subida de archivos;
 - migraciones formales en vez de depender de `db push`.
 
@@ -319,4 +319,3 @@ Prioridad producción:
 - política de retención de archivos;
 - despliegue y variables por entorno;
 - CI/CD con ejecución automática de lint, build y E2E.
-

@@ -215,22 +215,37 @@ Los métodos modelados son:
 
 El panel admin muestra pagos pendientes. Al verificar un pago, la matrícula pasa a activa; al rechazarlo, se conserva el motivo.
 
-### 6. Storage de comprobantes
+### 6. Storage de archivos
 
 `src/lib/storage.ts` decide el proveedor así:
 
-1. Si `STORAGE_FALLBACK` está configurado como `supabase`, `r2` o `local`, usa ese valor.
-2. Si no hay Supabase ni R2 configurados, usa almacenamiento local.
-3. Si hay Supabase, intenta Supabase Storage.
-4. Si no, intenta Cloudflare R2.
+1. Si `STORAGE_PROVIDER` está configurado como `supabase`, `r2` o `local`, usa ese valor.
+2. Si `STORAGE_FALLBACK` está configurado, lo usa como compatibilidad temporal.
+3. Si no hay Supabase ni R2 configurados, usa almacenamiento local.
+4. Si hay Supabase, intenta Supabase Storage.
+5. Si no, intenta Cloudflare R2.
 
-Si Supabase o R2 fallan, el sistema cae a local y guarda archivos en:
+El fallback local puede desactivarse con:
+
+```text
+STORAGE_ALLOW_LOCAL_FALLBACK="false"
+```
+
+Si Supabase o R2 fallan y el fallback está activo, el sistema cae a local y guarda archivos en:
 
 ```text
 uploads/{bucket}/{filePath}
 ```
 
-Para comprobantes locales, devuelve URLs bajo `/api/uploads/...`.
+Para storage local, devuelve URLs bajo `/api/uploads/...`.
+
+Para Cloudflare R2, la clave se guarda con prefijo lógico de bucket:
+
+```text
+{bucket}/{filePath}
+```
+
+La URL pública se construye con `R2_PUBLIC_URL` cuando está configurada. En producción se recomienda usar un dominio público o custom domain del bucket.
 
 ### 7. Progreso
 
@@ -349,11 +364,13 @@ SUPABASE_URL=""
 SUPABASE_ANON_KEY=""
 SUPABASE_SERVICE_KEY=""
 
-STORAGE_FALLBACK="r2"
+STORAGE_PROVIDER="local"
+STORAGE_ALLOW_LOCAL_FALLBACK="true"
 R2_ACCOUNT_ID=""
 R2_ACCESS_KEY_ID=""
 R2_SECRET_ACCESS_KEY=""
 R2_BUCKET_NAME="edplatform-uploads"
+R2_PUBLIC_URL=""
 
 UPSTASH_REDIS_REST_URL=""
 UPSTASH_REDIS_REST_TOKEN=""
