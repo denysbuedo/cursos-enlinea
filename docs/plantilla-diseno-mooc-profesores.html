@@ -1,0 +1,552 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Plantilla para diseño de MOOC</title>
+  <style>
+    :root {
+      --mes-blue: #005aa9;
+      --mes-blue-dark: #003f78;
+      --text: #17212b;
+      --muted: #52667a;
+      --line: #d8e1ea;
+      --soft: #f4f7fb;
+      --white: #ffffff;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--white);
+      color: var(--text);
+      font-family: Arial, Helvetica, sans-serif;
+      line-height: 1.5;
+    }
+
+    main {
+      max-width: 1080px;
+      margin: 0 auto;
+      padding: 36px 28px 60px;
+    }
+
+    header {
+      border-bottom: 4px solid var(--mes-blue);
+      margin-bottom: 32px;
+      padding-bottom: 18px;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      color: var(--mes-blue-dark);
+      font-size: 30px;
+      line-height: 1.15;
+    }
+
+    h2 {
+      margin: 34px 0 12px;
+      border-bottom: 1px solid var(--line);
+      padding-bottom: 8px;
+      color: var(--mes-blue-dark);
+      font-size: 22px;
+    }
+
+    h3 {
+      margin: 24px 0 10px;
+      color: var(--text);
+      font-size: 17px;
+    }
+
+    p {
+      margin: 8px 0;
+    }
+
+    .intro {
+      max-width: 850px;
+      color: var(--muted);
+      font-size: 15px;
+    }
+
+    .note {
+      border-left: 4px solid var(--mes-blue);
+      background: var(--soft);
+      padding: 12px 14px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .field {
+      min-height: 34px;
+      border: 1px solid var(--line);
+      background: var(--white);
+      padding: 8px;
+    }
+
+    .field.large {
+      min-height: 90px;
+    }
+
+    .field.xlarge {
+      min-height: 150px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    label {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: .02em;
+      text-transform: uppercase;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 10px 0 18px;
+      font-size: 14px;
+    }
+
+    th {
+      background: var(--mes-blue);
+      color: var(--white);
+      text-align: left;
+      font-weight: 700;
+    }
+
+    th,
+    td {
+      border: 1px solid var(--line);
+      padding: 8px;
+      vertical-align: top;
+    }
+
+    td.blank {
+      height: 52px;
+    }
+
+    .section-box {
+      border: 1px solid var(--line);
+      margin-top: 16px;
+      padding: 16px;
+    }
+
+    .module-title {
+      margin: 0 0 12px;
+      color: var(--mes-blue-dark);
+      font-size: 18px;
+    }
+
+    .checklist {
+      columns: 2;
+      margin: 10px 0 0;
+      padding-left: 20px;
+    }
+
+    .checklist li {
+      break-inside: avoid;
+      margin-bottom: 8px;
+    }
+
+    .small {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .page-break {
+      page-break-before: always;
+    }
+
+    @media print {
+      body {
+        font-size: 12px;
+      }
+
+      main {
+        max-width: none;
+        padding: 18mm 14mm;
+      }
+
+      h2 {
+        page-break-after: avoid;
+      }
+
+      table,
+      .section-box {
+        page-break-inside: avoid;
+      }
+
+      .no-print {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <h1>Plantilla para diseño de MOOC</h1>
+      <p class="intro">
+        Documento de trabajo offline para profesores y equipos docentes. Complete esta plantilla antes de montar el curso en la plataforma. La información está organizada según los campos que luego se registran en el CMS.
+      </p>
+      <p class="small no-print">Sugerencia: abra este archivo en el navegador y use “Imprimir / Guardar como PDF” para compartirlo.</p>
+    </header>
+
+    <section>
+      <h2>1. Identificación del curso</h2>
+      <div class="grid">
+        <div>
+          <label>Título del curso en español</label>
+          <div class="field"></div>
+        </div>
+        <div>
+          <label>Título del curso en inglés, si aplica</label>
+          <div class="field"></div>
+        </div>
+        <div>
+          <label>Profesor responsable</label>
+          <div class="field"></div>
+        </div>
+        <div>
+          <label>Institución / facultad / departamento</label>
+          <div class="field"></div>
+        </div>
+        <div>
+          <label>Correo de contacto académico</label>
+          <div class="field"></div>
+        </div>
+        <div>
+          <label>Idioma principal del curso</label>
+          <div class="field">Español / Inglés / Bilingüe / Otro:</div>
+        </div>
+      </div>
+
+      <h3>Descripción breve del curso</h3>
+      <div class="field large"></div>
+
+      <h3>Resumen para catálogo público</h3>
+      <p class="small">Texto corto para que el estudiante entienda rápidamente qué aprenderá y por qué matricularse.</p>
+      <div class="field large"></div>
+    </section>
+
+    <section>
+      <h2>2. Ficha MOOC</h2>
+      <div class="grid-3">
+        <div>
+          <label>Nivel</label>
+          <div class="field">Principiante / Intermedio / Avanzado</div>
+        </div>
+        <div>
+          <label>Duración estimada total</label>
+          <div class="field">_____ horas</div>
+        </div>
+        <div>
+          <label>Dedicación semanal recomendada</label>
+          <div class="field">_____ horas/semana</div>
+        </div>
+        <div>
+          <label>Modalidad</label>
+          <div class="field">Autodirigido / Por edición</div>
+        </div>
+        <div>
+          <label>Certificado</label>
+          <div class="field">Sí / No</div>
+        </div>
+        <div>
+          <label>Precio</label>
+          <div class="field">Gratis / Pago: _______</div>
+        </div>
+      </div>
+
+      <h3>Objetivos de aprendizaje</h3>
+      <table>
+        <thead>
+          <tr>
+            <th style="width: 70px;">No.</th>
+            <th>Al finalizar el curso, el estudiante será capaz de...</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>1</td><td class="blank"></td></tr>
+          <tr><td>2</td><td class="blank"></td></tr>
+          <tr><td>3</td><td class="blank"></td></tr>
+          <tr><td>4</td><td class="blank"></td></tr>
+        </tbody>
+      </table>
+
+      <div class="grid">
+        <div>
+          <h3>Dirigido a</h3>
+          <div class="field large"></div>
+        </div>
+        <div>
+          <h3>Requisitos previos</h3>
+          <div class="field large"></div>
+        </div>
+      </div>
+
+      <h3>Competencias que desarrolla</h3>
+      <div class="field large"></div>
+    </section>
+
+    <section class="page-break">
+      <h2>3. Organización general por módulos</h2>
+      <p class="note">
+        Un MOOC debe organizarse en módulos progresivos. Cada módulo agrupa sesiones breves, actividades, materiales complementarios y evaluaciones automáticas cuando corresponda.
+      </p>
+
+      <table>
+        <thead>
+          <tr>
+            <th style="width: 70px;">Módulo</th>
+            <th>Título del módulo</th>
+            <th>Objetivo o descripción breve</th>
+            <th style="width: 120px;">Horas estimadas</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>1</td><td class="blank"></td><td></td><td></td></tr>
+          <tr><td>2</td><td class="blank"></td><td></td><td></td></tr>
+          <tr><td>3</td><td class="blank"></td><td></td><td></td></tr>
+          <tr><td>4</td><td class="blank"></td><td></td><td></td></tr>
+          <tr><td>5</td><td class="blank"></td><td></td><td></td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section>
+      <h2>4. Plantilla de módulo</h2>
+      <p class="small">Duplique esta sección por cada módulo del curso.</p>
+
+      <div class="section-box">
+        <h3 class="module-title">Módulo ___: ________________________________</h3>
+        <div class="grid">
+          <div>
+            <label>Objetivo del módulo</label>
+            <div class="field large"></div>
+          </div>
+          <div>
+            <label>Resultado esperado</label>
+            <div class="field large"></div>
+          </div>
+        </div>
+
+        <h3>Sesiones del módulo</h3>
+        <table>
+          <thead>
+            <tr>
+              <th style="width: 70px;">Orden</th>
+              <th>Título de la sesión</th>
+              <th>Tipo</th>
+              <th>Duración video</th>
+              <th>¿Vista previa?</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>1</td><td class="blank"></td><td>Grabada / En vivo / Híbrida</td><td></td><td>Sí / No</td></tr>
+            <tr><td>2</td><td class="blank"></td><td>Grabada / En vivo / Híbrida</td><td></td><td>Sí / No</td></tr>
+            <tr><td>3</td><td class="blank"></td><td>Grabada / En vivo / Híbrida</td><td></td><td>Sí / No</td></tr>
+            <tr><td>4</td><td class="blank"></td><td>Grabada / En vivo / Híbrida</td><td></td><td>Sí / No</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="page-break">
+      <h2>5. Plantilla de sesión</h2>
+      <p class="small">Duplique esta sección por cada sesión o lección del curso.</p>
+
+      <div class="section-box">
+        <h3 class="module-title">Sesión ___: ________________________________</h3>
+
+        <div class="grid">
+          <div>
+            <label>Módulo al que pertenece</label>
+            <div class="field"></div>
+          </div>
+          <div>
+            <label>Duración estimada de estudio</label>
+            <div class="field">_____ minutos</div>
+          </div>
+        </div>
+
+        <h3>Descripción de la sesión</h3>
+        <div class="field large"></div>
+
+        <h3>Video de la sesión</h3>
+        <table>
+          <tbody>
+            <tr>
+              <th style="width: 260px;">Fuente principal recomendada</th>
+              <td>YouTube / Vimeo / Repositorio externo / Subida a plataforma / Otro:</td>
+            </tr>
+            <tr>
+              <th>URL del video o ubicación del archivo</th>
+              <td class="blank"></td>
+            </tr>
+            <tr>
+              <th>Duración del video</th>
+              <td>_____ minutos</td>
+            </tr>
+            <tr>
+              <th>Observaciones técnicas</th>
+              <td class="blank"></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>Actividad de práctica</h3>
+        <p class="small">Debe orientar al estudiante a aplicar lo aprendido. Puede no ser calificable.</p>
+        <div class="field xlarge"></div>
+
+        <h3>Bibliografía y materiales complementarios</h3>
+        <p class="small">Pueden estar subidos a la plataforma o venir desde un repositorio de objetos de aprendizaje.</p>
+        <table>
+          <thead>
+            <tr>
+              <th>Título del recurso</th>
+              <th>Tipo</th>
+              <th>Fuente</th>
+              <th>URL o archivo</th>
+              <th>Uso esperado</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td class="blank"></td><td>PDF / enlace / presentación / lectura / dataset / otro</td><td>Repositorio / externo / subida</td><td></td><td></td></tr>
+            <tr><td class="blank"></td><td>PDF / enlace / presentación / lectura / dataset / otro</td><td>Repositorio / externo / subida</td><td></td><td></td></tr>
+            <tr><td class="blank"></td><td>PDF / enlace / presentación / lectura / dataset / otro</td><td>Repositorio / externo / subida</td><td></td><td></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="page-break">
+      <h2>6. Banco de preguntas</h2>
+      <p class="note">
+        Para que el MOOC sea escalable, priorice preguntas autocorregibles con retroalimentación inmediata. Use etiquetas, dificultad y módulo para permitir evaluaciones aleatorias.
+      </p>
+
+      <table>
+        <thead>
+          <tr>
+            <th style="width: 60px;">No.</th>
+            <th>Módulo / tema</th>
+            <th>Dificultad</th>
+            <th>Etiqueta(s)</th>
+            <th>Tipo</th>
+            <th>Pregunta</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>1</td><td></td><td>Baja / Media / Alta</td><td></td><td>Opción múltiple / V-F</td><td class="blank"></td></tr>
+          <tr><td>2</td><td></td><td>Baja / Media / Alta</td><td></td><td>Opción múltiple / V-F</td><td class="blank"></td></tr>
+          <tr><td>3</td><td></td><td>Baja / Media / Alta</td><td></td><td>Opción múltiple / V-F</td><td class="blank"></td></tr>
+          <tr><td>4</td><td></td><td>Baja / Media / Alta</td><td></td><td>Opción múltiple / V-F</td><td class="blank"></td></tr>
+        </tbody>
+      </table>
+
+      <h3>Detalle de pregunta</h3>
+      <p class="small">Duplique este bloque para cada pregunta.</p>
+      <div class="section-box">
+        <label>Enunciado</label>
+        <div class="field large"></div>
+        <label>Opciones de respuesta</label>
+        <table>
+          <tbody>
+            <tr><td style="width: 60px;">A</td><td class="blank"></td><td style="width: 130px;">Correcta: Sí / No</td></tr>
+            <tr><td>B</td><td class="blank"></td><td>Correcta: Sí / No</td></tr>
+            <tr><td>C</td><td class="blank"></td><td>Correcta: Sí / No</td></tr>
+            <tr><td>D</td><td class="blank"></td><td>Correcta: Sí / No</td></tr>
+          </tbody>
+        </table>
+        <label>Retroalimentación para respuesta correcta</label>
+        <div class="field large"></div>
+        <label>Retroalimentación para respuesta incorrecta</label>
+        <div class="field large"></div>
+      </div>
+    </section>
+
+    <section>
+      <h2>7. Evaluación final</h2>
+      <div class="grid-3">
+        <div>
+          <label>Puntuación mínima de aprobación</label>
+          <div class="field">_____%</div>
+        </div>
+        <div>
+          <label>Número de intentos</label>
+          <div class="field">_____</div>
+        </div>
+        <div>
+          <label>Selección de preguntas</label>
+          <div class="field">Fija / Aleatoria por etiqueta</div>
+        </div>
+      </div>
+
+      <h3>Reglas de selección aleatoria, si aplica</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Etiqueta / tema</th>
+            <th>Cantidad de preguntas</th>
+            <th>Dificultad requerida</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td class="blank"></td><td></td><td></td></tr>
+          <tr><td class="blank"></td><td></td><td></td></tr>
+          <tr><td class="blank"></td><td></td><td></td></tr>
+        </tbody>
+      </table>
+
+      <h3>Criterios para certificación</h3>
+      <div class="field large">
+        Completar sesiones: Sí / No<br />
+        Aprobar evaluación final: Sí / No<br />
+        Otro requisito:
+      </div>
+    </section>
+
+    <section class="page-break">
+      <h2>8. Checklist antes de entregar el curso</h2>
+      <ul class="checklist">
+        <li>El curso tiene título y descripción claros.</li>
+        <li>La ficha MOOC está completa.</li>
+        <li>Los objetivos de aprendizaje son verificables.</li>
+        <li>El curso está organizado por módulos.</li>
+        <li>Cada módulo tiene objetivo o descripción.</li>
+        <li>Las sesiones son breves y están ordenadas.</li>
+        <li>Cada sesión indica video o recurso principal.</li>
+        <li>Los videos tienen URL o archivo localizado.</li>
+        <li>Las prácticas están redactadas para trabajo autónomo.</li>
+        <li>La bibliografía está separada del video.</li>
+        <li>Los materiales indican fuente: repositorio, externo o subida.</li>
+        <li>Existe banco de preguntas autocorregibles.</li>
+        <li>Las preguntas tienen retroalimentación.</li>
+        <li>La evaluación final tiene criterio de aprobación.</li>
+        <li>Se definió si el curso emite certificado.</li>
+        <li>No depende de tutoría individual para poder completarse.</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>9. Observaciones del equipo docente</h2>
+      <div class="field xlarge"></div>
+    </section>
+  </main>
+</body>
+</html>
