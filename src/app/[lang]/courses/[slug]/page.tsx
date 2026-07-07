@@ -305,17 +305,17 @@ export default function CourseDetailPage() {
   };
 
   return (
-    <div className="container mx-auto py-10 px-4 max-w-6xl">
+    <div className="mx-auto max-w-7xl px-4 py-10">
       <nav className="text-sm text-[#7b8fa1] mb-6">
         <Link href={`/${lang}/courses`} className="hover:text-black">{dict.courses.allCourses}</Link>
         <span className="mx-2">/</span>
         <span className="text-black">{t(course.title.es, course.title.en)}</span>
       </nav>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2 space-y-8">
+      <div className="grid grid-cols-1 gap-10 lg:grid-cols-[minmax(0,1fr)_320px]">
+        <div className="space-y-10">
           {/* Title + badges */}
-          <div>
+          <header className="border-b border-[#d8e1ea] pb-8">
             <div className="flex items-center gap-3 mb-3 flex-wrap">
               <span style={{background:isFree?"#d5f5e3":"#fef3c6", color:"#000"}} className="inline-flex items-center rounded-full px-3 py-1 text-sm font-medium">
                 {isFree ? dict.courses.free : `${currencySymbol[course.currency] || ""}${course.price} ${course.currency}`}
@@ -335,50 +335,55 @@ export default function CourseDetailPage() {
                 </span>
               )}
             </div>
-            <h1 className="text-3xl font-bold tracking-tight">{t(course.title.es, course.title.en)}</h1>
-          </div>
+            <h1 className="max-w-4xl text-4xl font-semibold tracking-tight text-[#17212b]">
+              {t(course.title.es, course.title.en)}
+            </h1>
+            <p className="mt-5 max-w-3xl text-lg leading-8 text-[#52667a]">
+              {t(course.description.es, course.description.en)}
+            </p>
+          </header>
 
-          {/* Description */}
-          <div className="prose dark:prose-invert max-w-none">
-            <p className="text-[#7b8fa1] leading-relaxed">{t(course.description.es, course.description.en)}</p>
-          </div>
-
-          <section className="rounded-xl border p-5">
-            <h2 className="mb-4 text-xl font-semibold">{t("Ficha del curso", "Course profile")}</h2>
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <section>
+            <div className="mb-5 flex items-center justify-between gap-4 border-b border-[#d8e1ea] pb-3">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary">MOOC</p>
+                <h2 className="text-2xl font-semibold text-[#17212b]">{t("Ficha académica", "Academic profile")}</h2>
+              </div>
+            </div>
+            <div className="grid gap-px overflow-hidden border border-[#d8e1ea] bg-[#d8e1ea] sm:grid-cols-2 lg:grid-cols-3">
               {course.estimatedHours && (
-                <div className="rounded-md bg-accent/50 p-3">
+                <div className="bg-white p-4">
                   <p className="text-xs text-[#7b8fa1]">{t("Duración estimada", "Estimated duration")}</p>
                   <p className="font-medium">{course.estimatedHours} {t("horas", "hours")}</p>
                 </div>
               )}
               {course.weeklyHours && (
-                <div className="rounded-md bg-accent/50 p-3">
+                <div className="bg-white p-4">
                   <p className="text-xs text-[#7b8fa1]">{t("Esfuerzo semanal", "Weekly effort")}</p>
                   <p className="font-medium">{course.weeklyHours} {t("horas", "hours")}</p>
                 </div>
               )}
               {course.level && (
-                <div className="rounded-md bg-accent/50 p-3">
+                <div className="bg-white p-4">
                   <p className="text-xs text-[#7b8fa1]">{t("Nivel", "Level")}</p>
                   <p className="font-medium">{levelLabel[course.level] || course.level}</p>
                 </div>
               )}
-              <div className="rounded-md bg-accent/50 p-3">
+              <div className="bg-white p-4">
                 <p className="text-xs text-[#7b8fa1]">{t("Ritmo", "Pace")}</p>
                 <p className="font-medium">{course.selfPaced !== false ? t("Autodirigido", "Self-paced") : t("Por edición", "Cohort-based")}</p>
               </div>
-              <div className="rounded-md bg-accent/50 p-3">
+              <div className="bg-white p-4">
                 <p className="text-xs text-[#7b8fa1]">{t("Idioma", "Language")}</p>
                 <p className="font-medium">{(course.language || "es").toUpperCase()}</p>
               </div>
-              <div className="rounded-md bg-accent/50 p-3">
+              <div className="bg-white p-4">
                 <p className="text-xs text-[#7b8fa1]">{t("Certificado", "Certificate")}</p>
                 <p className="font-medium">{course.certificateAvailable !== false ? t("Disponible", "Available") : t("No disponible", "Not available")}</p>
               </div>
             </div>
 
-            <div className="mt-5 grid gap-5 md:grid-cols-2">
+            <div className="mt-8 grid gap-8 md:grid-cols-2">
               {[
                 { title: t("Qué aprenderás", "What you will learn"), items: objectives },
                 { title: t("A quién va dirigido", "Who this is for"), items: audience },
@@ -386,7 +391,7 @@ export default function CourseDetailPage() {
                 { title: t("Competencias", "Competencies"), items: competencies },
               ].filter((section) => section.items.length > 0).map((section) => (
                 <div key={section.title}>
-                  <h3 className="mb-2 text-sm font-semibold">{section.title}</h3>
+                  <h3 className="mb-3 border-b border-[#d8e1ea] pb-2 text-base font-semibold text-[#17212b]">{section.title}</h3>
                   <ul className="space-y-1 text-sm text-[#506478]">
                     {section.items.map((item) => (
                       <li key={item} className="flex gap-2">
@@ -402,7 +407,7 @@ export default function CourseDetailPage() {
 
           {/* Progress bar */}
           {course.isEnrolled && (
-            <div className="rounded-xl border p-5">
+            <section className="border-y border-[#d8e1ea] py-5">
               <div className="flex justify-between text-sm mb-2">
                 <span className="font-medium">{dict.courses.progress}</span>
                 <span className="text-[#7b8fa1]">{Math.round(progress)}%</span>
@@ -410,17 +415,28 @@ export default function CourseDetailPage() {
               <div className="h-3 rounded-full bg-[#e8ecf1] overflow-hidden">
                 <div className="h-full rounded-full bg-primary transition-all duration-700 ease-out" style={{ width: `${Math.min(100, progress)}%` }} />
               </div>
-            </div>
+            </section>
           )}
 
           {/* Sessions */}
-          <div>
-            <h2 className="text-xl font-semibold mb-4">{dict.courses.sessions} ({totalSessions})</h2>
+          <section>
+            <div className="mb-6 border-b border-[#d8e1ea] pb-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary">
+                {t("Programa del curso", "Course program")}
+              </p>
+              <h2 className="text-2xl font-semibold text-[#17212b]">{dict.courses.sessions} ({totalSessions})</h2>
+              <p className="mt-2 max-w-3xl text-sm leading-6 text-[#52667a]">
+                {t(
+                  "Cada módulo organiza sus sesiones con video, actividad de práctica y bibliografía o materiales complementarios cuando estén disponibles.",
+                  "Each module organizes its sessions with video, practice activity, and bibliography or complementary materials when available."
+                )}
+              </p>
+            </div>
             {course.modules && course.modules.length > 0 ? (
-              <div className="space-y-6">
+              <div className="space-y-10">
                 {standaloneSessions.length > 0 && (
                   <section className="space-y-3">
-                    <h3 className="font-semibold">{t("Sesiones sin módulo", "Sessions without module")}</h3>
+                    <h3 className="text-lg font-semibold text-[#17212b]">{t("Sesiones sin módulo", "Sessions without module")}</h3>
                     <SessionList
                       sessions={standaloneSessions}
                       isEnrolled={course.isEnrolled}
@@ -432,13 +448,16 @@ export default function CourseDetailPage() {
                   </section>
                 )}
                 {course.modules.map((module) => (
-                  <section key={module.id} className="space-y-3">
-                    <div>
-                      <h3 className="font-semibold">
-                        {module.order}. {t(module.title.es, module.title.en)}
+                  <section key={module.id} className="space-y-4">
+                    <div className="border-l-4 border-primary pl-4">
+                      <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[#7b8fa1]">
+                        {t("Módulo", "Module")} {module.order}
+                      </p>
+                      <h3 className="text-xl font-semibold text-[#17212b]">
+                        {t(module.title.es, module.title.en)}
                       </h3>
                       {module.description && (
-                        <p className="mt-1 text-sm text-[#7b8fa1]">
+                        <p className="mt-2 max-w-3xl text-sm leading-6 text-[#52667a]">
                           {t(module.description.es, module.description.en)}
                         </p>
                       )}
@@ -466,7 +485,7 @@ export default function CourseDetailPage() {
                 completedSessions={completedSessions}
               />
             )}
-          </div>
+          </section>
 
           {/* Evaluation section */}
           {course.isEnrolled && allComplete && (

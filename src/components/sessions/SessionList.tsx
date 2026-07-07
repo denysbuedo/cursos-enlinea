@@ -10,7 +10,10 @@ import {
   Clock,
   ExternalLink,
   FileText,
+  Library,
   Loader2,
+  MonitorPlay,
+  PencilLine,
 } from "lucide-react";
 import { resolveVideoRender } from "@/lib/video";
 
@@ -67,7 +70,7 @@ function SessionVideo({ session, lang }: { session: SessionItem; lang: string })
   if (!render) return null;
 
   return (
-    <div className="mt-3 overflow-hidden rounded-md border bg-black">
+    <div className="mt-3 overflow-hidden rounded-md bg-black">
       {render.type === "external" ? (
         <iframe
           src={render.embedUrl}
@@ -112,7 +115,7 @@ export function SessionList({
   }
 
   return (
-    <div className="space-y-3">
+    <div className="divide-y divide-[#d8e1ea] border-y border-[#d8e1ea]">
       {sessions.map((session) => {
         const Icon = sessionIcons[session.sessionType] || Video;
         const isLocked = !isEnrolled && !session.preview;
@@ -124,133 +127,141 @@ export function SessionList({
         const resources = Array.isArray(session.resources) ? session.resources : [];
 
         return (
-          <div
+          <article
             key={session.id}
-            className={`flex items-start gap-4 p-4 rounded-lg border transition-colors ${
+            className={`py-6 transition-colors ${
               isLocked
-                ? "opacity-60 bg-[#e8ecf1]/30"
+                ? "opacity-60"
                 : isCompleted
-                ? "bg-[#f0fdf4] dark:bg-green-950/20 border-[#b9f8cf] dark:border-green-900"
-                : "hover:bg-accent/50"
+                ? "bg-[#f7fbf8]"
+                : ""
             }`}
           >
-            {/* Session number + icon */}
-            <div
-              className={`flex-shrink-0 flex items-center justify-center w-10 h-10 rounded-full ${
-                isCompleted
-                  ? "bg-[#d5f5e3] text-black dark:bg-green-900/30 dark:text-green-400"
-                  : "bg-primary/10 text-primary"
-              }`}
-            >
-              {isCompleted ? (
-                <CheckCircle2 className="w-5 h-5" />
-              ) : (
-                <span className="text-sm font-bold">{session.order}</span>
-              )}
-            </div>
+            <div className="grid gap-4 md:grid-cols-[44px_1fr_auto]">
+              <div
+                className={`flex h-11 w-11 items-center justify-center rounded-full ${
+                  isCompleted
+                    ? "bg-[#d5f5e3] text-[#0f5132]"
+                    : "bg-[#e7f0f8] text-primary"
+                }`}
+              >
+                {isCompleted ? <CheckCircle2 className="h-5 w-5" /> : <span className="text-sm font-semibold">{session.order}</span>}
+              </div>
 
-            {/* Content */}
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 flex-wrap">
-                <h4 className="font-medium text-sm">
-                  {t(session.title.es, session.title.en)}
-                </h4>
-                <span className="inline-flex items-center gap-1 rounded-full bg-[#e8ecf1] px-2 py-0.5 text-xs text-[#7b8fa1]">
-                  <Icon className="w-3 h-3" />
-                  {t(
-                    sessionLabels[session.sessionType].es,
-                    sessionLabels[session.sessionType].en
+              <div className="min-w-0">
+                <div className="flex flex-wrap items-center gap-2">
+                  <h4 className="text-base font-semibold text-[#17212b]">
+                    {t(session.title.es, session.title.en)}
+                  </h4>
+                  <span className="inline-flex items-center gap-1 rounded-full bg-[#edf2f7] px-2 py-0.5 text-xs text-[#52667a]">
+                    <Icon className="h-3 w-3" />
+                    {t(sessionLabels[session.sessionType].es, sessionLabels[session.sessionType].en)}
+                  </span>
+                  {session.preview && !isEnrolled && (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-[#d6eaf8] px-2 py-0.5 text-xs font-medium text-[#0b4f8a]">
+                      <Play className="h-3 w-3" />
+                      {t("Vista previa", "Preview")}
+                    </span>
                   )}
-                </span>
-                {session.preview && !isEnrolled && (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-[#d6eaf8] text-black dark:bg-blue-900/30 dark:text-blue-400 px-2 py-0.5 text-xs font-medium">
-                    <Play className="w-3 h-3" />
-                    {t("Preview gratuito", "Free preview")}
-                  </span>
+                  {session.durationMinutes && (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-[#f4f7fb] px-2 py-0.5 text-xs text-[#52667a]">
+                      <Clock className="h-3 w-3" />
+                      {session.durationMinutes} {t("min", "min")}
+                    </span>
+                  )}
+                  {isCompleted && (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-[#d5f5e3] px-2 py-0.5 text-xs font-medium text-[#0f5132]">
+                      <CheckCircle2 className="h-3 w-3" />
+                      {t("Completada", "Completed")}
+                    </span>
+                  )}
+                </div>
+
+                <p className="mt-2 max-w-3xl text-sm leading-6 text-[#52667a]">
+                  {t(session.description.es, session.description.en)}
+                </p>
+
+                {session.scheduledAt && (
+                  <p className="mt-2 text-xs text-[#7b8fa1]">
+                    <Calendar className="mr-1 inline h-3 w-3" />
+                    {new Date(session.scheduledAt).toLocaleDateString(
+                      lang === "en" ? "en-US" : "es-ES",
+                      { dateStyle: "medium", timeStyle: "short" }
+                    )}
+                  </p>
                 )}
-                {session.durationMinutes && (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-[#eef2f6] px-2 py-0.5 text-xs text-[#52667a]">
-                    <Clock className="w-3 h-3" />
-                    {session.durationMinutes} {t("min", "min")}
-                  </span>
+
+                {!isLocked && session.videoUrl && (
+                  <section className="mt-5">
+                    <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-[#17212b]">
+                      <MonitorPlay className="h-4 w-4 text-primary" />
+                      {t("Video de la sesión", "Session video")}
+                      {session.videoPlatform && <span className="text-xs font-normal text-[#7b8fa1]">({session.videoPlatform})</span>}
+                    </div>
+                    <SessionVideo session={session} lang={lang} />
+                  </section>
                 )}
-                {isCompleted && (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-[#d5f5e3] text-black dark:bg-green-900/30 dark:text-green-400 px-2 py-0.5 text-xs font-medium">
-                    <CheckCircle2 className="w-3 h-3" />
-                    {t("Completada", "Completed")}
-                  </span>
+
+                {!isLocked && practicePrompt && (
+                  <section className="mt-5 border-l-4 border-[#7aa6d8] bg-[#f7f9fb] px-4 py-3">
+                    <div className="mb-1 flex items-center gap-2 text-sm font-semibold text-[#17212b]">
+                      <PencilLine className="h-4 w-4 text-primary" />
+                      {t("Actividad de práctica", "Practice activity")}
+                    </div>
+                    <p className="text-sm leading-6 text-[#52667a]">{practicePrompt}</p>
+                  </section>
+                )}
+
+                {!isLocked && resources.length > 0 && (
+                  <section className="mt-5">
+                    <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-[#17212b]">
+                      <Library className="h-4 w-4 text-primary" />
+                      {t("Bibliografía y materiales complementarios", "Bibliography and complementary materials")}
+                    </div>
+                    <div className="grid gap-2 sm:grid-cols-2">
+                      {resources.map((resource) => (
+                        <a
+                          key={resource.id}
+                          href={resource.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="group flex min-w-0 items-center gap-2 border border-[#d8e1ea] bg-white px-3 py-2 text-sm text-[#17212b] hover:border-primary"
+                        >
+                          <FileText className="h-4 w-4 flex-shrink-0 text-primary" />
+                          <span className="truncate">{resource.title}</span>
+                          <ExternalLink className="ml-auto h-3.5 w-3.5 flex-shrink-0 text-[#7b8fa1] group-hover:text-primary" />
+                        </a>
+                      ))}
+                    </div>
+                  </section>
                 )}
               </div>
-              <p className="text-xs text-[#7b8fa1] mt-1 line-clamp-1">
-                {t(session.description.es, session.description.en)}
-              </p>
-              {session.videoPlatform && (
-                <p className="text-xs text-[#7b8fa1] mt-1">
-                  {session.videoPlatform}
-                </p>
-              )}
-              {!isLocked && session.videoUrl && (
-                <SessionVideo session={session} lang={lang} />
-              )}
-              {session.scheduledAt && (
-                <p className="text-xs text-[#7b8fa1] mt-1">
-                  <Calendar className="w-3 h-3 inline mr-1" />
-                  {new Date(session.scheduledAt).toLocaleDateString(
-                    lang === "en" ? "en-US" : "es-ES",
-                    { dateStyle: "medium", timeStyle: "short" }
-                  )}
-                </p>
-              )}
-              {!isLocked && practicePrompt && (
-                <p className="text-xs text-[#52667a] mt-2 rounded-md bg-[#f7f9fb] px-3 py-2">
-                  <span className="font-medium">{t("Práctica:", "Practice:")}</span> {practicePrompt}
-                </p>
-              )}
-              {!isLocked && resources.length > 0 && (
-                <div className="mt-3 flex flex-wrap gap-2">
-                  {resources.map((resource) => (
-                    <a
-                      key={resource.id}
-                      href={resource.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex max-w-full items-center gap-1 rounded-md border bg-white px-2.5 py-1.5 text-xs font-medium text-primary hover:bg-accent"
-                    >
-                      <FileText className="w-3.5 h-3.5 flex-shrink-0" />
-                      <span className="truncate">{resource.title}</span>
-                      <ExternalLink className="w-3 h-3 flex-shrink-0" />
-                    </a>
-                  ))}
-                </div>
-              )}
-            </div>
 
-            {/* Action / Status */}
-            <div className="flex-shrink-0">
-              {isLocked ? (
-                <Lock className="w-5 h-5 text-[#7b8fa1]" />
-              ) : isCompleted ? (
-                <CheckCircle2 className="w-5 h-5 text-black" />
-              ) : isEnrolled && onMarkComplete ? (
-                <button
-                  onClick={() => onMarkComplete(session.id)}
-                  disabled={isCompleting}
-                  className="inline-flex items-center gap-1 rounded-lg border px-3 py-1.5 text-xs font-medium hover:bg-primary hover:text-white transition-colors disabled:opacity-50"
-                >
-                  {isCompleting ? (
-                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                  ) : (
-                    <CheckCircle2 className="w-3.5 h-3.5" />
-                  )}
-                  {t("Completar", "Complete")}
-                </button>
-              ) : session.preview ? (
-                <Play className="w-5 h-5 text-[#3b82f6]" />
-              ) : (
-                <CheckCircle2 className="w-5 h-5 text-primary" />
-              )}
+              <div className="md:justify-self-end">
+                {isLocked ? (
+                  <div className="inline-flex items-center gap-2 text-xs font-medium text-[#7b8fa1]">
+                    <Lock className="h-4 w-4" />
+                    {t("Bloqueada", "Locked")}
+                  </div>
+                ) : isCompleted ? (
+                  <CheckCircle2 className="h-5 w-5 text-[#0f5132]" />
+                ) : isEnrolled && onMarkComplete ? (
+                  <button
+                    onClick={() => onMarkComplete(session.id)}
+                    disabled={isCompleting}
+                    className="inline-flex items-center gap-1 border border-primary px-3 py-1.5 text-xs font-medium text-primary transition-colors hover:bg-primary hover:text-white disabled:opacity-50"
+                  >
+                    {isCompleting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <CheckCircle2 className="h-3.5 w-3.5" />}
+                    {t("Completar", "Complete")}
+                  </button>
+                ) : session.preview ? (
+                  <Play className="h-5 w-5 text-primary" />
+                ) : (
+                  <CheckCircle2 className="h-5 w-5 text-primary" />
+                )}
+              </div>
             </div>
-          </div>
+          </article>
         );
       })}
     </div>
