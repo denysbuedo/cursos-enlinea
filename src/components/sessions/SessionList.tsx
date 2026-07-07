@@ -12,6 +12,7 @@ import {
   FileText,
   Loader2,
 } from "lucide-react";
+import { resolveVideoRender } from "@/lib/video";
 
 interface SessionResource {
   id: string;
@@ -27,6 +28,7 @@ interface SessionItem {
   description: { es: string; en: string };
   sessionType: "RECORDED" | "LIVE" | "HYBRID";
   preview: boolean;
+  videoUrl?: string;
   videoPlatform?: string;
   durationMinutes?: number | null;
   resources?: SessionResource[] | null;
@@ -57,6 +59,36 @@ const sessionLabels: Record<string, { es: string; en: string }> = {
   LIVE: { es: "En vivo", en: "Live" },
   HYBRID: { es: "Híbrida", en: "Hybrid" },
 };
+
+function SessionVideo({ session, lang }: { session: SessionItem; lang: string }) {
+  const render = resolveVideoRender(session.videoUrl, session.videoPlatform);
+  const t = (es: string, en: string) => (lang === "en" ? en : es);
+
+  if (!render) return null;
+
+  return (
+    <div className="mt-3 overflow-hidden rounded-md border bg-black">
+      {render.type === "external" ? (
+        <iframe
+          src={render.embedUrl}
+          title={t(session.title.es, session.title.en)}
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          allowFullScreen
+          className="aspect-video w-full"
+        />
+      ) : render.type === "file" ? (
+        <video src={render.url} controls preload="metadata" className="aspect-video w-full bg-black" />
+      ) : (
+        <div className="p-3">
+          <a href={render.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs font-medium text-white underline">
+            {t("Abrir video", "Open video")}
+            <ExternalLink className="h-3 w-3" />
+          </a>
+        </div>
+      )}
+    </div>
+  );
+}
 
 export function SessionList({
   sessions,
@@ -156,6 +188,9 @@ export function SessionList({
                 <p className="text-xs text-[#7b8fa1] mt-1">
                   {session.videoPlatform}
                 </p>
+              )}
+              {!isLocked && session.videoUrl && (
+                <SessionVideo session={session} lang={lang} />
               )}
               {session.scheduledAt && (
                 <p className="text-xs text-[#7b8fa1] mt-1">

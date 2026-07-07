@@ -203,6 +203,7 @@ model Enrollment {
   @@index([userId])
   @@index([courseId, status])
   @@index([editionId])
+  @@unique([userId, courseId, editionId])
 }
 
 model Payment {

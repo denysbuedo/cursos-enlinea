@@ -1279,17 +1279,22 @@ export default function CmsPage() {
             </div>
             <div className="grid gap-3 md:grid-cols-2">
               <input className="rounded-md border px-3 py-2 text-sm" placeholder="Slug" value={courseForm.slug} onChange={(e) => setCourseForm({ ...courseForm, slug: e.target.value })} />
-              <select
-                className="rounded-md border px-3 py-2 text-sm"
-                value={courseForm.id ? courseForm.status : "DRAFT"}
-                onChange={(e) => setCourseForm({ ...courseForm, status: e.target.value })}
-                disabled={!courseForm.id}
-                title={t("Primero guarda el curso como borrador. Luego podrás publicarlo cuando tenga sesiones con video.", "Save the course as a draft first. You can publish it after it has sessions with video.")}
-              >
-                <option value="DRAFT">Draft</option>
-                <option value="PUBLISHED">Published</option>
-                <option value="ARCHIVED">Archived</option>
-              </select>
+              {courseForm.id ? (
+                <select
+                  className="rounded-md border px-3 py-2 text-sm"
+                  value={courseForm.status}
+                  onChange={(e) => setCourseForm({ ...courseForm, status: e.target.value })}
+                  title={t("Primero guarda el curso como borrador. Luego podrás publicarlo cuando tenga sesiones con video.", "Save the course as a draft first. You can publish it after it has sessions with video.")}
+                >
+                  <option value="DRAFT">{t("Borrador", "Draft")}</option>
+                  <option value="PUBLISHED">{t("Publicado", "Published")}</option>
+                  <option value="ARCHIVED">{t("Archivado", "Archived")}</option>
+                </select>
+              ) : (
+                <div className="rounded-md border bg-[#f4f7fb] px-3 py-2 text-sm text-[#52667a]">
+                  {t("Estado inicial: Borrador", "Initial status: Draft")}
+                </div>
+              )}
               <input className="rounded-md border px-3 py-2 text-sm" placeholder="Título ES" value={courseForm.title.es} onChange={(e) => setCourseForm({ ...courseForm, title: { ...courseForm.title, es: e.target.value } })} />
               <input className="rounded-md border px-3 py-2 text-sm" placeholder="Title EN" value={courseForm.title.en} onChange={(e) => setCourseForm({ ...courseForm, title: { ...courseForm.title, en: e.target.value } })} />
               <textarea className="rounded-md border px-3 py-2 text-sm md:col-span-2" placeholder="Descripción ES" value={courseForm.description.es} onChange={(e) => setCourseForm({ ...courseForm, description: { ...courseForm.description, es: e.target.value } })} />
@@ -1704,6 +1709,8 @@ export default function CmsPage() {
                     <Plus className="h-4 w-4" />
                     {moduleForm.moduleId ? t("Actualizar", "Update") : t("Agregar", "Add")}
                   </button>
+                  <textarea className="rounded-md border px-3 py-2 text-sm md:col-span-2" placeholder={t("Descripción u objetivo del módulo ES", "Module description or objective ES")} value={moduleForm.description.es} onChange={(e) => setModuleForm({ ...moduleForm, description: { ...moduleForm.description, es: e.target.value } })} />
+                  <textarea className="rounded-md border px-3 py-2 text-sm md:col-span-2" placeholder={t("Description or objective EN", "Description or objective EN")} value={moduleForm.description.en} onChange={(e) => setModuleForm({ ...moduleForm, description: { ...moduleForm.description, en: e.target.value } })} />
                 </div>
                 <div className="mt-4 space-y-3">
                   {selectedCourse.modules.length === 0 ? (
@@ -1715,6 +1722,9 @@ export default function CmsPage() {
                       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                         <div>
                           <p className="font-medium">{module.order}. {t(module.title.es, module.title.en)}</p>
+                          {module.description && (module.description.es || module.description.en) && (
+                            <p className="mt-1 text-xs text-[#52667a]">{t(module.description.es || "", module.description.en || "")}</p>
+                          )}
                           <p className="text-xs text-[#7b8fa1]">{module.sessions.length} {t("sesiones", "sessions")}</p>
                         </div>
                         <button onClick={() => setModuleForm({ moduleId: module.id, title: module.title, description: module.description || { ...emptyText }, order: String(module.order), status: module.status })} className="rounded-md border px-3 py-1.5 text-xs hover:bg-accent">
@@ -1770,7 +1780,8 @@ export default function CmsPage() {
                     {uploadingVideo ? t("Subiendo...", "Uploading...") : t("Subir video", "Upload video")}
                     <input type="file" accept="video/mp4,video/webm,video/quicktime,video/x-m4v" className="hidden" onChange={(e) => uploadVideo(e.target.files?.[0] || null)} />
                   </label>
-                  <textarea className="rounded-md border px-3 py-2 text-sm md:col-span-2" placeholder="Descripción ES" value={sessionForm.description.es} onChange={(e) => setSessionForm({ ...sessionForm, description: { ...sessionForm.description, es: e.target.value } })} />
+                  <textarea className="rounded-md border px-3 py-2 text-sm md:col-span-2" placeholder={t("Descripción de la sesión ES", "Session description ES")} value={sessionForm.description.es} onChange={(e) => setSessionForm({ ...sessionForm, description: { ...sessionForm.description, es: e.target.value } })} />
+                  <textarea className="rounded-md border px-3 py-2 text-sm md:col-span-2" placeholder={t("Session description EN", "Session description EN")} value={sessionForm.description.en} onChange={(e) => setSessionForm({ ...sessionForm, description: { ...sessionForm.description, en: e.target.value } })} />
                   <p className="text-xs text-[#7b8fa1] md:col-span-2">
                     {t("Recomendado: usar YouTube/Vimeo por URL. Usa subida solo para casos donde el video no estará en una app externa.", "Recommended: use YouTube/Vimeo by URL. Upload only when the video will not live in an external app.")}
                   </p>

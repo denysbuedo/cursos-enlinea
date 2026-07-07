@@ -6,7 +6,6 @@ import Link from "next/link";
 import { getDictionary, getLangFromParams } from "@/lib/i18n";
 import { SessionList } from "@/components/sessions/SessionList";
 import { EvaluationForm } from "@/components/evaluations/EvaluationForm";
-import { resolveVideoRender } from "@/lib/video";
 import {
   BookOpen,
   Globe,
@@ -76,6 +75,7 @@ interface SessionResource {
 interface SessionItem {
   id: string;
   courseId: string;
+  moduleId?: string | null;
   title: { es: string; en: string };
   description: { es: string; en: string };
   keywords: string[];
@@ -115,35 +115,6 @@ function localizedList(value: { es?: string[]; en?: string[] } | null | undefine
   const primary = lang === "en" ? value?.en : value?.es;
   const fallback = lang === "en" ? value?.es : value?.en;
   return Array.isArray(primary) && primary.length > 0 ? primary : Array.isArray(fallback) ? fallback : [];
-}
-
-function VideoPlayer({ session, lang }: { session: SessionItem; lang: string }) {
-  const render = resolveVideoRender(session.videoUrl, session.videoPlatform);
-  const t = (es: string, en: string) => (lang === "en" ? en : es);
-
-  if (!render) return null;
-
-  return (
-    <div className="overflow-hidden rounded-lg border bg-black">
-      {render.type === "external" ? (
-        <iframe
-          src={render.embedUrl}
-          title={t(session.title.es, session.title.en)}
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-          allowFullScreen
-          className="aspect-video w-full"
-        />
-      ) : render.type === "file" ? (
-        <video src={render.url} controls preload="metadata" className="aspect-video w-full bg-black" />
-      ) : (
-        <div className="p-4">
-          <a href={render.url} target="_blank" rel="noopener noreferrer" className="text-sm text-white underline">
-            {t("Abrir video", "Open video")}
-          </a>
-        </div>
-      )}
-    </div>
-  );
 }
 
 export default function CourseDetailPage() {
@@ -317,9 +288,11 @@ export default function CourseDetailPage() {
 
   const isFree = course.pricingModel === "FREE";
   const allComplete = progress >= 100;
-  const featuredSession = course.isEnrolled
-    ? course.modules?.flatMap((module) => module.sessions).find((session) => session.videoUrl) || course.sessions.find((session) => session.videoUrl)
-    : course.sessions.find((session) => session.preview && session.videoUrl);
+  const moduleSessionCount = course.modules?.reduce((total, module) => total + module.sessions.length, 0) ?? 0;
+  const standaloneSessions = course.modules && course.modules.length > 0
+    ? course.sessions.filter((session) => !session.moduleId)
+    : course.sessions;
+  const totalSessions = moduleSessionCount + standaloneSessions.length;
   const checkoutHref = `/${lang}/checkout?course=${course.slug}${selectedEditionId ? `&edition=${selectedEditionId}` : ""}`;
   const objectives = localizedList(course.learningObjectives, lang);
   const audience = localizedList(course.targetAudience, lang);
@@ -332,7 +305,7 @@ export default function CourseDetailPage() {
   };
 
   return (
-    <div className="container mx-auto py-10 px-4 max-w-4xl">
+    <div className="container mx-auto py-10 px-4 max-w-6xl">
       <nav className="text-sm text-[#7b8fa1] mb-6">
         <Link href={`/${lang}/courses`} className="hover:text-black">{dict.courses.allCourses}</Link>
         <span className="mx-2">/</span>
@@ -427,18 +400,6 @@ export default function CourseDetailPage() {
             </div>
           </section>
 
-          {featuredSession && (
-            <section className="space-y-3">
-              <div>
-                <h2 className="text-xl font-semibold">{t("Video", "Video")}</h2>
-                <p className="text-sm text-[#7b8fa1]">
-                  {t(featuredSession.title.es, featuredSession.title.en)}
-                </p>
-              </div>
-              <VideoPlayer session={featuredSession} lang={lang} />
-            </section>
-          )}
-
           {/* Progress bar */}
           {course.isEnrolled && (
             <div className="rounded-xl border p-5">
@@ -454,9 +415,22 @@ export default function CourseDetailPage() {
 
           {/* Sessions */}
           <div>
-            <h2 className="text-xl font-semibold mb-4">{dict.courses.sessions} ({course.sessions.length})</h2>
+            <h2 className="text-xl font-semibold mb-4">{dict.courses.sessions} ({totalSessions})</h2>
             {course.modules && course.modules.length > 0 ? (
               <div className="space-y-6">
+                {standaloneSessions.length > 0 && (
+                  <section className="space-y-3">
+                    <h3 className="font-semibold">{t("Sesiones sin módulo", "Sessions without module")}</h3>
+                    <SessionList
+                      sessions={standaloneSessions}
+                      isEnrolled={course.isEnrolled}
+                      lang={lang}
+                      courseId={course.id}
+                      onMarkComplete={course.isEnrolled ? handleMarkComplete : undefined}
+                      completingSession={completingSession}
+                    />
+                  </section>
+                )}
                 {course.modules.map((module) => (
                   <section key={module.id} className="space-y-3">
                     <div>
