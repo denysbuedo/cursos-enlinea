@@ -85,6 +85,22 @@
       padding: 8px;
     }
 
+    .editable,
+    [contenteditable="true"] {
+      outline: none;
+      cursor: text;
+    }
+
+    .editable:focus,
+    [contenteditable="true"]:focus {
+      border-color: var(--mes-blue);
+      box-shadow: 0 0 0 2px rgba(0, 90, 169, .12);
+    }
+
+    td[contenteditable="true"]:focus {
+      box-shadow: inset 0 0 0 2px rgba(0, 90, 169, .18);
+    }
+
     .field.large {
       min-height: 90px;
     }
@@ -167,6 +183,41 @@
       font-size: 13px;
     }
 
+    .toolbar {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, .96);
+      padding: 10px;
+      margin: 0 0 24px;
+    }
+
+    .toolbar button {
+      border: 1px solid var(--mes-blue);
+      background: var(--mes-blue);
+      color: var(--white);
+      padding: 8px 12px;
+      font-weight: 700;
+      font-size: 13px;
+      cursor: pointer;
+    }
+
+    .toolbar button.secondary {
+      background: var(--white);
+      color: var(--mes-blue);
+    }
+
+    .toolbar .status {
+      margin-left: auto;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
     .page-break {
       page-break-before: always;
     }
@@ -193,6 +244,10 @@
       .no-print {
         display: none;
       }
+
+      .toolbar {
+        display: none;
+      }
     }
   </style>
 </head>
@@ -203,8 +258,18 @@
       <p class="intro">
         Documento de trabajo offline para profesores y equipos docentes. Complete esta plantilla antes de montar el curso en la plataforma. La información está organizada según los campos que luego se registran en el CMS.
       </p>
-      <p class="small no-print">Sugerencia: abra este archivo en el navegador y use “Imprimir / Guardar como PDF” para compartirlo.</p>
+      <p class="small no-print">Haga clic sobre cualquier recuadro o celda de tabla para escribir. El navegador guarda automáticamente una copia local mientras trabaja.</p>
     </header>
+
+    <div class="toolbar no-print">
+      <button type="button" onclick="window.print()">Imprimir / Guardar PDF</button>
+      <button type="button" class="secondary" onclick="downloadFilledHtml()">Descargar HTML completado</button>
+      <button type="button" class="secondary" onclick="exportJson()">Exportar respaldo JSON</button>
+      <button type="button" class="secondary" onclick="document.getElementById('jsonInput').click()">Importar JSON</button>
+      <button type="button" class="secondary" onclick="clearSavedData()">Limpiar formulario</button>
+      <input id="jsonInput" type="file" accept="application/json" hidden onchange="importJson(event)" />
+      <span id="saveStatus" class="status">Sin cambios</span>
+    </div>
 
     <section>
       <h2>1. Identificación del curso</h2>
@@ -548,5 +613,134 @@
       <div class="field xlarge"></div>
     </section>
   </main>
+
+  <script>
+    const STORAGE_KEY = "plantilla-mooc-profesores-v1";
+    let INITIAL_DATA = {};
+
+    function shouldMakeCellEditable(cell) {
+      const text = cell.textContent.trim();
+      if (!text) return true;
+      if (/^\d+$/.test(text)) return false;
+      if (/^[A-D]$/.test(text)) return false;
+      return true;
+    }
+
+    function editableElements() {
+      return Array.from(document.querySelectorAll("[data-editable-id]"));
+    }
+
+    function prepareEditableFields() {
+      const fields = Array.from(document.querySelectorAll(".field"));
+      const tableCells = Array.from(document.querySelectorAll("td")).filter(shouldMakeCellEditable);
+      const targets = [...fields, ...tableCells];
+
+      targets.forEach((element, index) => {
+        element.contentEditable = "true";
+        element.classList.add("editable");
+        if (!element.dataset.editableId) {
+          element.dataset.editableId = `campo-${index + 1}`;
+        }
+      });
+      INITIAL_DATA = {};
+      editableElements().forEach((element) => {
+        INITIAL_DATA[element.dataset.editableId] = element.innerHTML;
+      });
+    }
+
+    function saveData() {
+      const data = {};
+      editableElements().forEach((element) => {
+        data[element.dataset.editableId] = element.innerHTML;
+      });
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      const status = document.getElementById("saveStatus");
+      if (status) {
+        status.textContent = `Guardado local: ${new Date().toLocaleTimeString("es-ES")}`;
+      }
+    }
+
+    function loadData() {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return;
+      try {
+        const data = JSON.parse(raw);
+        editableElements().forEach((element) => {
+          if (Object.prototype.hasOwnProperty.call(data, element.dataset.editableId)) {
+            element.innerHTML = data[element.dataset.editableId];
+          }
+        });
+        const status = document.getElementById("saveStatus");
+        if (status) status.textContent = "Cargado desde guardado local";
+      } catch {
+        localStorage.removeItem(STORAGE_KEY);
+      }
+    }
+
+    function downloadBlob(filename, content, type) {
+      const blob = new Blob([content], { type });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    function downloadFilledHtml() {
+      saveData();
+      const clone = document.documentElement.cloneNode(true);
+      clone.querySelectorAll("[contenteditable]").forEach((element) => {
+        element.removeAttribute("contenteditable");
+      });
+      clone.querySelectorAll(".toolbar").forEach((element) => element.remove());
+      const html = "<!doctype html>\n" + clone.outerHTML;
+      downloadBlob("mooc-completado.html", html, "text/html;charset=utf-8");
+    }
+
+    function exportJson() {
+      saveData();
+      const raw = localStorage.getItem(STORAGE_KEY) || "{}";
+      downloadBlob("mooc-respaldo.json", raw, "application/json;charset=utf-8");
+    }
+
+    function importJson(event) {
+      const file = event.target.files && event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          const data = JSON.parse(String(reader.result || "{}"));
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+          loadData();
+          saveData();
+        } catch {
+          alert("El archivo JSON no es válido.");
+        }
+      };
+      reader.readAsText(file);
+      event.target.value = "";
+    }
+
+    function clearSavedData() {
+      if (!confirm("¿Desea limpiar todos los campos guardados en esta plantilla?")) return;
+      localStorage.removeItem(STORAGE_KEY);
+      editableElements().forEach((element) => {
+        element.innerHTML = INITIAL_DATA[element.dataset.editableId] || "";
+      });
+      const status = document.getElementById("saveStatus");
+      if (status) status.textContent = "Formulario limpio";
+    }
+
+    prepareEditableFields();
+    loadData();
+    document.addEventListener("input", (event) => {
+      if (event.target instanceof HTMLElement && event.target.dataset.editableId) {
+        saveData();
+      }
+    });
+  </script>
 </body>
 </html>
