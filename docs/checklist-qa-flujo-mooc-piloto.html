@@ -1,0 +1,388 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Checklist QA - Flujo MOOC piloto</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: Arial, Helvetica, sans-serif; background: #f4f7fb; color: #17212b; line-height: 1.5; }
+    .container { max-width: 1180px; margin: 0 auto; padding: 28px 18px 48px; }
+    .toolbar { position: sticky; top: 0; z-index: 10; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 22px; border-bottom: 3px solid #005aa9; background: #fff; padding: 12px; box-shadow: 0 2px 8px rgba(20, 40, 70, .08); }
+    button { border: 0; cursor: pointer; font-weight: 700; padding: 8px 14px; font-size: .86rem; }
+    .btn-primary { background: #005aa9; color: #fff; }
+    .btn-secondary { background: #e8ecf1; color: #17212b; }
+    .btn-danger { background: #b42318; color: #fff; }
+    .stats { display: flex; gap: 14px; margin-left: auto; color: #52667a; font-size: .86rem; }
+    .stats strong { color: #17212b; }
+    h1 { color: #003f78; font-size: 1.9rem; margin-bottom: 8px; border-bottom: 1px solid #d8e1ea; padding-bottom: 10px; }
+    h2 { margin: 28px 0 10px; background: #e7f0f8; color: #003f78; border-left: 5px solid #005aa9; padding: 9px 12px; font-size: 1.18rem; }
+    h3 { margin: 18px 0 8px; color: #17212b; font-size: 1rem; }
+    p { margin: 8px 0; }
+    .intro { color: #52667a; max-width: 900px; margin-bottom: 18px; }
+    .meta { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin: 18px 0 24px; }
+    .meta label { display: block; color: #52667a; font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .03em; }
+    .meta input { width: 100%; border: 1px solid #d8e1ea; padding: 8px; background: #fff; }
+    table { width: 100%; border-collapse: collapse; margin: 10px 0 18px; background: #fff; font-size: .88rem; }
+    th { background: #005aa9; color: #fff; text-align: left; font-size: .78rem; }
+    th, td { border: 1px solid #d8e1ea; padding: 7px 8px; vertical-align: top; }
+    td.id { width: 76px; font-weight: 700; color: #003f78; white-space: nowrap; }
+    td.step { min-width: 240px; }
+    td.expected { min-width: 250px; color: #52667a; }
+    td.result { width: 132px; }
+    td.notes { min-width: 230px; }
+    .radio-group { display: flex; gap: 5px; flex-wrap: wrap; }
+    .radio-group label { display: inline-flex; align-items: center; gap: 3px; cursor: pointer; border: 1px solid #d8e1ea; padding: 3px 6px; font-size: .74rem; background: #fff; }
+    .radio-group input { display: none; }
+    .radio-group input:checked + span { font-weight: 800; }
+    .ok input:checked + span { color: #137333; }
+    .fail input:checked + span { color: #b42318; }
+    .na input:checked + span { color: #52667a; }
+    textarea, input[type="text"] { width: 100%; border: 1px solid #d8e1ea; padding: 6px 8px; font-family: inherit; font-size: .82rem; resize: vertical; min-height: 34px; }
+    textarea:focus, input:focus { outline: 2px solid rgba(0, 90, 169, .18); border-color: #005aa9; }
+    .summary { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin: 20px 0; }
+    .summary div { background: #fff; border: 1px solid #d8e1ea; padding: 12px; }
+    .summary label { display: block; color: #52667a; font-size: .75rem; font-weight: 700; text-transform: uppercase; }
+    .summary textarea { min-height: 72px; margin-top: 6px; }
+    .footer { margin-top: 36px; border-top: 1px solid #d8e1ea; padding-top: 14px; color: #7b8fa1; font-size: .82rem; text-align: center; }
+    #export-area { display: none; margin-top: 20px; border: 1px solid #d8e1ea; background: #fff; padding: 16px; white-space: pre-wrap; font-family: Consolas, monospace; font-size: .82rem; }
+    @media print {
+      body { background: #fff; }
+      .toolbar, #export-area { display: none !important; }
+      .container { max-width: none; padding: 12mm; }
+      h2, table { page-break-inside: avoid; }
+      textarea, input[type="text"] { border: 0; min-height: 22px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="toolbar">
+      <button class="btn-primary" type="button" onclick="saveResults()">Guardar progreso</button>
+      <button class="btn-secondary" type="button" onclick="loadResults()">Cargar progreso</button>
+      <button class="btn-secondary" type="button" onclick="exportResults()">Exportar resultados</button>
+      <button class="btn-secondary" type="button" onclick="window.print()">Imprimir / PDF</button>
+      <button class="btn-danger" type="button" onclick="resetAll()">Reiniciar</button>
+      <div class="stats">
+        <span>OK: <strong id="cnt-ok">0</strong></span>
+        <span>Fallo: <strong id="cnt-fail">0</strong></span>
+        <span>N/A: <strong id="cnt-na">0</strong></span>
+        <span>Pendiente: <strong id="cnt-pending">0</strong></span>
+      </div>
+    </div>
+
+    <h1>Checklist QA - Flujo MOOC piloto</h1>
+    <p class="intro">
+      Validación de extremo a extremo para comprobar que la plataforma permite crear, publicar, cursar, evaluar y certificar un MOOC sin intervención directa en la base de datos.
+    </p>
+
+    <div class="meta">
+      <div><label>Fecha de prueba</label><input id="meta-date" type="text" placeholder="2026-07-13" /></div>
+      <div><label>Ambiente</label><input id="meta-env" type="text" placeholder="Local / QA / Staging" /></div>
+      <div><label>Responsable QA</label><input id="meta-owner" type="text" /></div>
+      <div><label>Curso piloto</label><input id="meta-course" type="text" /></div>
+      <div><label>URL base</label><input id="meta-url" type="text" placeholder="http://localhost:3000" /></div>
+      <div><label>Build / commit</label><input id="meta-build" type="text" /></div>
+    </div>
+
+    <form id="checklist"></form>
+
+    <h2>Criterios de cierre del piloto</h2>
+    <table>
+      <thead><tr><th>Criterio</th><th>Resultado</th><th>Observaciones</th></tr></thead>
+      <tbody id="closure"></tbody>
+    </table>
+
+    <h2>Resumen de hallazgos</h2>
+    <div class="summary">
+      <div><label>Bloqueantes</label><textarea id="sum-blockers"></textarea></div>
+      <div><label>Importantes</label><textarea id="sum-major"></textarea></div>
+      <div><label>Menores</label><textarea id="sum-minor"></textarea></div>
+      <div><label>Decisión QA</label><textarea id="sum-decision" placeholder="Aprobado / Aprobado con observaciones / No aprobado"></textarea></div>
+    </div>
+
+    <div id="export-area"></div>
+    <div class="footer">Plataforma de cursos en línea - Checklist QA MOOC piloto</div>
+  </div>
+
+  <script>
+    const STORAGE_KEY = "qa-mooc-piloto-v1";
+
+    const sections = [
+      {
+        title: "1. Preparación del curso en CMS",
+        items: [
+          ["CMS-01", "Entrar al CMS como Admin o Instructor.", "El panel carga sin error y muestra cursos existentes o estado vacío."],
+          ["CMS-02", "Crear un curso nuevo completando ficha básica y ficha MOOC.", "El curso se guarda como Borrador, sin exigir sesiones todavía."],
+          ["CMS-03", "Verificar que el estado inicial sea Borrador.", "No se puede publicar desde la creación inicial si faltan sesiones con video."],
+          ["CMS-04", "Crear al menos una edición del curso o revisar la edición inicial.", "La edición queda asociada al curso y visible en el CMS."],
+          ["CMS-05", "Crear Módulo 1 con título, orden y descripción/objetivo.", "El módulo aparece en la lista con su descripción."],
+          ["CMS-06", "Crear Módulo 2 con título, orden y descripción/objetivo.", "El módulo aparece ordenado correctamente."],
+          ["CMS-07", "Crear una sesión grabada dentro del Módulo 1.", "La sesión se guarda asociada al módulo correcto."],
+          ["CMS-08", "Agregar video por URL externa, por ejemplo YouTube o Vimeo.", "La sesión guarda la URL y la plataforma detecta o muestra el proveedor."],
+          ["CMS-09", "Agregar una práctica a la sesión.", "La práctica queda visible al editar y luego en la vista del curso."],
+          ["CMS-10", "Agregar bibliografía/material complementario por URL externa.", "El recurso queda asociado a la sesión y no se confunde con el video."],
+          ["CMS-11", "Agregar un material complementario subido a la plataforma, si aplica.", "El archivo sube sin error y queda disponible en la sesión."],
+          ["CMS-12", "Crear el resto de sesiones necesarias del piloto.", "Todas las sesiones quedan ordenadas dentro de sus módulos."],
+          ["CMS-13", "Intentar publicar el curso antes de cumplir requisitos mínimos.", "Si falta video o sesión publicada, el sistema informa qué falta."],
+          ["CMS-14", "Publicar sesiones necesarias y publicar el curso.", "El curso cambia a Publicado y queda visible en catálogo."]
+        ]
+      },
+      {
+        title: "2. Banco de preguntas y evaluación",
+        items: [
+          ["EVA-01", "Crear preguntas en el banco con módulo/tema, dificultad y etiquetas.", "Las preguntas se guardan y pueden editarse."],
+          ["EVA-02", "Crear al menos una pregunta de opción múltiple.", "Se puede definir respuesta correcta y retroalimentación."],
+          ["EVA-03", "Crear al menos una pregunta verdadero/falso.", "La pregunta queda disponible en el banco."],
+          ["EVA-04", "Configurar evaluación final con puntuación mínima.", "La evaluación se guarda asociada al curso."],
+          ["EVA-05", "Configurar selección aleatoria por etiqueta, si aplica.", "La evaluación respeta cantidad y filtros definidos."],
+          ["EVA-06", "Revisar que la evaluación no sea visible antes de completar sesiones, si esa es la regla.", "El estudiante no puede evaluarse antes de cumplir requisitos."]
+        ]
+      },
+      {
+        title: "3. Catálogo y vista pública del curso",
+        items: [
+          ["PUB-01", "Abrir el catálogo sin sesión iniciada.", "El curso publicado aparece si su visibilidad es pública."],
+          ["PUB-02", "Abrir la vista del curso.", "Se muestra título, descripción, ficha académica y programa del curso."],
+          ["PUB-03", "Revisar la jerarquía visual.", "Se entiende la estructura Módulo -> Sesión -> Video / Práctica / Bibliografía."],
+          ["PUB-04", "Revisar una sesión con video externo.", "El video se renderiza dentro de la sesión o se ofrece enlace funcional."],
+          ["PUB-05", "Revisar bibliografía/materiales complementarios.", "Los materiales aparecen en sección propia, separados del video."],
+          ["PUB-06", "Revisar prácticas.", "Las prácticas aparecen como actividad de aprendizaje, no como descripción del video."],
+          ["PUB-07", "Revisar sesiones bloqueadas para usuario no matriculado.", "El contenido no permitido queda bloqueado y las vistas previas funcionan."]
+        ]
+      },
+      {
+        title: "4. Matrícula del estudiante",
+        items: [
+          ["MAT-01", "Registrar o iniciar sesión como estudiante.", "El login/registro funciona y redirige correctamente."],
+          ["MAT-02", "Matricularse en el curso gratuito.", "La matrícula queda activa inmediatamente."],
+          ["MAT-03", "Matricularse en un curso de pago, si aplica.", "La matrícula queda pendiente de pago/aprobación."],
+          ["MAT-04", "Intentar matricularse dos veces en la misma edición.", "El sistema impide duplicado y muestra mensaje claro."],
+          ["MAT-05", "Matricularse en otra edición del mismo curso, si aplica.", "El sistema permite matrícula si es una edición diferente y las reglas lo permiten."]
+        ]
+      },
+      {
+        title: "5. Experiencia de aprendizaje",
+        items: [
+          ["APR-01", "Entrar al curso como estudiante matriculado.", "Todas las sesiones permitidas se muestran correctamente."],
+          ["APR-02", "Reproducir un video externo.", "El video carga sin romper la página."],
+          ["APR-03", "Abrir un material complementario externo.", "El enlace abre en nueva pestaña."],
+          ["APR-04", "Descargar o abrir un material subido, si aplica.", "El archivo se sirve correctamente desde la plataforma."],
+          ["APR-05", "Leer y completar una práctica.", "La práctica es clara y queda dentro de la sesión correspondiente."],
+          ["APR-06", "Marcar una sesión como completada.", "El progreso aumenta y la sesión queda marcada."],
+          ["APR-07", "Completar todas las sesiones.", "El progreso llega a 100% y se habilita la evaluación, si aplica."]
+        ]
+      },
+      {
+        title: "6. Evaluación y certificación",
+        items: [
+          ["CERT-01", "Abrir la evaluación final.", "La evaluación carga con preguntas válidas."],
+          ["CERT-02", "Enviar respuestas incorrectas.", "El sistema calcula nota, informa resultado y respeta intentos."],
+          ["CERT-03", "Enviar respuestas correctas suficientes.", "El estudiante aprueba la evaluación."],
+          ["CERT-04", "Emitir certificado.", "Se genera certificado con identificador verificable."],
+          ["CERT-05", "Descargar certificado PDF.", "El PDF descarga o abre correctamente."],
+          ["CERT-06", "Abrir URL de verificación.", "La página muestra certificado válido y datos coherentes."],
+          ["CERT-07", "Intentar emitir certificado sin aprobar.", "El sistema lo bloquea con mensaje claro."]
+        ]
+      },
+      {
+        title: "7. Administración y seguimiento",
+        items: [
+          ["ADM-01", "Entrar al panel de administración.", "El panel carga sin errores."],
+          ["ADM-02", "Revisar usuarios registrados.", "El estudiante aparece con datos básicos."],
+          ["ADM-03", "Revisar matrículas del curso/edición.", "La matrícula aparece una sola vez por estudiante y edición."],
+          ["ADM-04", "Revisar pagos pendientes, si aplica.", "El pago aparece en estado correcto y puede aprobarse/rechazarse."],
+          ["ADM-05", "Revisar certificados emitidos.", "El certificado aparece en administración."],
+          ["ADM-06", "Revisar trazabilidad/auditoría, si aplica.", "Las acciones relevantes aparecen registradas."]
+        ]
+      },
+      {
+        title: "8. Pruebas técnicas mínimas",
+        items: [
+          ["TEC-01", "Ejecutar npm run lint.", "Termina sin errores."],
+          ["TEC-02", "Ejecutar npm run build.", "Compila correctamente."],
+          ["TEC-03", "Ejecutar npx prisma migrate deploy sobre BD local limpia o actualizada.", "Migraciones aplican sin error."],
+          ["TEC-04", "Probar expiración de sesión en CMS.", "Las peticiones intentan refresh o muestran error de autorización claro."],
+          ["TEC-05", "Probar subida de archivo grande dentro del límite definido.", "La plataforma acepta o rechaza con mensaje claro."]
+        ]
+      }
+    ];
+
+    const closureCriteria = [
+      "El curso puede crearse sin tocar la base de datos.",
+      "El curso puede publicarse con módulos, sesiones y videos.",
+      "Los materiales complementarios se gestionan correctamente.",
+      "El estudiante puede matricularse una sola vez por edición.",
+      "El estudiante puede completar sesiones y ver progreso.",
+      "La evaluación final funciona de extremo a extremo.",
+      "El certificado se emite y verifica correctamente.",
+      "Admin/CMS/estudiante tienen flujos comprensibles.",
+      "No hay errores 500 en el flujo principal.",
+      "Lint y build pasan."
+    ];
+
+    function resultControls(id) {
+      return `
+        <div class="radio-group">
+          <label class="ok"><input type="radio" name="r-${id}" value="ok" onchange="count()"><span>OK</span></label>
+          <label class="fail"><input type="radio" name="r-${id}" value="fail" onchange="count()"><span>Fallo</span></label>
+          <label class="na"><input type="radio" name="r-${id}" value="na" onchange="count()"><span>N/A</span></label>
+        </div>`;
+    }
+
+    function renderChecklist() {
+      const form = document.getElementById("checklist");
+      form.innerHTML = sections.map(section => `
+        <h2>${section.title}</h2>
+        <table>
+          <thead>
+            <tr><th>ID</th><th>Paso</th><th>Resultado esperado</th><th>Resultado</th><th>Resultado real / evidencia</th></tr>
+          </thead>
+          <tbody>
+            ${section.items.map(([id, step, expected]) => `
+              <tr>
+                <td class="id">${id}</td>
+                <td class="step">${step}</td>
+                <td class="expected">${expected}</td>
+                <td class="result">${resultControls(id)}</td>
+                <td class="notes"><textarea id="note-${id}" placeholder="Describe resultado real, evidencia o defecto..."></textarea></td>
+              </tr>`).join("")}
+          </tbody>
+        </table>`).join("");
+
+      const closure = document.getElementById("closure");
+      closure.innerHTML = closureCriteria.map((criterion, index) => {
+        const id = `CLOSE-${String(index + 1).padStart(2, "0")}`;
+        return `<tr><td>${criterion}</td><td class="result">${resultControls(id)}</td><td><textarea id="note-${id}" placeholder="Observaciones..."></textarea></td></tr>`;
+      }).join("");
+    }
+
+    function allIds() {
+      const itemIds = sections.flatMap(section => section.items.map(item => item[0]));
+      const closeIds = closureCriteria.map((_, index) => `CLOSE-${String(index + 1).padStart(2, "0")}`);
+      return [...itemIds, ...closeIds];
+    }
+
+    function count() {
+      let ok = 0, fail = 0, na = 0;
+      allIds().forEach(id => {
+        const checked = document.querySelector(`input[name="r-${id}"]:checked`);
+        if (!checked) return;
+        if (checked.value === "ok") ok++;
+        if (checked.value === "fail") fail++;
+        if (checked.value === "na") na++;
+      });
+      const total = allIds().length;
+      document.getElementById("cnt-ok").textContent = ok;
+      document.getElementById("cnt-fail").textContent = fail;
+      document.getElementById("cnt-na").textContent = na;
+      document.getElementById("cnt-pending").textContent = total - ok - fail - na;
+    }
+
+    function collectData() {
+      const data = { meta: {}, results: {}, notes: {}, summary: {} };
+      ["date", "env", "owner", "course", "url", "build"].forEach(key => {
+        data.meta[key] = document.getElementById(`meta-${key}`).value;
+      });
+      allIds().forEach(id => {
+        const checked = document.querySelector(`input[name="r-${id}"]:checked`);
+        data.results[id] = checked ? checked.value : "";
+        const note = document.getElementById(`note-${id}`);
+        data.notes[id] = note ? note.value : "";
+      });
+      ["blockers", "major", "minor", "decision"].forEach(key => {
+        data.summary[key] = document.getElementById(`sum-${key}`).value;
+      });
+      return data;
+    }
+
+    function applyData(data) {
+      if (!data) return;
+      Object.entries(data.meta || {}).forEach(([key, value]) => {
+        const input = document.getElementById(`meta-${key}`);
+        if (input) input.value = value || "";
+      });
+      Object.entries(data.results || {}).forEach(([id, value]) => {
+        const radio = document.querySelector(`input[name="r-${id}"][value="${value}"]`);
+        if (radio) radio.checked = true;
+      });
+      Object.entries(data.notes || {}).forEach(([id, value]) => {
+        const note = document.getElementById(`note-${id}`);
+        if (note) note.value = value || "";
+      });
+      Object.entries(data.summary || {}).forEach(([key, value]) => {
+        const input = document.getElementById(`sum-${key}`);
+        if (input) input.value = value || "";
+      });
+      count();
+    }
+
+    function saveResults() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(collectData()));
+      alert("Progreso guardado en este navegador.");
+    }
+
+    function loadResults() {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) {
+        alert("No hay progreso guardado.");
+        return;
+      }
+      applyData(JSON.parse(raw));
+    }
+
+    function exportResults() {
+      const data = collectData();
+      const lines = [];
+      lines.push("CHECKLIST QA - FLUJO MOOC PILOTO");
+      lines.push(`Fecha: ${data.meta.date || ""}`);
+      lines.push(`Ambiente: ${data.meta.env || ""}`);
+      lines.push(`Responsable QA: ${data.meta.owner || ""}`);
+      lines.push(`Curso piloto: ${data.meta.course || ""}`);
+      lines.push(`URL base: ${data.meta.url || ""}`);
+      lines.push(`Build / commit: ${data.meta.build || ""}`);
+      lines.push("");
+      sections.forEach(section => {
+        lines.push(section.title.toUpperCase());
+        section.items.forEach(([id, step, expected]) => {
+          lines.push(`${id} | ${data.results[id] || "pendiente"} | ${step}`);
+          lines.push(`Esperado: ${expected}`);
+          if (data.notes[id]) lines.push(`Evidencia: ${data.notes[id]}`);
+          lines.push("");
+        });
+      });
+      lines.push("CRITERIOS DE CIERRE");
+      closureCriteria.forEach((criterion, index) => {
+        const id = `CLOSE-${String(index + 1).padStart(2, "0")}`;
+        lines.push(`${id} | ${data.results[id] || "pendiente"} | ${criterion}`);
+        if (data.notes[id]) lines.push(`Observación: ${data.notes[id]}`);
+      });
+      lines.push("");
+      lines.push("RESUMEN");
+      lines.push(`Bloqueantes: ${data.summary.blockers || ""}`);
+      lines.push(`Importantes: ${data.summary.major || ""}`);
+      lines.push(`Menores: ${data.summary.minor || ""}`);
+      lines.push(`Decisión QA: ${data.summary.decision || ""}`);
+
+      const exportArea = document.getElementById("export-area");
+      exportArea.style.display = "block";
+      exportArea.textContent = lines.join("\n");
+      navigator.clipboard?.writeText(exportArea.textContent).catch(() => {});
+    }
+
+    function resetAll() {
+      if (!confirm("¿Reiniciar todo el checklist y borrar progreso local?")) return;
+      localStorage.removeItem(STORAGE_KEY);
+      document.querySelectorAll("input[type='radio']").forEach(input => input.checked = false);
+      document.querySelectorAll("textarea, input[type='text']").forEach(input => input.value = "");
+      document.getElementById("export-area").style.display = "none";
+      count();
+    }
+
+    renderChecklist();
+    count();
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) applyData(JSON.parse(saved));
+  </script>
+</body>
+</html>
