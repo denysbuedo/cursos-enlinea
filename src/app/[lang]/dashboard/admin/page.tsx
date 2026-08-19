@@ -152,11 +152,27 @@ export default function AdminDashboardPage() {
 
   const t = (es: string, en: string) => (lang === "en" ? en : es);
 
+  const adminFetch = async (input: RequestInfo | URL, init?: RequestInit) => {
+    let response = await fetch(input, init);
+    if (response.status !== 401) return response;
+
+    const refresh = await fetch("/api/auth/refresh", { method: "POST" });
+    if (!refresh.ok) return response;
+
+    response = await fetch(input, init);
+    return response;
+  };
+
+  const readApiError = async (response: Response, fallback: string) => {
+    const data = await response.json().catch(() => ({}));
+    return typeof data.error === "string" && data.error ? data.error : fallback;
+  };
+
   const fetchPending = async () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch("/api/admin/payments/pending");
+      const res = await adminFetch("/api/admin/payments/pending");
       if (res.status === 403 || res.status === 401) {
         router.push(`/${lang}/dashboard`);
         return;
@@ -179,7 +195,7 @@ export default function AdminDashboardPage() {
   }, []);
 
   const fetchUsers = async () => { setUsersLoading(true); try {
-    const res = await fetch("/api/admin/users"); if(!res.ok) return;
+    const res = await adminFetch("/api/admin/users"); if(!res.ok) return;
     const d = await res.json(); setUsers(d.data||[]);
   } finally { setUsersLoading(false); }};
 
@@ -187,7 +203,7 @@ export default function AdminDashboardPage() {
     setCreatingUser(true);
     setError(null);
     try {
-      const res = await fetch("/api/admin/users", {
+      const res = await adminFetch("/api/admin/users", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -215,40 +231,47 @@ export default function AdminDashboardPage() {
   };
 
   const changeRole = async (userId: string, newRole: string) => { setRoleLoading(userId); try {
-    await fetch(`/api/admin/users/${userId}/role`, { method: "POST", headers: {"Content-Type":"application/json"}, body: JSON.stringify({role:newRole}) });
+    await adminFetch(`/api/admin/users/${userId}/role`, { method: "POST", headers: {"Content-Type":"application/json"}, body: JSON.stringify({role:newRole}) });
     setUsers(prev=>prev.map(u=>u.id===userId?{...u,role:newRole}:u));
   } finally { setRoleLoading(null); }};
 
   const fetchCertificates = async () => {
     setCertificatesLoading(true);
+    setError(null);
     try {
-      const res = await fetch("/api/admin/certificates?pageSize=50");
-      if (!res.ok) return;
+      const res = await adminFetch("/api/admin/certificates?pageSize=50");
+      if (!res.ok) throw new Error(await readApiError(res, t("No se pudieron cargar los certificados", "Certificates could not be loaded")));
       const data = await res.json();
       setCertificates(data.data || []);
       setCertificatesTotal(data.total || 0);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t("No se pudieron cargar los certificados", "Certificates could not be loaded"));
     } finally {
       setCertificatesLoading(false);
     }
   };
 
   const revokeCertificate = async (id: string) => {
+    const reason = revokeReason[id] || t("Revocado desde panel admin", "Revoked from admin panel");
+    if (!window.confirm(t("¿Confirmas revocar este certificado?", "Confirm certificate revocation?"))) return;
     setActionLoading(id);
+    setError(null);
     try {
-      const res = await fetch(`/api/admin/certificates/${id}/revoke`, {
+      const res = await adminFetch("/api/admin/certificates", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ reason: revokeReason[id] || t("Revocado desde panel admin", "Revoked from admin panel") }),
+        body: JSON.stringify({ certificateId: id, reason }),
       });
-      if (!res.ok) throw new Error();
+      if (!res.ok) throw new Error(await readApiError(res, t("Error al revocar certificado", "Certificate revocation error")));
       await fetchCertificates();
+      await fetchAudit();
       setRevokeReason((prev) => {
         const copy = { ...prev };
         delete copy[id];
         return copy;
       });
-    } catch {
-      setError(t("Error al revocar certificado", "Certificate revocation error"));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t("Error al revocar certificado", "Certificate revocation error"));
     } finally {
       setActionLoading(null);
     }
@@ -257,7 +280,7 @@ export default function AdminDashboardPage() {
   const fetchAudit = async () => {
     setAuditLoading(true);
     try {
-      const res = await fetch("/api/admin/audit-log?pageSize=50");
+      const res = await adminFetch("/api/admin/audit-log?pageSize=50");
       if (!res.ok) return;
       const data = await res.json();
       setAuditLogs(data.data || []);
@@ -270,7 +293,7 @@ export default function AdminDashboardPage() {
   const fetchPaymentInstructions = async () => {
     setPaymentInstructionsLoading(true);
     try {
-      const res = await fetch("/api/admin/payment-instructions");
+      const res = await adminFetch("/api/admin/payment-instructions");
       if (!res.ok) return;
       const data = await res.json();
       setPaymentInstructions(data.data || []);
@@ -302,7 +325,7 @@ export default function AdminDashboardPage() {
         accountInfo = JSON.parse(trimmedAccountInfo);
       }
 
-      const res = await fetch("/api/admin/payment-instructions", {
+      const res = await adminFetch("/api/admin/payment-instructions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -332,15 +355,17 @@ export default function AdminDashboardPage() {
 
   const handleVerify = async (id: string) => {
     setActionLoading(id);
+    setError(null);
     try {
-      const res = await fetch(`/api/admin/payments/${id}/verify`, {
+      const res = await adminFetch(`/api/admin/payments/${id}/verify`, {
         method: "POST",
       });
-      if (!res.ok) throw new Error();
+      if (!res.ok) throw new Error(await readApiError(res, t("Error al verificar", "Verification error")));
       setPayments((prev) => prev.filter((p) => p.id !== id));
       setTotal((prev) => prev - 1);
-    } catch {
-      setError(t("Error al verificar", "Verification error"));
+      await fetchAudit();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t("Error al verificar", "Verification error"));
     } finally {
       setActionLoading(null);
     }
@@ -349,23 +374,25 @@ export default function AdminDashboardPage() {
   const handleReject = async (id: string) => {
     const reason = rejectReason[id] || "";
     setActionLoading(id);
+    setError(null);
     try {
-      const res = await fetch(`/api/admin/payments/${id}/reject`, {
+      const res = await adminFetch(`/api/admin/payments/${id}/reject`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ reason }),
       });
-      if (!res.ok) throw new Error();
+      if (!res.ok) throw new Error(await readApiError(res, t("Error al rechazar", "Rejection error")));
       setPayments((prev) => prev.filter((p) => p.id !== id));
       setTotal((prev) => prev - 1);
+      await fetchAudit();
       // Limpiar razón
       setRejectReason((prev) => {
         const copy = { ...prev };
         delete copy[id];
         return copy;
       });
-    } catch {
-      setError(t("Error al rechazar", "Rejection error"));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t("Error al rechazar", "Rejection error"));
     } finally {
       setActionLoading(null);
     }
