@@ -74,7 +74,7 @@ async function main() {
   ];
 
   for (const [moduleIndex, moduleData] of modules.entries()) {
-    const module = await prisma.courseModule.create({
+    const courseModule = await prisma.courseModule.create({
       data: {
         courseId: course.id,
         title: json(moduleData.title),
@@ -87,7 +87,7 @@ async function main() {
       await prisma.session.create({
         data: {
           courseId: course.id,
-          moduleId: module.id,
+          moduleId: courseModule.id,
           title: json({ es: sessionData[0], en: sessionData[0] }),
           description: json({ es: sessionData[1], en: sessionData[1] }),
           sessionType: "RECORDED",

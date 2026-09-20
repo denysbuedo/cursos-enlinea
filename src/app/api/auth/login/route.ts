@@ -58,7 +58,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: message }, { status });
   };
 
-  const user = await prisma.user.findUnique({ where: { email } });
+  const user = await prisma.user.findUnique({ where: { email: email.trim().toLowerCase() } });
   if (!user) {
     return fail("Credenciales inválidas");
   }
@@ -66,6 +66,10 @@ export async function POST(request: NextRequest) {
   const valid = await verifyPassword(password, user.passwordHash);
   if (!valid) {
     return fail("Credenciales inválidas");
+  }
+
+  if (!user.emailVerifiedAt) {
+    return fail("Debes confirmar tu correo electrónico antes de iniciar sesión", 403);
   }
 
   const accessToken = await signAccessToken(user.id, user.role);

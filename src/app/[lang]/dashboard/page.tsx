@@ -91,7 +91,10 @@ export default function DashboardPage() {
             {lang === "en" ? "Learning dashboard" : "Panel de aprendizaje"}
           </div>
           <h1 className="text-3xl font-bold">{dict.dashboard.myCourses}</h1>
-          <p className="mt-2 max-w-2xl text-muted-foreground">{lang === "en" ? "Continue your learning journey and track progress toward certificates." : "Continúa tu aprendizaje y sigue el progreso hacia tus certificados."}</p>
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <p className="mt-2 max-w-2xl text-muted-foreground">{lang === "en" ? "Continue your learning journey and track progress toward certificates." : "Continúa tu aprendizaje y sigue el progreso hacia tus certificados."}</p>
+            <Link href={`/${lang}/profile`} className="text-sm font-medium text-primary hover:underline">{lang === "en" ? "Account security" : "Seguridad de la cuenta"}</Link>
+          </div>
         </div>
         {enrollments.length === 0 ? (
           <div className="grid gap-5 rounded-lg border border-dashed border-border bg-white p-6 md:grid-cols-[1fr_280px] md:items-center">

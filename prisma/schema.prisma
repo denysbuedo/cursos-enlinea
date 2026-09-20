@@ -69,6 +69,11 @@ enum ReviewStatus {
   REJECTED
 }
 
+enum AuthTokenType {
+  EMAIL_VERIFICATION
+  PASSWORD_RESET
+}
+
 model User {
   id              String        @id @default(uuid())
   email           String        @unique
@@ -80,7 +85,9 @@ model User {
   role            Role          @default(STUDENT)
   country         String?
   preferredLang   String        @default("es")
+  emailVerifiedAt DateTime?
   refreshTokens   RefreshToken[]
+  authTokens      AuthToken[]
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
   enrollments     Enrollment[]
@@ -146,6 +153,20 @@ model Course {
 
   @@index([slug, status])
   @@index([instructorId])
+}
+
+model AuthToken {
+  id         String        @id @default(uuid())
+  tokenHash  String        @unique
+  type       AuthTokenType
+  userId     String
+  expiresAt  DateTime
+  usedAt     DateTime?
+  createdAt  DateTime      @default(now())
+  user       User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, type])
+  @@index([expiresAt])
 }
 
 model CourseVisit {

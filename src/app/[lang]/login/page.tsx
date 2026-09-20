@@ -96,7 +96,7 @@ export default function LoginPage() {
             name="password"
             type="password"
             required
-            minLength={6}
+            minLength={10}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="••••••••"
@@ -119,6 +119,12 @@ export default function LoginPage() {
           )}
         </button>
       </form>
+
+      <div className="mt-4 text-center">
+        <Link href={`/${lang}/forgot-password`} className="text-sm text-primary hover:underline">
+          {dict.auth.forgotPassword}
+        </Link>
+      </div>
 
       <p className="text-center text-sm text-muted-foreground mt-6">
         {dict.auth.noAccount}{" "}

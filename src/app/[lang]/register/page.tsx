@@ -1,13 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import Link from "next/link";
 import { getDictionary, getLangFromParams } from "@/lib/i18n";
 
 export default function RegisterPage() {
   const params = useParams<{ lang: string }>();
-  const router = useRouter();
   const lang = getLangFromParams(params);
   const dict = getDictionary(lang);
 
@@ -15,6 +14,7 @@ export default function RegisterPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
   const t = (es: string, en: string) => (lang === "en" ? en : es);
@@ -22,6 +22,7 @@ export default function RegisterPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    setMessage("");
     setLoading(true);
 
     try {
@@ -36,8 +37,11 @@ export default function RegisterPage() {
         throw new Error(data.error || "Error");
       }
 
-      router.push(`/${lang}/dashboard`);
-      router.refresh();
+      const data = await res.json();
+      setMessage(data.message || t("Revisa tu correo para confirmar la cuenta.", "Check your email to confirm your account."));
+      setName("");
+      setEmail("");
+      setPassword("");
     } catch (err) {
       setError(
         err instanceof Error
@@ -64,6 +68,11 @@ export default function RegisterPage() {
         {error && (
           <div className="p-3 rounded-lg bg-[#c0392b]/10 text-black text-sm text-center">
             {error}
+          </div>
+        )}
+        {message && (
+          <div className="rounded-lg bg-[#e8f6ef] p-3 text-center text-sm text-[#0f5132]">
+            {message}
           </div>
         )}
 
@@ -106,12 +115,15 @@ export default function RegisterPage() {
             id="password"
             type="password"
             required
-            minLength={6}
+            minLength={10}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="••••••••"
             className="w-full px-4 py-2.5 rounded-lg border bg-[#fafbfc] focus:outline-none focus:ring-2 focus:ring-primary/30"
           />
+          <p className="mt-1.5 text-xs text-[#7b8fa1]">
+            {t("Mínimo 10 caracteres, con mayúsculas, minúsculas y números.", "At least 10 characters, including uppercase, lowercase, and numbers.")}
+          </p>
         </div>
 
         <button
@@ -138,6 +150,10 @@ export default function RegisterPage() {
         >
           {dict.auth.loginButton}
         </Link>
+      </p>
+      <p className="mt-3 text-center text-xs text-[#7b8fa1]">
+        {t("¿Ya te registraste y no recibiste el correo?", "Already registered and did not receive the email?")} {" "}
+        <Link href={`/${lang}/resend-verification`} className="text-primary hover:underline">{t("Reenviar confirmación", "Resend confirmation")}</Link>
       </p>
     </div>
   );
