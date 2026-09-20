@@ -13,6 +13,7 @@ export async function sendEmail(input: EmailInput): Promise<boolean> {
   const smtpPassword = process.env.SMTP_PASSWORD;
   const smtpPort = Number(process.env.SMTP_PORT || 25);
   const smtpStartTls = process.env.SMTP_STARTTLS !== "false";
+  const smtpRejectUnauthorized = process.env.SMTP_TLS_REJECT_UNAUTHORIZED !== "false";
   const apiKey = process.env.RESEND_API_KEY;
   const from = process.env.EMAIL_FROM;
 
@@ -23,6 +24,7 @@ export async function sendEmail(input: EmailInput): Promise<boolean> {
         port: smtpPort,
         secure: false,
         requireTLS: smtpStartTls,
+        tls: { rejectUnauthorized: smtpRejectUnauthorized },
         auth: { user: smtpUser, pass: smtpPassword },
       });
       await transporter.sendMail({ from, to: input.to, subject: input.subject, text: input.text, html: input.html });
