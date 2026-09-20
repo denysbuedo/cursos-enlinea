@@ -15,5 +15,5 @@ export function pkceChallenge(verifier: string): string {
 }
 
 export function googleRedirectUri(): string {
-  return `${(process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000").replace(/\/$/, "")}/api/auth/google/callback`;
+  return `${(process.env.APP_URL || process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000").replace(/\/$/, "")}/api/auth/google/callback`;
 }
