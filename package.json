@@ -36,6 +36,7 @@
     "jszip": "^3.10.2",
     "lucide-react": "^0.400.0",
     "next": "16.2.6",
+    "nodemailer": "^10.0.10",
     "pdfkit": "^0.15.0",
     "react": "19.2.4",
     "react-dom": "19.2.4"
@@ -45,6 +46,7 @@
     "@tailwindcss/postcss": "^4",
     "@types/bcrypt": "^5.0.2",
     "@types/node": "^20",
+    "@types/nodemailer": "^8.0.2",
     "@types/pdfkit": "^0.13.4",
     "@types/react": "^19",
     "@types/react-dom": "^19",
