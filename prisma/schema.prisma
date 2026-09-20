@@ -57,11 +57,26 @@ enum Role {
   STUDENT
 }
 
+enum CourseInstructorRole {
+  LEAD
+  INSTRUCTOR
+  EDITOR
+}
+
+enum ReviewStatus {
+  PENDING
+  PUBLISHED
+  REJECTED
+}
+
 model User {
   id              String        @id @default(uuid())
   email           String        @unique
   passwordHash    String
   name            String
+  bio             String?
+  institution     String?
+  avatarUrl       String?
   role            Role          @default(STUDENT)
   country         String?
   preferredLang   String        @default("es")
@@ -70,6 +85,8 @@ model User {
   updatedAt       DateTime      @updatedAt
   enrollments     Enrollment[]
   courses         Course[]       @relation("CourseInstructor")
+  courseAssignments CourseInstructor[]
+  courseReviews   CourseReview[]
   paymentsReviewed Payment[]    @relation("PaymentReviewer")
 }
 
@@ -94,6 +111,10 @@ model Course {
   targetAudience Json?
   requirements  Json?
   competencies  Json?
+  coverImageUrl String?
+  scienceBranch String?
+  topics        String[]
+  keywords      String[]
   questionBank  Json?
   estimatedHours Int?
   weeklyHours   Int?
@@ -108,17 +129,75 @@ model Course {
   currency      Currency      @default(USD)
   instructorId  String
   instructor    User          @relation("CourseInstructor", fields: [instructorId], references: [id])
+  instructors   CourseInstructor[]
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
+  viewCount     Int           @default(0)
+  uniqueVisitorCount Int       @default(0)
   sessions      Session[]
   modules       CourseModule[]
   editions      CourseEdition[]
   enrollments   Enrollment[]
   certificates  Certificate[]
   evaluations   Evaluation[]
+  visits        CourseVisit[]
+  viewEvents    CourseViewEvent[]
+  reviews       CourseReview[]
 
   @@index([slug, status])
   @@index([instructorId])
+}
+
+model CourseVisit {
+  id              String   @id @default(uuid())
+  courseId        String
+  visitorId       String
+  visitCount      Int      @default(1)
+  firstVisitedAt  DateTime @default(now())
+  lastVisitedAt   DateTime @updatedAt
+  course          Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@unique([courseId, visitorId])
+  @@index([courseId])
+}
+
+model CourseViewEvent {
+  id         String   @id @default(uuid())
+  courseId   String
+  visitorId  String
+  viewedAt   DateTime @default(now())
+  course     Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@index([courseId, viewedAt])
+}
+
+model CourseReview {
+  id          String       @id @default(uuid())
+  courseId    String
+  userId      String
+  rating      Int
+  testimonial String?
+  status      ReviewStatus @default(PENDING)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  course      Course      @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([courseId, userId])
+  @@index([courseId, status])
+}
+
+model CourseInstructor {
+  id         String               @id @default(uuid())
+  courseId   String
+  userId     String
+  role       CourseInstructorRole @default(INSTRUCTOR)
+  assignedAt DateTime             @default(now())
+  course     Course               @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  user       User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([courseId, userId])
+  @@index([userId])
 }
 
 model CourseEdition {

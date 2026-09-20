@@ -52,9 +52,20 @@ export function Footer({ lang, dict }: { lang: string; dict: Dict }) {
       </div>
 
       <div className="border-t border-white/12 bg-black/10">
-        <div className="container mx-auto flex flex-col gap-2 px-4 py-4 text-xs text-white/70 sm:flex-row sm:items-center sm:justify-between">
-          <p>© {new Date().getFullYear()} {APP_NAME}</p>
-          <p>{t("Plataforma MOOC institucional", "Institutional MOOC platform")}</p>
+        <div className="container mx-auto px-4 py-3">
+          <p className="mx-auto max-w-6xl text-center text-[11px] leading-4 text-white/70">
+            {t(
+              "Esta plataforma está soportada por la Red Nacional de Investigación y Educación de Avanzada (Reduniv) del Ministerio de Educación Superior de la República de Cuba.",
+              "This platform is supported by the National Advanced Research and Education Network (Reduniv) of the Ministry of Higher Education of the Republic of Cuba.",
+            )}
+          </p>
+        </div>
+        <div className="border-t border-white/10">
+          <div className="container mx-auto flex flex-wrap items-center justify-center gap-x-3 gap-y-1 px-4 py-3 text-xs text-white/70">
+            <span>© {new Date().getFullYear()} {APP_NAME}</span>
+            <span aria-hidden="true" className="text-white/40">·</span>
+            <span>{t("Plataforma MOOC institucional", "Institutional MOOC platform")}</span>
+          </div>
         </div>
       </div>
     </footer>

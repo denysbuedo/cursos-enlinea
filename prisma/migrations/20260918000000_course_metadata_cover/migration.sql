@@ -1,0 +1,5 @@
+ALTER TABLE "Course"
+ADD COLUMN "coverImageUrl" TEXT,
+ADD COLUMN "scienceBranch" TEXT,
+ADD COLUMN "topics" TEXT[] DEFAULT ARRAY[]::TEXT[],
+ADD COLUMN "keywords" TEXT[] DEFAULT ARRAY[]::TEXT[];

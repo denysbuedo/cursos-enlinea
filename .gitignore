@@ -40,6 +40,7 @@ yarn-error.log*
 /.agents/
 /.codex/
 codex.txt
+acceso.txt
 
 # env files (can opt-in for committing if needed)
 .env*

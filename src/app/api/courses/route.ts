@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth";
 import { rateLimit, RATE_LIMITS } from "@/lib/rate-limit";
+import { canManageCourse } from "@/lib/course-access";
 
 // Bugfix #2: búsqueda case-insensitive con ILIKE
 
@@ -93,7 +94,19 @@ export async function GET(request: NextRequest) {
     // Búsqueda case-insensitive usando PostgreSQL ILIKE
     const searchPattern = `%${search}%`;
     const matching: { id: string }[] = await prisma.$queryRawUnsafe(
-      `SELECT id FROM "Course" WHERE status = 'PUBLISHED' AND visibility = 'PUBLIC' AND ("title"->>'es' ILIKE $1 OR "title"->>'en' ILIKE $1 OR "slug" ILIKE $1)`,
+      `SELECT id FROM "Course"
+       WHERE status = 'PUBLISHED'
+         AND visibility = 'PUBLIC'
+         AND (
+           "title"->>'es' ILIKE $1
+           OR "title"->>'en' ILIKE $1
+           OR "description"->>'es' ILIKE $1
+           OR "description"->>'en' ILIKE $1
+           OR "slug" ILIKE $1
+           OR COALESCE("scienceBranch", '') ILIKE $1
+           OR array_to_string("topics", ' ') ILIKE $1
+           OR array_to_string("keywords", ' ') ILIKE $1
+         )`,
       searchPattern
     );
     where.id = { in: matching.map((c) => c.id) };
@@ -104,6 +117,12 @@ export async function GET(request: NextRequest) {
       where,
       include: {
         _count: { select: { enrollments: true, sessions: true } },
+        editions: {
+          where: { status: "PUBLISHED" },
+          select: { id: true, name: true, startsAt: true, endsAt: true, isDefault: true },
+          orderBy: [{ isDefault: "desc" }, { startsAt: "asc" }, { createdAt: "asc" }],
+          take: 1,
+        },
         sessions: {
           where: { preview: true, status: "PUBLISHED" },
           select: { id: true },
@@ -143,6 +162,10 @@ export async function POST(request: NextRequest) {
       targetAudience,
       requirements,
       competencies,
+      coverImageUrl,
+      scienceBranch,
+      topics,
+      keywords,
       estimatedHours,
       weeklyHours,
       level,
@@ -168,7 +191,7 @@ export async function POST(request: NextRequest) {
         select: { id: true, instructorId: true, status: true },
       });
       if (!existing) return NextResponse.json({ error: "Curso no encontrado" }, { status: 404 });
-      if (session.role !== "ADMIN" && existing.instructorId !== session.userId) {
+      if (!(await canManageCourse(existing.id, session.userId, session.role))) {
         return NextResponse.json({ error: "No eres el instructor de este curso" }, { status: 403 });
       }
       const nextStatus = status || existing.status;
@@ -194,6 +217,10 @@ export async function POST(request: NextRequest) {
           targetAudience: targetAudience || null,
           requirements: requirements || null,
           competencies: competencies || null,
+          coverImageUrl: coverImageUrl?.trim() || null,
+          scienceBranch: scienceBranch?.trim() || null,
+          topics: Array.isArray(topics) ? topics : [],
+          keywords: Array.isArray(keywords) ? keywords : [],
           estimatedHours: estimatedHours ? Number(estimatedHours) : null,
           weeklyHours: weeklyHours ? Number(weeklyHours) : null,
           level: level || null,
@@ -239,6 +266,10 @@ export async function POST(request: NextRequest) {
           targetAudience: targetAudience || null,
           requirements: requirements || null,
           competencies: competencies || null,
+          coverImageUrl: coverImageUrl?.trim() || null,
+          scienceBranch: scienceBranch?.trim() || null,
+          topics: Array.isArray(topics) ? topics : [],
+          keywords: Array.isArray(keywords) ? keywords : [],
           estimatedHours: estimatedHours ? Number(estimatedHours) : null,
           weeklyHours: weeklyHours ? Number(weeklyHours) : null,
           level: level || null,

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth";
 import { uploadFile } from "@/lib/storage";
+import { canManageCourse } from "@/lib/course-access";
 
 const MAX_VIDEO_SIZE_MB = 500;
 const ALLOWED_VIDEO_TYPES = ["video/mp4", "video/webm", "video/quicktime", "video/x-m4v"];
@@ -30,7 +31,7 @@ export async function POST(
       return NextResponse.json({ error: "Curso no encontrado" }, { status: 404 });
     }
 
-    if (session.role !== "ADMIN" && course.instructorId !== session.userId) {
+    if (!(await canManageCourse(course.id, session.userId, session.role))) {
       return NextResponse.json({ error: "No eres el instructor de este curso" }, { status: 403 });
     }
 

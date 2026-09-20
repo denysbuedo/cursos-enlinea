@@ -17,6 +17,7 @@ interface EnrollmentData {
   course: {
     slug: string;
     title: { es: string; en: string };
+    coverImageUrl?: string | null;
     _count: { sessions: number };
   };
 }
@@ -125,13 +126,20 @@ export default function DashboardPage() {
             </div>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 items-start gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {enrollments.map((e) => (
-              <Link key={e.id} href={`/${lang}/courses/${e.course.slug}`} className="group flex flex-col overflow-hidden rounded-lg border border-border bg-white transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg">
-                <div className="h-1.5 bg-primary" />
-                <div className="p-5 flex-1">
-                  <div className="flex items-start justify-between gap-3 mb-3">
-                    <h3 className="font-semibold group-hover:text-primary transition-colors">{t(e.course.title.es, e.course.title.en)}</h3>
+              <Link key={e.id} href={`/${lang}/courses/${e.course.slug}`} className="group flex h-[360px] w-full flex-col overflow-hidden rounded-lg border border-border bg-white transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg">
+                <div className="relative aspect-[1.85/1] shrink-0 overflow-hidden bg-[#f4f7fb]">
+                  {e.course.coverImageUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={e.course.coverImageUrl} alt="" className="h-full w-full object-contain transition-opacity duration-200 group-hover:opacity-95" />
+                  ) : (
+                    <div className="flex h-full items-center justify-center text-xs font-semibold text-primary/70">MOOC</div>
+                  )}
+                </div>
+                <div className="flex min-h-0 flex-1 flex-col p-4">
+                  <div className="mb-3 flex items-start justify-between gap-3">
+                    <h3 className="line-clamp-2 font-semibold leading-5 transition-colors group-hover:text-primary">{t(e.course.title.es, e.course.title.en)}</h3>
                     {e.progress >= 100 && <Award className="w-5 h-5 text-primary flex-shrink-0" />}
                   </div>
                   <div className="mt-3 space-y-1.5">

@@ -1,7 +1,11 @@
 import { expect, test, type Page } from "@playwright/test";
+import JSZip from "jszip";
+import { SignJWT } from "jose";
 
 const admin = { email: "admin@edplatform.com", password: "password123" };
-const student = { email: "alumno@edplatform.com", password: "password123" };
+const student = { email: "estudiante_demo@demo.local", password: "password123" };
+const demoCourseSlug = "diseno-de-moocs-desde-la-idea-hasta-la-publicacion";
+let demoOfflinePackage: Buffer | undefined;
 
 async function login(page: Page, email: string, password: string) {
   await page.goto("/es/login");
@@ -38,6 +42,16 @@ async function postFromPage(page: Page, url: string, data: unknown) {
     },
     { requestUrl: url, body: data }
   );
+}
+
+async function getBinaryFromPage(page: Page, url: string) {
+  return page.evaluate(async (requestUrl) => {
+    const response = await fetch(requestUrl);
+    const bytes = new Uint8Array(await response.arrayBuffer());
+    let binary = "";
+    bytes.forEach((byte) => { binary += String.fromCharCode(byte); });
+    return { ok: response.ok, status: response.status, text: response.ok ? "" : await response.text(), base64: btoa(binary) };
+  }, url);
 }
 
 function expectOk(response: { ok: boolean; status: number; text: string }) {
@@ -163,6 +177,17 @@ test.describe("R1 critical flows", () => {
     expectOk(moduleResponse);
     const courseModule = moduleResponse.json.data;
 
+    const uploadedPpt = await page.evaluate(async (courseId) => {
+      const formData = new FormData();
+      formData.append("file", new File(["E2E PPT placeholder"], "material-e2e.pptx", {
+        type: "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+      }));
+      const response = await fetch(`/api/courses/${courseId}/resources/upload`, { method: "POST", body: formData });
+      return { status: response.status, body: await response.json() };
+    }, course.id);
+    expect(uploadedPpt.status, JSON.stringify(uploadedPpt.body)).toBe(201);
+    const uploadedPptData = uploadedPpt.body.data;
+
     const sessionResponse = await postFromPage(page, `/api/courses/${course.id}/sessions`, {
         moduleId: courseModule.id,
         title: { es: "Sesión E2E", en: "E2E Session" },
@@ -179,6 +204,13 @@ test.describe("R1 critical flows", () => {
             url: "https://example.com/recurso-mooc.pdf",
             type: "PDF",
             source: "REPOSITORY",
+          },
+          {
+            id: "res-e2e-pptx",
+            title: uploadedPptData.title,
+            url: uploadedPptData.url,
+            type: uploadedPptData.type,
+            source: uploadedPptData.source,
           },
         ],
         practicePrompt: {
@@ -240,7 +272,7 @@ test.describe("R1 critical flows", () => {
 
     await page.goto(`/es/courses/${slug}`);
     await expect(page.getByRole("heading", { name: courseTitle })).toBeVisible();
-    await expect(page.getByText("Ficha del curso")).toBeVisible();
+    await expect(page.getByText("Ficha académica")).toBeVisible();
     await expect(page.getByText("Diseñar una experiencia MOOC básica")).toBeVisible();
     await expect(page.getByText("8 horas")).toBeVisible();
     await expect(page.getByText("8 min")).toBeVisible();
@@ -268,6 +300,12 @@ test.describe("R1 critical flows", () => {
     await page.goto("/es/courses");
     await page.getByPlaceholder("Buscar cursos...").fill(courseTitle);
     await expect(page.getByText(courseTitle)).toBeVisible();
+
+    const offlinePackageResponse = await getBinaryFromPage(page, `/api/courses/${course.id}/offline-package`);
+    expect(offlinePackageResponse.ok, `${offlinePackageResponse.status} ${offlinePackageResponse.text}`).toBeTruthy();
+    const offlineZip = await JSZip.loadAsync(Buffer.from(offlinePackageResponse.base64, "base64"));
+    const offlineManifest = JSON.parse(await offlineZip.file("manifest.json")!.async("string")) as { includedResources: Array<{ title: string }> };
+    expect(offlineManifest.includedResources.some((resource) => resource.title === "material-e2e.pptx"), JSON.stringify(offlineManifest)).toBeTruthy();
 
     await page.goto("/es/dashboard/cms");
     await page.getByRole("button", { name: new RegExp(courseTitle) }).click();
@@ -348,11 +386,14 @@ test.describe("R1 critical flows", () => {
     await expect(page.getByText(email)).toBeVisible();
   });
 
-  test("student can complete free seeded course, pass evaluation and verify certificate", async ({ page }) => {
+  test("student can complete the demo course, pass evaluation and verify certificate", async ({ page }) => {
     await loginByApi(page, student.email, student.password);
 
-    await page.goto("/es/courses/introduccion-programacion-web");
-    await expect(page.getByRole("heading", { name: /introducción a la programación web/i })).toBeVisible();
+    await page.goto(`/es/courses/${demoCourseSlug}`);
+    await expect(page.locator("h1").first()).toBeVisible();
+    const demoPackageResponse = await getBinaryFromPage(page, `/api/courses/${demoCourseSlug}/offline-package`);
+    expect(demoPackageResponse.ok, `${demoPackageResponse.status} ${demoPackageResponse.text}`).toBeTruthy();
+    demoOfflinePackage = Buffer.from(demoPackageResponse.base64, "base64");
 
     const completeButtons = page.getByRole("button", { name: /completar/i });
     const count = await completeButtons.count();
@@ -363,7 +404,7 @@ test.describe("R1 critical flows", () => {
     await expect(page.getByText(/100%/)).toBeVisible();
 
     const evaluationResponse = await page.evaluate(async () => {
-      const response = await fetch("/api/evaluations?courseSlug=introduccion-programacion-web");
+      const response = await fetch("/api/evaluations?courseSlug=diseno-de-moocs-desde-la-idea-hasta-la-publicacion");
       return { ok: response.ok, status: response.status, json: await response.json() };
     });
     expect(evaluationResponse.ok, `HTTP ${evaluationResponse.status} ${JSON.stringify(evaluationResponse.json)}`).toBeTruthy();
@@ -394,7 +435,7 @@ test.describe("R1 critical flows", () => {
     });
     expect(enrollmentResponse.ok, `HTTP ${enrollmentResponse.status} ${JSON.stringify(enrollmentResponse.json)}`).toBeTruthy();
     const enrollment = enrollmentResponse.json.data.find(
-      (item: { course: { slug: string } }) => item.course.slug === "introduccion-programacion-web"
+      (item: { course: { slug: string } }) => item.course.slug === demoCourseSlug
     );
     expect(enrollment?.id).toBeTruthy();
 
@@ -415,6 +456,70 @@ test.describe("R1 critical flows", () => {
     expect(verifyResponse.ok()).toBeTruthy();
     const verifyJson = await verifyResponse.json();
     expect(verifyJson.valid).toBeTruthy();
-    expect(verifyJson.criteria).toContain("puntaje mínimo de 80");
+    expect(verifyJson.criteria).toMatch(/puntaje mínimo de \d+%/);
+  });
+
+  test("offline package works without connection and synchronizes after reconnecting", async ({ page }) => {
+    if (!demoOfflinePackage) {
+      await loginByApi(page, student.email, student.password);
+      const packageResponse = await getBinaryFromPage(page, `/api/courses/${demoCourseSlug}/offline-package`);
+      expect(packageResponse.ok, `${packageResponse.status} ${packageResponse.text}`).toBeTruthy();
+      demoOfflinePackage = Buffer.from(packageResponse.base64, "base64");
+    }
+    const zip = await JSZip.loadAsync(demoOfflinePackage!);
+    const html = await zip.file("index.html")?.async("string");
+    expect(html).toBeTruthy();
+    expect(html).toContain("/api/offline/sync");
+
+    const courseJson = JSON.parse(html!.match(/const COURSE=(.*?);const key/s)![1]) as {
+      syncToken: string;
+      syncEndpoint: string;
+    };
+    await page.goto("/es/login");
+    await page.setContent(html!);
+    await page.context().setOffline(true);
+
+    const sessionButtons = page.locator("[data-complete]");
+    const sessionCount = await sessionButtons.count();
+    for (let index = 0; index < sessionCount; index += 1) {
+      await sessionButtons.nth(index).click();
+    }
+    expect(await page.evaluate(() => Object.keys(localStorage).some((key) => key.startsWith("curso-offline-")))).toBeTruthy();
+
+    const questionNames = await page.locator("#evaluation input[type=radio]").evaluateAll((inputs) => [
+      ...new Set(inputs.map((input) => input.getAttribute("name")).filter(Boolean)),
+    ]);
+    for (const name of questionNames) {
+      await page.locator(`input[name="${name}"]`).first().check();
+    }
+    await page.getByRole("button", { name: "Guardar respuestas" }).click();
+    await expect(page.locator("#evaluationResult")).toContainText("Resultado guardado");
+
+    await page.context().setOffline(false);
+    await page.getByRole("button", { name: "Sincronizar progreso" }).click();
+    await expect(page.locator("#syncStatus")).toContainText("Sincronizado correctamente");
+
+    const partialSync = await page.request.post(courseJson.syncEndpoint, {
+      headers: { Authorization: `Bearer ${courseJson.syncToken}` },
+      data: { completedSessionIds: [] },
+    });
+    expect(partialSync.ok()).toBeTruthy();
+    expect((await partialSync.json()).data.progress).toBe(100);
+
+    const expiredToken = await new SignJWT({
+      type: "offline-sync",
+      courseId: "expired-course",
+      enrollmentId: "expired-enrollment",
+    })
+      .setProtectedHeader({ alg: "HS256" })
+      .setSubject("expired-user")
+      .setIssuedAt()
+      .setExpirationTime(Math.floor(Date.now() / 1000) - 60)
+      .sign(new TextEncoder().encode(process.env.JWT_SECRET || "aprendizaje-local-jwt-secret-minimum-32-chars"));
+    const expiredResponse = await page.request.post("/api/offline/sync", {
+      headers: { Authorization: `Bearer ${expiredToken}` },
+      data: {},
+    });
+    expect(expiredResponse.status()).toBe(401);
   });
 });

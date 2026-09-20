@@ -14,7 +14,12 @@ export async function GET(request: NextRequest) {
     const status = searchParams.get("status");
 
     const where: Record<string, unknown> = {};
-    if (session.role === "INSTRUCTOR") where.instructorId = session.userId;
+    if (session.role === "INSTRUCTOR") {
+      where.OR = [
+        { instructorId: session.userId },
+        { instructors: { some: { userId: session.userId } } },
+      ];
+    }
     if (status && ["DRAFT", "SCHEDULED", "PUBLISHED", "ARCHIVED"].includes(status)) {
       where.status = status;
     }
@@ -32,6 +37,14 @@ export async function GET(request: NextRequest) {
       where,
       include: {
         instructor: { select: { id: true, name: true, email: true } },
+        instructors: {
+          orderBy: [{ role: "asc" }, { assignedAt: "asc" }],
+          select: {
+            id: true,
+            role: true,
+            user: { select: { id: true, name: true, email: true, bio: true, institution: true, avatarUrl: true } },
+          },
+        },
         modules: {
           orderBy: { order: "asc" },
           include: {

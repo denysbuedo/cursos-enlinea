@@ -12,6 +12,12 @@ const MIME_TYPES: Record<string, string> = {
   ".webp": "image/webp",
   ".gif": "image/gif",
   ".pdf": "application/pdf",
+  ".ppt": "application/vnd.ms-powerpoint",
+  ".pptx": "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+  ".doc": "application/msword",
+  ".docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  ".xls": "application/vnd.ms-excel",
+  ".xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
   ".mp4": "video/mp4",
   ".webm": "video/webm",
   ".mov": "video/quicktime",
@@ -24,7 +30,7 @@ export async function GET(
 ) {
   const { path: pathParts } = await params;
   const filePath = pathParts.join("/");
-  const uploadsRoot = path.resolve(process.cwd(), "uploads");
+  const uploadsRoot = path.resolve(process.env.UPLOADS_DIR || path.join(process.cwd(), "uploads"));
   const fullPath = path.resolve(uploadsRoot, filePath);
 
   if (fullPath !== uploadsRoot && !fullPath.startsWith(`${uploadsRoot}${path.sep}`)) {

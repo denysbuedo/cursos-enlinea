@@ -12,17 +12,21 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const search = String(searchParams.get("search") || "").trim();
     const pageSize = Math.min(Number(searchParams.get("pageSize") || 10), 25);
+    const requestedRole = searchParams.get("role");
+    const userRole = requestedRole === "INSTRUCTOR" ? "INSTRUCTOR" : "STUDENT";
 
-    if (search.length < 2) {
+    if (search.length < 2 && requestedRole !== "INSTRUCTOR") {
       return NextResponse.json({ data: [], total: 0 });
     }
 
     const where = {
-      role: "STUDENT" as const,
-      OR: [
-        { name: { contains: search, mode: "insensitive" as const } },
-        { email: { contains: search, mode: "insensitive" as const } },
-      ],
+      role: userRole as "STUDENT" | "INSTRUCTOR",
+      ...(search.length >= 2 ? {
+        OR: [
+          { name: { contains: search, mode: "insensitive" as const } },
+          { email: { contains: search, mode: "insensitive" as const } },
+        ],
+      } : {}),
     };
 
     const [users, total] = await Promise.all([

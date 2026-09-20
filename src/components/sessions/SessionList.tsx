@@ -18,7 +18,7 @@ import {
 import { resolveVideoRender } from "@/lib/video";
 
 interface SessionResource {
-  id: string;
+  id?: string;
   title: string;
   url: string;
   type: string;
@@ -219,9 +219,9 @@ export function SessionList({
                       {t("Bibliografía y materiales complementarios", "Bibliography and complementary materials")}
                     </div>
                     <div className="grid gap-2 sm:grid-cols-2">
-                      {resources.map((resource) => (
+                      {resources.map((resource, resourceIndex) => (
                         <a
-                          key={resource.id}
+                          key={`${session.id}-resource-${resource.id || resource.url || resource.title || "item"}-${resourceIndex}`}
                           href={resource.url}
                           target="_blank"
                           rel="noopener noreferrer"

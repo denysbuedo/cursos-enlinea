@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth";
+import { canManageCourse } from "@/lib/course-access";
 
 async function getEditableCourse(courseIdOrSlug: string, userId: string, role: string) {
   const course = await prisma.course.findFirst({
@@ -9,7 +10,7 @@ async function getEditableCourse(courseIdOrSlug: string, userId: string, role: s
   });
 
   if (!course) return null;
-  if (role !== "ADMIN" && course.instructorId !== userId) {
+  if (!(await canManageCourse(course.id, userId, role))) {
     throw new Error("FORBIDDEN");
   }
   return course;

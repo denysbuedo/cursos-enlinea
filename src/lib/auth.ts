@@ -33,6 +33,29 @@ export async function verifyAccessToken(token: string) {
   return payload as { sub: string; role: string };
 }
 
+export async function signOfflineSyncToken(userId: string, courseId: string, enrollmentId: string) {
+  return new SignJWT({
+    type: "offline-sync",
+    courseId,
+    enrollmentId,
+  })
+    .setProtectedHeader({ alg: "HS256" })
+    .setSubject(userId)
+    .setIssuedAt()
+    .setExpirationTime("30d")
+    .sign(JWT_SECRET);
+}
+
+export async function verifyOfflineSyncToken(token: string) {
+  const { payload } = await jwtVerify(token, JWT_SECRET);
+  return payload as {
+    sub: string;
+    type: "offline-sync";
+    courseId: string;
+    enrollmentId: string;
+  };
+}
+
 // ─── Refresh Token ──────────────────────────────
 
 export async function createRefreshToken(userId: string): Promise<string> {

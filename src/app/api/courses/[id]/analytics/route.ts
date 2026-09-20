@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth";
+import { canManageCourse } from "@/lib/course-access";
 
 type EnrollmentWithSignals = {
   id: string;
@@ -66,6 +67,8 @@ export async function GET(
       select: {
         id: true,
         instructorId: true,
+        viewCount: true,
+        uniqueVisitorCount: true,
         editions: {
           orderBy: [{ isDefault: "desc" }, { startsAt: "asc" }, { createdAt: "asc" }],
           select: { id: true, name: true, startsAt: true, endsAt: true, capacity: true, status: true, isDefault: true },
@@ -74,21 +77,31 @@ export async function GET(
     });
 
     if (!course) return NextResponse.json({ error: "Curso no encontrado" }, { status: 404 });
-    if (session.role !== "ADMIN" && course.instructorId !== session.userId) {
+    if (!(await canManageCourse(course.id, session.userId, session.role))) {
       return NextResponse.json({ error: "Acceso denegado" }, { status: 403 });
     }
 
-    const enrollments = await prisma.enrollment.findMany({
-      where: { courseId: course.id },
-      select: {
-        id: true,
-        status: true,
-        progress: true,
-        editionId: true,
-        certificate: { select: { id: true, isRevoked: true } },
-        evalAttempts: { select: { score: true, passed: true } },
-      },
-    });
+    const [enrollments, viewEvents] = await Promise.all([
+      prisma.enrollment.findMany({
+        where: { courseId: course.id },
+        select: {
+          id: true,
+          status: true,
+          progress: true,
+          editionId: true,
+          certificate: { select: { id: true, isRevoked: true } },
+          evalAttempts: { select: { score: true, passed: true } },
+        },
+      }),
+      prisma.courseViewEvent.findMany({
+        where: {
+          courseId: course.id,
+          viewedAt: { gte: new Date(Date.now() - 29 * 24 * 60 * 60 * 1000) },
+        },
+        select: { viewedAt: true },
+        orderBy: { viewedAt: "asc" },
+      }),
+    ]);
 
     const overall = summarize(enrollments);
     const editionMetrics = course.editions.map((edition) => {
@@ -100,12 +113,29 @@ export async function GET(
     });
 
     const withoutEdition = enrollments.filter((enrollment) => !enrollment.editionId);
+    const viewsByDayMap = new Map<string, number>();
+    for (const event of viewEvents) {
+      const day = event.viewedAt.toISOString().slice(0, 10);
+      viewsByDayMap.set(day, (viewsByDayMap.get(day) || 0) + 1);
+    }
+    const viewsByDay = Array.from({ length: 30 }, (_, index) => {
+      const date = new Date();
+      date.setHours(0, 0, 0, 0);
+      date.setDate(date.getDate() - (29 - index));
+      const day = date.toISOString().slice(0, 10);
+      return { day, views: viewsByDayMap.get(day) || 0 };
+    });
 
     return NextResponse.json({
       data: {
         overall,
         editions: editionMetrics,
         withoutEdition: withoutEdition.length > 0 ? summarize(withoutEdition) : null,
+        views: {
+          total: course.viewCount,
+          unique: course.uniqueVisitorCount,
+          byDay: viewsByDay,
+        },
       },
     });
   } catch (error) {

@@ -1,0 +1,27 @@
+Curso
+- Las categoría del curso(Draft, Published y Archived, están en ingles aunque el idioma seleccionado sea español.
+- Por qué aparecen las categorías Draft, Published y Archived en el formulario de crear curso. Debería crearse como draft por defecto y ponerlo en published solo cuando esté completado. Archived es una categoría posterior.
+- slug solo está es español, eso es correcto?
+- De que sentido tiene seleccionar el idioma del curso si la ficha del moocs lo pide en ambos idiomas, sino complete la información de uno de los idiomas, que pasa?. Tenemos que analizar ese tema del idioma, la plataforma es multilengueje, sin embargo puedo declarar un curso en español.
+
+Ediciones
+No me queda claro eso de tener un edición incial y yo poder crear ediciones.
+
+Modulo: Por qué no se incluye una pequeña descripción del módulo, en el curso de prueba que me pones, le pusimos descripción o objetivo al modulo, sin embargo en la IU, solo pide nombre y orden.
+
+Sesiones
+Debajo de la sección del video, aparece Descripción ES, esa es la descripción del video? que es?. pq solo lo pides en español y no en inglés.
+
+
+
+Vista del curso
+
+- Hay que mejorar la vista del curso. Por que no usamos la pagina más y encapsulamos la vista del curso al centro de la pagina?
+- existe mala organización de los videos. Los videos son de las secciones, pq aparece un video encima de los modulos. La jerarquía de es modulo-sección. 
+- Solo aparece visible un video, como puedo ver los videos de las secciones, solo veo un texto con el enlace, pq no aparece en cada sección el video correspondiente (si lo subi, claro)
+
+
+Matrícula
+- El mismo estudiante se puede matricular 2 veces en el mismo curso y en la misma edición. 
+
+

@@ -13,10 +13,15 @@ interface CourseData {
   slug: string;
   title: { es: string; en: string };
   description: { es: string; en: string };
+  coverImageUrl?: string | null;
+  scienceBranch?: string | null;
+  topics?: string[];
+  keywords?: string[];
   pricingModel: string;
   price?: number;
   currency: string;
   _count: { enrollments: number; sessions: number };
+  editions?: { startsAt?: string | null; endsAt?: string | null }[];
   sessions?: { id: string }[];
 }
 
@@ -108,7 +113,7 @@ export default function CoursesPage() {
       />
 
       {loading ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {Array.from({ length: 6 }).map((_, i) => (
             <div key={i} className="h-72 animate-pulse rounded-lg border border-border bg-white" />
           ))}
@@ -136,15 +141,12 @@ export default function CoursesPage() {
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {courses.map((course) => (
               <CourseCard
                 key={course.id}
                 {...course}
                 lang={lang}
-                hasPreview={
-                  course.sessions ? course.sessions.length > 0 : false
-                }
               />
             ))}
           </div>

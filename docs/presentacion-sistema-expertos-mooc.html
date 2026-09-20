@@ -1,0 +1,857 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Presentacion a expertos - Plataforma MOOC RedUniv</title>
+  <style>
+    :root {
+      --mes-blue: #005ea8;
+      --mes-blue-dark: #00477f;
+      --mes-blue-soft: #e8f2fb;
+      --ink: #17212b;
+      --muted: #5c6b78;
+      --line: #d8e0e7;
+      --bg: #f4f7fa;
+      --white: #ffffff;
+      --green: #167a4a;
+      --amber: #a86300;
+      --red: #b42318;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: Arial, Helvetica, sans-serif;
+      line-height: 1.45;
+    }
+
+    a { color: var(--mes-blue); }
+
+    .deck {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 26px 18px 64px;
+    }
+
+    .slide {
+      position: relative;
+      min-height: 650px;
+      margin: 0 auto 26px;
+      padding: 44px 52px;
+      background: var(--white);
+      border: 1px solid var(--line);
+      box-shadow: 0 14px 30px rgba(0, 32, 72, 0.09);
+      page-break-after: always;
+      overflow: hidden;
+    }
+
+    .slide::before {
+      content: "";
+      position: absolute;
+      inset: 0 0 auto;
+      height: 8px;
+      background: var(--mes-blue);
+    }
+
+    .slide-number {
+      position: absolute;
+      right: 28px;
+      bottom: 22px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .kicker {
+      margin: 0 0 10px;
+      color: var(--mes-blue);
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    h1, h2, h3 {
+      margin: 0;
+      line-height: 1.12;
+      letter-spacing: 0;
+    }
+
+    h1 {
+      max-width: 850px;
+      font-size: 52px;
+      color: var(--mes-blue-dark);
+    }
+
+    h2 {
+      max-width: 900px;
+      font-size: 38px;
+      color: var(--mes-blue-dark);
+    }
+
+    h3 {
+      margin-bottom: 8px;
+      font-size: 20px;
+      color: var(--ink);
+    }
+
+    p {
+      margin: 12px 0 0;
+      max-width: 850px;
+      color: var(--muted);
+      font-size: 19px;
+    }
+
+    ul {
+      margin: 20px 0 0;
+      padding-left: 22px;
+    }
+
+    li {
+      margin: 10px 0;
+      font-size: 20px;
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: 1.05fr .95fr;
+      gap: 34px;
+      align-items: center;
+      min-height: 650px;
+    }
+
+    .hero h1 { font-size: 50px; }
+
+    .hero-img {
+      width: 100%;
+      min-height: 380px;
+      object-fit: cover;
+      border-radius: 4px;
+      border: 1px solid var(--line);
+    }
+
+    .subtitle {
+      margin-top: 22px;
+      color: var(--ink);
+      font-size: 24px;
+    }
+
+    .meta {
+      margin-top: 34px;
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      min-height: 36px;
+      padding: 7px 12px;
+      border-radius: 999px;
+      background: var(--mes-blue-soft);
+      color: var(--mes-blue-dark);
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 18px;
+      margin-top: 28px;
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-top: 28px;
+    }
+
+    .card {
+      min-height: 132px;
+      padding: 20px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: #fbfdff;
+    }
+
+    .card strong {
+      display: block;
+      margin-bottom: 8px;
+      color: var(--mes-blue-dark);
+      font-size: 21px;
+    }
+
+    .card span {
+      color: var(--muted);
+      font-size: 17px;
+    }
+
+    .metric {
+      padding: 24px;
+      border-left: 6px solid var(--mes-blue);
+      background: var(--mes-blue-soft);
+    }
+
+    .metric b {
+      display: block;
+      color: var(--mes-blue-dark);
+      font-size: 36px;
+    }
+
+    .metric span {
+      color: var(--muted);
+      font-size: 16px;
+    }
+
+    .flow {
+      margin-top: 32px;
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 10px;
+      align-items: stretch;
+    }
+
+    .step {
+      position: relative;
+      min-height: 132px;
+      padding: 18px 14px;
+      border: 1px solid var(--line);
+      border-top: 5px solid var(--mes-blue);
+      background: #fbfdff;
+      text-align: center;
+    }
+
+    .step:not(:last-child)::after {
+      content: ">";
+      position: absolute;
+      right: -12px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--mes-blue);
+      font-weight: 700;
+      z-index: 2;
+    }
+
+    .step b {
+      display: block;
+      margin-bottom: 8px;
+      color: var(--mes-blue-dark);
+      font-size: 18px;
+    }
+
+    .step span {
+      color: var(--muted);
+      font-size: 15px;
+    }
+
+    .architecture {
+      margin-top: 28px;
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 18px;
+      align-items: stretch;
+    }
+
+    .layer {
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      overflow: hidden;
+      background: #fbfdff;
+    }
+
+    .layer h3 {
+      padding: 14px 16px;
+      background: var(--mes-blue);
+      color: var(--white);
+      font-size: 19px;
+    }
+
+    .layer ul {
+      margin: 0;
+      padding: 16px 20px 18px 34px;
+    }
+
+    .layer li {
+      margin: 8px 0;
+      font-size: 17px;
+    }
+
+    .compare {
+      width: 100%;
+      margin-top: 24px;
+      border-collapse: collapse;
+      font-size: 17px;
+    }
+
+    .compare th,
+    .compare td {
+      padding: 13px 14px;
+      border: 1px solid var(--line);
+      text-align: left;
+      vertical-align: top;
+    }
+
+    .compare th {
+      background: var(--mes-blue);
+      color: var(--white);
+      font-size: 18px;
+    }
+
+    .compare td:first-child {
+      width: 28%;
+      color: var(--mes-blue-dark);
+      font-weight: 700;
+    }
+
+    .tag-ok, .tag-risk, .tag-next {
+      display: inline-block;
+      margin: 2px 4px 2px 0;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .tag-ok { background: #e8f6ef; color: var(--green); }
+    .tag-risk { background: #fff2dc; color: var(--amber); }
+    .tag-next { background: #edf2f7; color: var(--muted); }
+
+    .visual {
+      margin-top: 28px;
+      padding: 20px;
+      border: 1px solid var(--line);
+      background: #fbfdff;
+    }
+
+    .svg-wrap {
+      width: 100%;
+      overflow: hidden;
+    }
+
+    svg text {
+      font-family: Arial, Helvetica, sans-serif;
+      letter-spacing: 0;
+    }
+
+    .quote {
+      margin-top: 28px;
+      padding: 26px;
+      border-left: 7px solid var(--mes-blue);
+      background: var(--mes-blue-soft);
+      color: var(--ink);
+      font-size: 24px;
+      font-weight: 700;
+    }
+
+    .notes {
+      margin-top: 24px;
+      padding: 16px 18px;
+      border: 1px dashed #b8c7d4;
+      background: #fbfdff;
+      color: var(--muted);
+      font-size: 15px;
+    }
+
+    .notes b { color: var(--ink); }
+
+    .references li {
+      font-size: 15px;
+      margin: 8px 0;
+      overflow-wrap: anywhere;
+    }
+
+    .footer-mark {
+      position: absolute;
+      left: 52px;
+      bottom: 22px;
+      color: var(--mes-blue-dark);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    @media print {
+      body { background: #fff; }
+      .deck { max-width: none; padding: 0; }
+      .slide {
+        width: 100%;
+        min-height: 100vh;
+        margin: 0;
+        box-shadow: none;
+        border: 0;
+      }
+      .notes { display: none; }
+      a { color: #000; text-decoration: none; }
+    }
+
+    @media (max-width: 900px) {
+      .slide { padding: 34px 26px; }
+      .hero, .grid-2, .grid-3, .architecture, .flow {
+        grid-template-columns: 1fr;
+      }
+      h1, .hero h1 { font-size: 38px; }
+      h2 { font-size: 31px; }
+      .step:not(:last-child)::after { display: none; }
+    }
+  </style>
+</head>
+<body>
+<main class="deck">
+
+  <section class="slide hero">
+    <div>
+      <p class="kicker">Presentacion a expertos</p>
+      <h1>Plataforma institucional para cursos MOOC y certificacion digital</h1>
+      <p class="subtitle">Sistema desplegado para publicar cursos autonomos, evaluar automaticamente, gestionar contenidos y emitir certificados verificables.</p>
+      <div class="meta">
+        <span class="pill">RedUniv</span>
+        <span class="pill">cursos.reduniv.edu.cu</span>
+        <span class="pill">Version piloto funcional</span>
+        <span class="pill">15 de septiembre de 2026</span>
+      </div>
+    </div>
+    <img class="hero-img" src="../src/assets/mooc-hero-institucional.png" alt="Imagen institucional de aprendizaje en linea">
+    <span class="footer-mark">Plataforma MOOC institucional</span>
+    <span class="slide-number">1</span>
+  </section>
+
+  <section class="slide">
+    <p class="kicker">Mensaje central</p>
+    <h2>La plataforma ya permite demostrar un flujo MOOC completo</h2>
+    <div class="grid-3">
+      <div class="metric"><b>4</b><span>modulos en el curso demo importado</span></div>
+      <div class="metric"><b>12</b><span>sesiones publicadas con video</span></div>
+      <div class="metric"><b>1</b><span>evaluacion automatica con banco de preguntas</span></div>
+      <div class="metric"><b>2</b><span>ediciones de curso para probar cohortes</span></div>
+      <div class="metric"><b>PDF</b><span>materiales complementarios locales y externos</span></div>
+      <div class="metric"><b>VC</b><span>certificacion verificable como credencial digital</span></div>
+    </div>
+    <div class="quote">No se presenta solo un catalogo de videos: se presenta una experiencia de aprendizaje autonomo con progreso, evaluacion y certificacion.</div>
+    <div class="notes"><b>Guion sugerido:</b> iniciar aclarando que es una plataforma en fase piloto funcional, lista para evaluacion experta de producto, pedagogia y operacion.</div>
+    <span class="footer-mark">Resumen ejecutivo</span>
+    <span class="slide-number">2</span>
+  </section>
+
+  <section class="slide">
+    <p class="kicker">Problema que atiende</p>
+    <h2>Escalar formacion continua sin depender de procesos manuales</h2>
+    <div class="grid-2">
+      <div class="card">
+        <strong>Demanda creciente</strong>
+        <span>Instituciones y docentes necesitan publicar cursos en linea con acceso amplio, seguimiento y certificacion.</span>
+      </div>
+      <div class="card">
+        <strong>Modelo MOOC</strong>
+        <span>El diseno debe asumir autonomia, modularidad, evaluacion automatica y bajo costo marginal por estudiante.</span>
+      </div>
+      <div class="card">
+        <strong>Control institucional</strong>
+        <span>La universidad conserva dominio sobre usuarios, cursos, certificados, datos y politicas de publicacion.</span>
+      </div>
+      <div class="card">
+        <strong>Contexto operativo</strong>
+        <span>La arquitectura considera pagos manuales, videos externos, almacenamiento hibrido y despliegue detras de HAProxy.</span>
+      </div>
+    </div>
+    <div class="notes"><b>Dato para discusion:</b> la literatura sobre MOOCs identifica abandono, evaluacion y apoyo al estudiante como retos recurrentes; por eso la plataforma prioriza progreso visible, retroalimentacion y certificacion.</div>
+    <span class="footer-mark">Necesidad institucional</span>
+    <span class="slide-number">3</span>
+  </section>
+
+  <section class="slide">
+    <p class="kicker">MOOC vs LMS tradicional</p>
+    <h2>El enfoque no es administrar una clase, sino facilitar aprendizaje autonomo a escala</h2>
+    <table class="compare">
+      <thead>
+        <tr>
+          <th>Dimension</th>
+          <th>LMS tradicional</th>
+          <th>MOOC institucional propuesto</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Escala</td>
+          <td>Grupos definidos y atencion frecuente del profesor.</td>
+          <td>Cientos o miles de participantes con baja intervencion manual.</td>
+        </tr>
+        <tr>
+          <td>Contenido</td>
+          <td>Recursos asociados a una asignatura o aula.</td>
+          <td>Modulos, lecciones breves, videos, recursos y practicas autocontenidas.</td>
+        </tr>
+        <tr>
+          <td>Evaluacion</td>
+          <td>Correccion manual frecuente.</td>
+          <td>Evaluacion automatica, intentos, feedback y banco de preguntas.</td>
+        </tr>
+        <tr>
+          <td>Certificacion</td>
+          <td>Constancias internas o actas academicas.</td>
+          <td>Certificado verificable con URL publica y estructura de credencial digital.</td>
+        </tr>
+      </tbody>
+    </table>
+    <span class="footer-mark">Modelo pedagogico</span>
+    <span class="slide-number">4</span>
+  </section>
+
+  <section class="slide">
+    <p class="kicker">Flujo del estudiante</p>
+    <h2>Experiencia principal: pocos pasos, progreso visible, cierre certificable</h2>
+    <div class="flow">
+      <div class="step"><b>1. Descubrir</b><span>Catalogo publico, ficha MOOC y requisitos.</span></div>
+      <div class="step"><b>2. Matricular</b><span>Acceso gratuito o flujo de pago manual.</span></div>
+      <div class="step"><b>3. Aprender</b><span>Videos, recursos y practicas por sesion.</span></div>
+      <div class="step"><b>4. Evaluar</b><span>Preguntas automaticas con feedback.</span></div>
+      <div class="step"><b>5. Certificar</b><span>PDF y verificacion publica del certificado.</span></div>
+    </div>
+    <div class="visual svg-wrap">
+      <svg viewBox="0 0 1040 210" role="img" aria-label="Diagrama del progreso de estudiante">
+        <rect x="20" y="36" width="1000" height="34" rx="17" fill="#e8f2fb"/>
+        <rect x="20" y="36" width="760" height="34" rx="17" fill="#005ea8"/>
+        <text x="20" y="110" font-size="20" fill="#17212b" font-weight="700">Progreso visible</text>
+        <text x="20" y="140" font-size="16" fill="#5c6b78">El estudiante sabe que completo, que le falta y cuando puede solicitar certificado.</text>
+        <circle cx="140" cy="53" r="10" fill="#fff"/>
+        <circle cx="360" cy="53" r="10" fill="#fff"/>
+        <circle cx="580" cy="53" r="10" fill="#fff"/>
+        <circle cx="760" cy="53" r="10" fill="#fff"/>
+        <text x="105" y="28" font-size="14" fill="#00477f">modulo 1</text>
+        <text x="325" y="28" font-size="14" fill="#00477f">modulo 2</text>
+        <text x="545" y="28" font-size="14" fill="#00477f">modulo 3</text>
+        <text x="725" y="28" font-size="14" fill="#00477f">evaluacion</text>
+      </svg>
+    </div>
+    <span class="footer-mark">Experiencia del estudiante</span>
+    <span class="slide-number">5</span>
+  </section>
+
+  <section class="slide">
+    <p class="kicker">Gestion academica</p>
+    <h2>El CMS permite montar cursos sin tocar la base de datos</h2>
+    <div class="grid-3">
+      <div class="card"><strong>Ficha MOOC</strong><span>Objetivos, publico, requisitos, competencias, duracion, dedicacion, nivel e idioma.</span></div>
+      <div class="card"><strong>Ediciones</strong><span>Multiples convocatorias o cohortes de un mismo curso, con estado y capacidad.</span></div>
+      <div class="card"><strong>Modulos</strong><span>Organizacion academica por unidades progresivas.</span></div>
+      <div class="card"><strong>Sesiones</strong><span>Videos externos o subidos, materiales y practicas.</span></div>
+      <div class="card"><strong>Evaluacion</strong><span>Configuracion de intentos, nota minima, feedback y aleatorizacion.</span></div>
+      <div class="card"><strong>Banco</strong><span>Preguntas con etiquetas, dificultad, modulo, tema y seleccion aleatoria.</span></div>
+    </div>
+    <div class="notes"><b>Demostracion sugerida:</b> abrir el panel CMS, mostrar el curso demo, navegar por modulos, sesiones, materiales y evaluacion.</div>
+    <span class="footer-mark">CMS academico</span>
+    <span class="slide-number">6</span>
+  </section>
+
+  <section class="slide">
+    <p class="kicker">Arquitectura</p>
+    <h2>Aplicacion full-stack con frontera clara entre HAProxy, Nginx, Next.js y PostgreSQL</h2>
+    <div class="architecture">
+      <div class="layer">
+        <h3>Entrada</h3>
+        <ul>
+          <li>HAProxy institucional</li>
+          <li>TLS y certificado en el frontal</li>
+          <li>Backend HTTP: 10.46.6.87:80</li>
+          <li>Host: cursos.reduniv.edu.cu</li>
+        </ul>
+      </div>
+      <div class="layer">
+        <h3>Aplicacion</h3>
+        <ul>
+          <li>Nginx como reverse proxy</li>
+          <li>Next.js 16 App Router</li>
+          <li>React 19 y TypeScript</li>
+          <li>API routes en el mismo proyecto</li>
+        </ul>
+      </div>
+      <div class="layer">
+        <h3>Datos</h3>
+        <ul>
+          <li>PostgreSQL 15</li>
+          <li>Prisma ORM</li>
+          <li>Storage local configurable</li>
+          <li>Certificados y auditoria</li>
+        </ul>
+      </div>
+    </div>
+    <div class="visual svg-wrap">
+      <svg viewBox="0 0 1040 190" role="img" aria-label="Diagrama de arquitectura tecnica">
+        <defs>
+          <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+            <path d="M0,0 L0,6 L9,3 z" fill="#005ea8"/>
+          </marker>
+        </defs>
+        <rect x="20" y="54" width="160" height="70" rx="6" fill="#e8f2fb" stroke="#005ea8"/>
+        <text x="100" y="84" text-anchor="middle" font-size="17" font-weight="700" fill="#00477f">Usuarios</text>
+        <text x="100" y="107" text-anchor="middle" font-size="13" fill="#5c6b78">web / movil</text>
+        <line x1="180" y1="89" x2="300" y2="89" stroke="#005ea8" stroke-width="3" marker-end="url(#arrow)"/>
+        <rect x="300" y="54" width="170" height="70" rx="6" fill="#fff" stroke="#005ea8"/>
+        <text x="385" y="84" text-anchor="middle" font-size="17" font-weight="700" fill="#00477f">HAProxy</text>
+        <text x="385" y="107" text-anchor="middle" font-size="13" fill="#5c6b78">TLS externo</text>
+        <line x1="470" y1="89" x2="590" y2="89" stroke="#005ea8" stroke-width="3" marker-end="url(#arrow)"/>
+        <rect x="590" y="54" width="170" height="70" rx="6" fill="#fff" stroke="#005ea8"/>
+        <text x="675" y="84" text-anchor="middle" font-size="17" font-weight="700" fill="#00477f">Nginx</text>
+        <text x="675" y="107" text-anchor="middle" font-size="13" fill="#5c6b78">10.46.6.87:80</text>
+        <line x1="760" y1="89" x2="880" y2="89" stroke="#005ea8" stroke-width="3" marker-end="url(#arrow)"/>
+        <rect x="880" y="26" width="140" height="56" rx="6" fill="#e8f2fb" stroke="#005ea8"/>
+        <text x="950" y="60" text-anchor="middle" font-size="16" font-weight="700" fill="#00477f">Next.js</text>
+        <rect x="880" y="102" width="140" height="56" rx="6" fill="#e8f2fb" stroke="#005ea8"/>
+        <text x="950" y="136" text-anchor="middle" font-size="16" font-weight="700" fill="#00477f">PostgreSQL</text>
+      </svg>
+    </div>
+    <span class="footer-mark">Arquitectura de despliegue</span>
+    <span class="slide-number">7</span>
+  </section>
+
+  <section class="slide">
+    <p class="kicker">Seguridad y operacion</p>
+    <h2>Controles ya presentes en la version piloto</h2>
+    <div class="grid-2">
+      <div class="card"><strong>Autenticacion</strong><span>JWT con cookies httpOnly, refresh token persistido, logout y proteccion por roles.</span></div>
+      <div class="card"><strong>RBAC</strong><span>Roles de administrador, instructor y estudiante, con endpoints protegidos.</span></div>
+      <div class="card"><strong>Cabeceras</strong><span>HSTS, X-Frame-Options, nosniff y referrer policy.</span></div>
+      <div class="card"><strong>Archivos</strong><span>Uploads servidos por API controlada y raiz configurable fuera del release.</span></div>
+      <div class="card"><strong>Auditoria</strong><span>Registro de acciones administrativas y eventos relevantes.</span></div>
+      <div class="card"><strong>Despliegue</strong><span>Next.js solo en localhost; Nginx expone HTTP interno al HAProxy.</span></div>
+    </div>
+    <span class="footer-mark">Seguridad</span>
+    <span class="slide-number">8</span>
+  </section>
+
+  <section class="slide">
+    <p class="kicker">Evaluacion automatica</p>
+    <h2>La evaluacion se disena para escala, no para correccion manual masiva</h2>
+    <div class="grid-2">
+      <div>
+        <ul>
+          <li>Preguntas de seleccion multiple, verdadero/falso y respuesta corta.</li>
+          <li>Banco reutilizable con etiquetas, dificultad, tema y modulo.</li>
+          <li>Aleatorizacion de preguntas y opciones.</li>
+          <li>Feedback inmediato configurable.</li>
+          <li>Limite de intentos y nota minima.</li>
+          <li>Correccion server-side: las respuestas correctas no se exponen antes del envio.</li>
+        </ul>
+      </div>
+      <div class="visual">
+        <svg viewBox="0 0 470 360" role="img" aria-label="Diagrama de evaluacion automatica">
+          <rect x="35" y="25" width="400" height="58" rx="5" fill="#005ea8"/>
+          <text x="235" y="61" text-anchor="middle" font-size="20" font-weight="700" fill="#fff">Banco de preguntas</text>
+          <rect x="55" y="120" width="160" height="58" rx="5" fill="#e8f2fb" stroke="#005ea8"/>
+          <text x="135" y="154" text-anchor="middle" font-size="17" fill="#00477f">Etiquetas</text>
+          <rect x="255" y="120" width="160" height="58" rx="5" fill="#e8f2fb" stroke="#005ea8"/>
+          <text x="335" y="154" text-anchor="middle" font-size="17" fill="#00477f">Dificultad</text>
+          <rect x="55" y="210" width="160" height="58" rx="5" fill="#e8f2fb" stroke="#005ea8"/>
+          <text x="135" y="244" text-anchor="middle" font-size="17" fill="#00477f">Modulo</text>
+          <rect x="255" y="210" width="160" height="58" rx="5" fill="#e8f2fb" stroke="#005ea8"/>
+          <text x="335" y="244" text-anchor="middle" font-size="17" fill="#00477f">Tema</text>
+          <rect x="115" y="302" width="240" height="42" rx="5" fill="#167a4a"/>
+          <text x="235" y="329" text-anchor="middle" font-size="16" font-weight="700" fill="#fff">Entrega aleatoria y feedback</text>
+        </svg>
+      </div>
+    </div>
+    <span class="footer-mark">Evaluacion</span>
+    <span class="slide-number">9</span>
+  </section>
+
+  <section class="slide">
+    <p class="kicker">Certificacion digital</p>
+    <h2>El certificado no es solo un PDF: tiene verificacion publica</h2>
+    <div class="grid-2">
+      <div>
+        <ul>
+          <li>Emision condicionada a matricula activa, progreso 100% y evaluacion aprobada.</li>
+          <li>Badge ID unico y URL publica de verificacion.</li>
+          <li>Datos del estudiante, curso, emisor y criterio de aprobacion.</li>
+          <li>Soporte para revocacion y consulta de estado.</li>
+          <li>Base conceptual alineada con Open Badges y Verifiable Credentials.</li>
+        </ul>
+      </div>
+      <div class="visual">
+        <svg viewBox="0 0 470 360" role="img" aria-label="Certificado verificable">
+          <rect x="70" y="35" width="330" height="245" rx="8" fill="#fff" stroke="#005ea8" stroke-width="3"/>
+          <rect x="95" y="70" width="280" height="18" fill="#e8f2fb"/>
+          <rect x="95" y="110" width="220" height="12" fill="#d8e0e7"/>
+          <rect x="95" y="136" width="250" height="12" fill="#d8e0e7"/>
+          <rect x="95" y="162" width="190" height="12" fill="#d8e0e7"/>
+          <circle cx="332" cy="218" r="38" fill="#005ea8"/>
+          <text x="332" y="225" text-anchor="middle" font-size="24" font-weight="700" fill="#fff">VC</text>
+          <rect x="130" y="300" width="210" height="38" rx="19" fill="#e8f2fb" stroke="#005ea8"/>
+          <text x="235" y="324" text-anchor="middle" font-size="15" font-weight="700" fill="#00477f">Verificacion publica</text>
+        </svg>
+      </div>
+    </div>
+    <span class="footer-mark">Certificados</span>
+    <span class="slide-number">10</span>
+  </section>
+
+  <section class="slide">
+    <p class="kicker">Estado actual</p>
+    <h2>Que esta listo y que debe observar el grupo experto</h2>
+    <table class="compare">
+      <thead>
+        <tr>
+          <th>Area</th>
+          <th>Estado</th>
+          <th>Comentario para expertos</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Flujo MOOC</td>
+          <td><span class="tag-ok">Implementado</span></td>
+          <td>Curso demo publicado con modulos, sesiones, videos, materiales, evaluacion y ediciones.</td>
+        </tr>
+        <tr>
+          <td>CMS</td>
+          <td><span class="tag-ok">Implementado</span></td>
+          <td>Permite crear y administrar cursos sin operar directamente la base de datos.</td>
+        </tr>
+        <tr>
+          <td>Certificacion</td>
+          <td><span class="tag-ok">Implementado</span></td>
+          <td>PDF y verificacion publica; revisar validez juridico-institucional del modelo de certificado.</td>
+        </tr>
+        <tr>
+          <td>UX academica</td>
+          <td><span class="tag-risk">A validar</span></td>
+          <td>Requiere evaluacion con docentes y estudiantes reales para ajustar lenguaje, navegacion y carga cognitiva.</td>
+        </tr>
+        <tr>
+          <td>Escalabilidad</td>
+          <td><span class="tag-next">Siguiente fase</span></td>
+          <td>Faltan pruebas de carga, observabilidad, storage externo y politicas de backup/retencion.</td>
+        </tr>
+      </tbody>
+    </table>
+    <span class="footer-mark">Madurez del sistema</span>
+    <span class="slide-number">11</span>
+  </section>
+
+  <section class="slide">
+    <p class="kicker">Curso demo para la presentacion</p>
+    <h2>Diseño y Produccion de Cursos MOOC</h2>
+    <div class="grid-2">
+      <div>
+        <ul>
+          <li>Curso publicado y visible en el catalogo.</li>
+          <li>Cuatro modulos academicos.</li>
+          <li>Doce sesiones con videos externos.</li>
+          <li>Materiales complementarios externos y PDFs subidos.</li>
+          <li>Practicas por sesion.</li>
+          <li>Evaluacion final con tres preguntas.</li>
+          <li>Dos ediciones para mostrar soporte de multiples cohortes.</li>
+        </ul>
+      </div>
+      <div class="visual">
+        <h3>Ruta de demostracion</h3>
+        <p>1. Abrir catalogo publico.</p>
+        <p>2. Entrar a la ficha del curso.</p>
+        <p>3. Mostrar modulos y sesiones.</p>
+        <p>4. Abrir un PDF complementario.</p>
+        <p>5. Entrar como admin y mostrar CMS.</p>
+        <p>6. Mostrar evaluacion y banco de preguntas.</p>
+      </div>
+    </div>
+    <div class="quote">URL de referencia: /es/courses/diseno-produccion-cursos-mooc</div>
+    <span class="footer-mark">Demostracion</span>
+    <span class="slide-number">12</span>
+  </section>
+
+  <section class="slide">
+    <p class="kicker">Evidencia cientifica</p>
+    <h2>Decisiones de diseño alineadas con problemas identificados en la literatura</h2>
+    <div class="grid-2">
+      <div class="card">
+        <strong>Persistencia y abandono</strong>
+        <span>La literatura reporta baja permanencia y retorno en MOOCs; por eso se prioriza progreso visible, sesiones breves y cierre certificable.</span>
+      </div>
+      <div class="card">
+        <strong>Calidad instruccional</strong>
+        <span>Los estudios recomiendan no limitar el MOOC a empaquetar contenidos; se requieren objetivos, actividades, feedback y evaluacion.</span>
+      </div>
+      <div class="card">
+        <strong>Evaluacion a escala</strong>
+        <span>La evaluacion manual es un cuello de botella; se implementa correccion automatica y banco de preguntas.</span>
+      </div>
+      <div class="card">
+        <strong>Credenciales verificables</strong>
+        <span>Las microcredenciales requieren metadatos, criterio de emision y mecanismos de verificacion para ser confiables y portables.</span>
+      </div>
+    </div>
+    <div class="notes"><b>Referencias clave:</b> Hew y Cheung (2014), Margaryan et al. (2015), Reich y Ruiperez-Valiente (2019), 1EdTech Open Badges 3.0 y W3C Verifiable Credentials.</div>
+    <span class="footer-mark">Fundamento</span>
+    <span class="slide-number">13</span>
+  </section>
+
+  <section class="slide">
+    <p class="kicker">Riesgos y decisiones pendientes</p>
+    <h2>Lo que debe discutirse antes de escalar</h2>
+    <div class="grid-2">
+      <div class="card"><strong>Gobernanza academica</strong><span>Definir quien aprueba cursos, criterios de calidad, vigencia, revision y archivo.</span></div>
+      <div class="card"><strong>Produccion docente</strong><span>Establecer plantilla, guia de video, rubrica de preguntas y revision editorial.</span></div>
+      <div class="card"><strong>Infraestructura</strong><span>Definir storage externo, backups, monitoreo, logs y pruebas de carga.</span></div>
+      <div class="card"><strong>Certificacion</strong><span>Acordar texto institucional, identidad del emisor, validez, revocacion y custodia de claves.</span></div>
+      <div class="card"><strong>Analitica</strong><span>Medir avance por modulo, abandono, intentos, preguntas problematicas y finalizacion.</span></div>
+      <div class="card"><strong>Integraciones</strong><span>Valorar eXeLearning, repositorios de objetos, identidad institucional y pasarelas de pago.</span></div>
+    </div>
+    <span class="footer-mark">Agenda experta</span>
+    <span class="slide-number">14</span>
+  </section>
+
+  <section class="slide">
+    <p class="kicker">Propuesta de continuidad</p>
+    <h2>De piloto funcional a plataforma institucional</h2>
+    <div class="flow">
+      <div class="step"><b>1. Validar</b><span>Presentacion con expertos y recorrido guiado.</span></div>
+      <div class="step"><b>2. Pilotar</b><span>Curso MOOC con docentes y estudiantes reales.</span></div>
+      <div class="step"><b>3. Medir</b><span>Analitica de avance, evaluacion y abandono.</span></div>
+      <div class="step"><b>4. Endurecer</b><span>Backups, monitoreo, storage, seguridad y carga.</span></div>
+      <div class="step"><b>5. Escalar</b><span>Catalogo institucional y produccion docente regular.</span></div>
+    </div>
+    <div class="quote">Decision solicitada al grupo experto: validar si el modelo pedagogico, tecnico y de certificacion es adecuado para pasar a piloto institucional.</div>
+    <span class="footer-mark">Siguientes pasos</span>
+    <span class="slide-number">15</span>
+  </section>
+
+  <section class="slide">
+    <p class="kicker">Referencias</p>
+    <h2>Base academica y normativa utilizada</h2>
+    <ol class="references">
+      <li>Hew, K. F. & Cheung, W. S. (2014). <i>Students' and instructors' use of massive open online courses (MOOCs): Motivations and challenges</i>. Educational Research Review, 12, 45-58. DOI: <a href="https://doi.org/10.1016/j.edurev.2014.05.001">10.1016/j.edurev.2014.05.001</a>.</li>
+      <li>Margaryan, A., Bianco, M. & Littlejohn, A. (2015). <i>Instructional quality of Massive Open Online Courses (MOOCs)</i>. Computers & Education, 80, 77-83. DOI: <a href="https://doi.org/10.1016/j.compedu.2014.08.005">10.1016/j.compedu.2014.08.005</a>.</li>
+      <li>Reich, J. & Ruiperez-Valiente, J. A. (2019). <i>The MOOC pivot</i>. Science, 363(6423), 130-131. DOI: <a href="https://doi.org/10.1126/science.aav7958">10.1126/science.aav7958</a>.</li>
+      <li>Hollands, F. M. & Tirthali, D. (2014). <i>Resource requirements and costs of developing and delivering MOOCs</i>. International Review of Research in Open and Distributed Learning, 15(5), 113-133. DOI: <a href="https://doi.org/10.19173/irrodl.v15i5.1901">10.19173/irrodl.v15i5.1901</a>.</li>
+      <li>Watson, S. L., Watson, W. R., Richardson, J. & Loizzo, J. (2015). <i>Virtually unlimited classrooms: Pedagogical practices in massive open online courses</i>. The Internet and Higher Education, 24, 1-12. DOI: <a href="https://doi.org/10.1016/j.iheduc.2014.07.001">10.1016/j.iheduc.2014.07.001</a>.</li>
+      <li>1EdTech. <i>Open Badges 3.0 Specification and Implementation Guide</i>. <a href="https://www.1edtech.org/standards/open-badges">https://www.1edtech.org/standards/open-badges</a>.</li>
+      <li>W3C. (2025). <i>Verifiable Credentials Data Model v2.0</i>. W3C Recommendation. <a href="https://www.w3.org/TR/vc-data-model/">https://www.w3.org/TR/vc-data-model/</a>.</li>
+      <li>Documentacion interna del proyecto: <i>Arquitectura y stack</i>, <i>Cierre de etapa MOOC</i>, <i>Manual de usuario v1</i> y curso demo desplegado en produccion.</li>
+    </ol>
+    <span class="footer-mark">Referencias</span>
+    <span class="slide-number">16</span>
+  </section>
+
+</main>
+<script>
+  const slides = Array.from(document.querySelectorAll('.slide'));
+  function go(delta) {
+    const y = window.scrollY;
+    const current = slides.reduce((best, slide, index) => {
+      const d = Math.abs(slide.offsetTop - y);
+      return d < best.d ? { index, d } : best;
+    }, { index: 0, d: Infinity }).index;
+    const next = Math.max(0, Math.min(slides.length - 1, current + delta));
+    slides[next].scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+  window.addEventListener('keydown', (event) => {
+    if (event.key === 'ArrowRight' || event.key === 'PageDown') go(1);
+    if (event.key === 'ArrowLeft' || event.key === 'PageUp') go(-1);
+  });
+</script>
+</body>
+</html>

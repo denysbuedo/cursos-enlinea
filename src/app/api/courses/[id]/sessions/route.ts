@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession, requireAuth } from "@/lib/auth";
+import { canManageCourse } from "@/lib/course-access";
 
 export async function GET(
   request: NextRequest,
@@ -70,7 +71,7 @@ export async function POST(
       select: { id: true, instructorId: true },
     });
     if (!course) return NextResponse.json({ error: "Curso no encontrado" }, { status: 404 });
-    if (session.role !== "ADMIN" && course.instructorId !== session.userId) {
+    if (!(await canManageCourse(course.id, session.userId, session.role))) {
       return NextResponse.json({ error: "No eres el instructor de este curso" }, { status: 403 });
     }
 

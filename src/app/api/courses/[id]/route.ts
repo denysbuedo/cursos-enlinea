@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 import { rateLimit, RATE_LIMITS } from "@/lib/rate-limit";
+import { canViewCourseInCms } from "@/lib/course-access";
 
 export async function GET(
   request: NextRequest,
@@ -45,7 +46,16 @@ export async function GET(
         select: { enrollments: true },
       },
       instructor: {
-        select: { id: true, name: true, email: true },
+        select: { id: true, name: true, email: true, bio: true, institution: true, avatarUrl: true },
+      },
+      instructors: {
+        where: { role: { in: ["LEAD", "INSTRUCTOR"] } },
+        orderBy: [{ role: "asc" }, { assignedAt: "asc" }],
+        select: {
+          id: true,
+          role: true,
+          user: { select: { id: true, name: true, bio: true, institution: true, avatarUrl: true } },
+        },
       },
     },
   });
@@ -72,9 +82,15 @@ export async function GET(
     }
   }
 
-  const canManage =
-    Boolean(session) &&
-    (session?.role === "ADMIN" || (session?.role === "INSTRUCTOR" && course.instructorId === session.userId));
+  const completionCount = await prisma.enrollment.count({
+    where: {
+      courseId: course.id,
+      progress: { gte: 100 },
+      status: { notIn: ["CANCELLED", "SUSPENDED"] },
+    },
+  });
+
+  const canManage = session ? await canViewCourseInCms(course.id, session.userId, session.role) : false;
   const canViewPublicCourse = course.status === "PUBLISHED" && course.visibility === "PUBLIC";
   const canViewEnrolledCourse = course.status === "PUBLISHED" && course.visibility === "ENROLLED_ONLY" && isEnrolled;
 
@@ -101,5 +117,10 @@ export async function GET(
     isEnrolled,
     enrollmentStatus,
     _count: course._count,
+    completionCount,
+  }, {
+    headers: {
+      "Cache-Control": "no-store, max-age=0",
+    },
   });
 }

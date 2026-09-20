@@ -1,0 +1,251 @@
+{
+  "format": "cursos-enlinea-mooc",
+  "formatVersion": 1,
+  "exportedAt": "2026-09-19T00:00:00.000Z",
+  "course": {
+    "slug": "diseno-de-moocs-desde-la-idea-hasta-la-publicacion",
+    "title": {
+      "es": "Diseño de MOOCs: de la idea a la publicación",
+      "en": "MOOC Design: From Idea to Publication"
+    },
+    "description": {
+      "es": "Curso práctico para diseñar un MOOC con objetivos claros, contenidos breves, evaluación automática y una experiencia de aprendizaje autónoma.",
+      "en": "A practical course for designing a MOOC with clear objectives, short content, automated assessment and an autonomous learning experience."
+    },
+    "learningObjectives": [
+      "Explicar las características que distinguen un MOOC de un curso convencional.",
+      "Formular objetivos de aprendizaje verificables.",
+      "Organizar contenidos en módulos y sesiones breves.",
+      "Diseñar preguntas autocorregibles con retroalimentación.",
+      "Preparar un curso para su publicación en la plataforma."
+    ],
+    "targetAudience": [
+      "Profesores universitarios.",
+      "Diseñadores instruccionales.",
+      "Coordinadores de educación en línea."
+    ],
+    "requirements": [
+      "Conocimientos básicos de la materia que se desea enseñar.",
+      "Acceso a un editor de documentos y a recursos digitales.",
+      "No se requieren conocimientos de programación."
+    ],
+    "competencies": [
+      "Diseño instruccional para aprendizaje autónomo.",
+      "Producción y organización de contenidos digitales.",
+      "Diseño de evaluación automática."
+    ],
+    "coverImageUrl": "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=1600&q=80",
+    "scienceBranch": "Ciencias de la educación",
+    "topics": ["MOOC", "educación en línea", "diseño instruccional", "evaluación automática"],
+    "keywords": ["curso abierto", "aprendizaje autónomo", "contenidos digitales", "certificación"],
+    "estimatedHours": 6,
+    "weeklyHours": 3,
+    "level": "INTERMEDIATE",
+    "language": "es",
+    "certificateAvailable": true,
+    "selfPaced": true,
+    "pricingModel": "FREE",
+    "price": null,
+    "currency": "USD",
+    "instructors": [],
+    "editions": [
+      {
+        "name": { "es": "Edición abierta de prueba", "en": "Open test edition" },
+        "startsAt": null,
+        "endsAt": null,
+        "capacity": null,
+        "status": "DRAFT",
+        "isDefault": true
+      }
+    ],
+    "modules": [
+      {
+        "title": { "es": "Fundamentos del modelo MOOC", "en": "MOOC model foundations" },
+        "description": { "es": "Qué es un MOOC y cómo se diferencia de un LMS tradicional.", "en": "What a MOOC is and how it differs from a traditional LMS." },
+        "order": 1,
+        "status": "DRAFT",
+        "sessions": [
+          {
+            "title": { "es": "Qué es un MOOC", "en": "What is a MOOC" },
+            "description": { "es": "Se presentan las características massive, open, online y course.", "en": "The massive, open, online and course characteristics are introduced." },
+            "keywords": ["MOOC", "aprendizaje autónomo"],
+            "sessionType": "RECORDED",
+            "preview": true,
+            "videoUrl": "https://www.youtube.com/watch?v=H2b0yYq4vXQ",
+            "videoPlatform": "YOUTUBE",
+            "durationMinutes": 8,
+            "resources": [
+              { "title": "Definición y características de un MOOC", "type": "LECTURA", "source": "externo", "url": "https://exelearning.net/", "use": "Lectura introductoria" }
+            ],
+            "practicePrompt": { "es": "Escriba tres diferencias entre un MOOC y un curso presencial.", "en": "Write three differences between a MOOC and a face-to-face course." },
+            "order": 1,
+            "status": "DRAFT"
+          },
+          {
+            "title": { "es": "El estudiante autónomo", "en": "The autonomous learner" },
+            "description": { "es": "Se analiza qué necesita un estudiante cuando aprende sin acompañamiento permanente.", "en": "What learners need when studying without permanent support." },
+            "keywords": ["autonomía", "progreso"],
+            "sessionType": "RECORDED",
+            "preview": false,
+            "videoUrl": "https://www.youtube.com/watch?v=9No-FiEInLA",
+            "videoPlatform": "YOUTUBE",
+            "durationMinutes": 7,
+            "resources": [
+              { "title": "Lista de comprobación del estudiante", "type": "ENLACE", "source": "plataforma", "url": "https://www.edx.org/", "use": "Comparar experiencias de aprendizaje" }
+            ],
+            "practicePrompt": { "es": "Defina qué información debe ver un estudiante al entrar en su curso.", "en": "Define what information a learner should see when entering the course." },
+            "order": 2,
+            "status": "DRAFT"
+          }
+        ]
+      },
+      {
+        "title": { "es": "Arquitectura de contenidos", "en": "Content architecture" },
+        "description": { "es": "Organización del curso por módulos, sesiones, videos y materiales.", "en": "Organizing the course into modules, sessions, videos and materials." },
+        "order": 2,
+        "status": "DRAFT",
+        "sessions": [
+          {
+            "title": { "es": "De los objetivos a los módulos", "en": "From objectives to modules" },
+            "description": { "es": "Cómo convertir objetivos de aprendizaje en una estructura progresiva.", "en": "How to turn learning objectives into a progressive structure." },
+            "keywords": ["objetivos", "módulos"],
+            "sessionType": "RECORDED",
+            "preview": false,
+            "videoUrl": "https://vimeo.com/76979871",
+            "videoPlatform": "VIMEO",
+            "durationMinutes": 10,
+            "resources": [
+              { "title": "Plantilla de diseño de curso", "type": "DOCUMENTO", "source": "plataforma", "url": "https://www.mes.gob.cu/", "use": "Planificar la estructura" }
+            ],
+            "practicePrompt": { "es": "Organice cinco objetivos en tres módulos progresivos.", "en": "Organize five objectives into three progressive modules." },
+            "order": 1,
+            "status": "DRAFT"
+          },
+          {
+            "title": { "es": "Diseño de sesiones breves", "en": "Designing short sessions" },
+            "description": { "es": "Buenas prácticas para fragmentar videos y actividades.", "en": "Best practices for splitting videos and activities." },
+            "keywords": ["microaprendizaje", "video"],
+            "sessionType": "RECORDED",
+            "preview": false,
+            "videoUrl": "https://www.youtube.com/watch?v=aqz-KE-bpKQ",
+            "videoPlatform": "YOUTUBE",
+            "durationMinutes": 9,
+            "resources": [
+              { "title": "Repositorio de objetos de aprendizaje", "type": "REPOSITORIO", "source": "externo", "url": "https://oercommons.org/", "use": "Buscar materiales reutilizables" }
+            ],
+            "practicePrompt": { "es": "Divida una conferencia de 40 minutos en cuatro sesiones breves.", "en": "Split a 40-minute lecture into four short sessions." },
+            "order": 2,
+            "status": "DRAFT"
+          }
+        ]
+      },
+      {
+        "title": { "es": "Evaluación y publicación", "en": "Assessment and publication" },
+        "description": { "es": "Evaluación automática, retroalimentación y lista final de publicación.", "en": "Automated assessment, feedback and final publication checklist." },
+        "order": 3,
+        "status": "DRAFT",
+        "sessions": [
+          {
+            "title": { "es": "Preguntas autocorregibles", "en": "Auto-graded questions" },
+            "description": { "es": "Diseño de preguntas de opción múltiple y retroalimentación inmediata.", "en": "Designing multiple-choice questions and immediate feedback." },
+            "keywords": ["evaluación", "retroalimentación"],
+            "sessionType": "RECORDED",
+            "preview": false,
+            "videoUrl": "https://www.youtube.com/watch?v=J---aiyznGQ",
+            "videoPlatform": "YOUTUBE",
+            "durationMinutes": 11,
+            "resources": [
+              { "title": "Banco de preguntas de ejemplo", "type": "DOCUMENTO", "source": "plataforma", "url": "https://www.coursera.org/", "use": "Observar tipos de evaluación" }
+            ],
+            "practicePrompt": { "es": "Redacte dos preguntas con retroalimentación para cada respuesta.", "en": "Write two questions with feedback for each answer." },
+            "order": 1,
+            "status": "DRAFT"
+          },
+          {
+            "title": { "es": "Lista de comprobación antes de publicar", "en": "Pre-publication checklist" },
+            "description": { "es": "Revisión final de contenidos, enlaces, evaluación y certificado.", "en": "Final review of content, links, assessment and certificate." },
+            "keywords": ["publicación", "calidad"],
+            "sessionType": "RECORDED",
+            "preview": false,
+            "videoUrl": "https://www.youtube.com/watch?v=ScMzIvxBSi4",
+            "videoPlatform": "YOUTUBE",
+            "durationMinutes": 6,
+            "resources": [],
+            "practicePrompt": { "es": "Revise un curso con la lista de comprobación y registre los cambios pendientes.", "en": "Review a course with the checklist and record pending changes." },
+            "order": 2,
+            "status": "DRAFT"
+          }
+        ]
+      }
+    ],
+    "sessions": [],
+    "evaluation": {
+      "title": { "es": "Evaluación final: diseño de MOOCs", "en": "Final assessment: MOOC design" },
+      "description": { "es": "Compruebe los conceptos esenciales del curso.", "en": "Check the essential concepts from the course." },
+      "passingScore": 70,
+      "maxAttempts": 3,
+      "showFeedback": true,
+      "shuffleQuestions": true,
+      "shuffleOptions": true,
+      "questions": [
+        {
+          "type": "MCQ",
+          "prompt": { "es": "¿Qué característica permite que un MOOC atienda a cientos o miles de participantes?", "en": "Which characteristic allows a MOOC to serve hundreds or thousands of participants?" },
+          "options": [
+            { "id": "A", "text": "Massive", "correct": true },
+            { "id": "B", "text": "Presencial", "correct": false },
+            { "id": "C", "text": "Individual", "correct": false }
+          ],
+          "correctAnswer": ["A"],
+          "feedback": { "es": "La dimensión massive se refiere a la capacidad para atender a muchos participantes.", "en": "Massive refers to serving many participants." },
+          "tags": ["fundamentos"],
+          "difficulty": "BASIC",
+          "topic": "Concepto de MOOC"
+        },
+        {
+          "type": "MCQ",
+          "prompt": { "es": "¿Cuál es una duración recomendada para una sesión de video de un MOOC?", "en": "What is a recommended duration for a MOOC video session?" },
+          "options": [
+            { "id": "A", "text": "Entre 5 y 15 minutos", "correct": true },
+            { "id": "B", "text": "Tres horas sin interrupción", "correct": false },
+            { "id": "C", "text": "No importa la duración", "correct": false }
+          ],
+          "correctAnswer": ["A"],
+          "feedback": { "es": "Las sesiones breves favorecen la atención y el avance autónomo.", "en": "Short sessions support attention and autonomous progress." },
+          "tags": ["contenidos"],
+          "difficulty": "BASIC",
+          "topic": "Sesiones breves"
+        },
+        {
+          "type": "MCQ",
+          "prompt": { "es": "¿Qué evaluación es más escalable en un MOOC?", "en": "Which assessment is more scalable in a MOOC?" },
+          "options": [
+            { "id": "A", "text": "Cuestionario autocorregible", "correct": true },
+            { "id": "B", "text": "Corrección manual de miles de tareas", "correct": false },
+            { "id": "C", "text": "Tutoría individual obligatoria", "correct": false }
+          ],
+          "correctAnswer": ["A"],
+          "feedback": { "es": "La evaluación automática permite retroalimentación inmediata a gran escala.", "en": "Automated assessment provides immediate feedback at scale." },
+          "tags": ["evaluacion"],
+          "difficulty": "INTERMEDIATE",
+          "topic": "Evaluación automática"
+        },
+        {
+          "type": "MCQ",
+          "prompt": { "es": "¿Qué debe poder consultar el estudiante durante el curso?", "en": "What should the learner be able to check during the course?" },
+          "options": [
+            { "id": "A", "text": "Su progreso y las actividades pendientes", "correct": true },
+            { "id": "B", "text": "Solo el nombre del profesor", "correct": false },
+            { "id": "C", "text": "Únicamente el video inicial", "correct": false }
+          ],
+          "correctAnswer": ["A"],
+          "feedback": { "es": "El progreso visible ayuda al estudiante a organizar su aprendizaje.", "en": "Visible progress helps learners organize their study." },
+          "tags": ["experiencia-estudiante"],
+          "difficulty": "INTERMEDIATE",
+          "topic": "Seguimiento"
+        }
+      ]
+    },
+    "questionBank": []
+  }
+}

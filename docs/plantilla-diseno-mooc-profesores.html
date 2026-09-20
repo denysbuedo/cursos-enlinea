@@ -218,6 +218,26 @@
       font-size: 12px;
     }
 
+    .add-row {
+      border: 1px solid var(--mes-blue);
+      background: var(--white);
+      color: var(--mes-blue);
+      padding: 7px 10px;
+      font-weight: 700;
+      font-size: 13px;
+      cursor: pointer;
+    }
+
+    select.field-select {
+      width: 100%;
+      min-height: 34px;
+      border: 1px solid var(--line);
+      background: var(--white);
+      padding: 8px;
+      color: var(--text);
+      font: inherit;
+    }
+
     .page-break {
       page-break-before: always;
     }
@@ -264,8 +284,8 @@
     <div class="toolbar no-print">
       <button type="button" onclick="window.print()">Imprimir / Guardar PDF</button>
       <button type="button" class="secondary" onclick="downloadFilledHtml()">Descargar HTML completado</button>
-      <button type="button" class="secondary" onclick="exportJson()">Exportar respaldo JSON</button>
-      <button type="button" class="secondary" onclick="document.getElementById('jsonInput').click()">Importar JSON</button>
+      <button type="button" class="secondary" onclick="exportJson()">Exportar curso JSON</button>
+      <button type="button" class="secondary" onclick="document.getElementById('jsonInput').click()">Importar datos JSON</button>
       <button type="button" class="secondary" onclick="clearSavedData()">Limpiar formulario</button>
       <input id="jsonInput" type="file" accept="application/json" hidden onchange="importJson(event)" />
       <span id="saveStatus" class="status">Sin cambios</span>
@@ -276,64 +296,68 @@
       <div class="grid">
         <div>
           <label>Título del curso en español</label>
-          <div class="field"></div>
+          <div class="field" data-field="title.es"></div>
         </div>
         <div>
           <label>Título del curso en inglés, si aplica</label>
-          <div class="field"></div>
+          <div class="field" data-field="title.en"></div>
         </div>
         <div>
           <label>Profesor responsable</label>
-          <div class="field"></div>
+          <div class="field" data-field="instructor.name"></div>
         </div>
         <div>
           <label>Institución / facultad / departamento</label>
-          <div class="field"></div>
+          <div class="field" data-field="institution"></div>
         </div>
         <div>
           <label>Correo de contacto académico</label>
-          <div class="field"></div>
+          <div class="field" data-field="instructor.email"></div>
         </div>
         <div>
           <label>Idioma principal del curso</label>
-          <div class="field">Español / Inglés / Bilingüe / Otro:</div>
+          <div class="field" data-field="language">Español</div>
         </div>
       </div>
 
       <h3>Descripción breve del curso</h3>
-      <div class="field large"></div>
+      <div class="field large" data-field="description.es"></div>
 
       <h3>Resumen para catálogo público</h3>
       <p class="small">Texto corto para que el estudiante entienda rápidamente qué aprenderá y por qué matricularse.</p>
-      <div class="field large"></div>
+      <div class="field large" data-field="catalogSummary.es"></div>
     </section>
 
     <section>
       <h2>2. Ficha MOOC</h2>
+      <p class="note">
+        Complete esta ficha como la tarjeta de presentación académica del curso. Escriba qué aprenderá el estudiante, a quién va dirigido, qué requisitos necesita y cuánto tiempo debe dedicar. No describa aquí cada clase: eso se hace en los módulos y sesiones.
+      </p>
       <div class="grid-3">
         <div>
           <label>Nivel</label>
-          <div class="field">Principiante / Intermedio / Avanzado</div>
+          <select class="field-select" data-field="level"><option value="BEGINNER">Principiante</option><option value="INTERMEDIATE">Intermedio</option><option value="ADVANCED">Avanzado</option></select>
         </div>
         <div>
           <label>Duración estimada total</label>
-          <div class="field">_____ horas</div>
+          <div class="field" data-field="estimatedHours">_____ horas</div>
         </div>
         <div>
           <label>Dedicación semanal recomendada</label>
-          <div class="field">_____ horas/semana</div>
+          <div class="field" data-field="weeklyHours">_____ horas/semana</div>
         </div>
         <div>
           <label>Modalidad</label>
-          <div class="field">Autodirigido / Por edición</div>
+          <select class="field-select" data-field="selfPaced"><option value="true">Autodirigido</option><option value="false">Por edición</option></select>
         </div>
         <div>
           <label>Certificado</label>
-          <div class="field">Sí / No</div>
+          <select class="field-select" data-field="certificateAvailable"><option value="true">Sí</option><option value="false">No</option></select>
         </div>
         <div>
           <label>Precio</label>
-          <div class="field">Gratis / Pago: _______</div>
+          <select class="field-select" data-field="pricing"><option value="FREE">Gratis</option><option value="PAID">Pago</option></select>
+          <div class="field" data-field="price">Importe, si es de pago</div>
         </div>
       </div>
 
@@ -345,27 +369,69 @@
             <th>Al finalizar el curso, el estudiante será capaz de...</th>
           </tr>
         </thead>
-        <tbody>
-          <tr><td>1</td><td class="blank"></td></tr>
-          <tr><td>2</td><td class="blank"></td></tr>
-          <tr><td>3</td><td class="blank"></td></tr>
-          <tr><td>4</td><td class="blank"></td></tr>
+        <tbody id="objectivesRows">
+          <tr><td>1</td><td class="blank" data-field="learningObjectives.1"></td></tr>
+          <tr><td>2</td><td class="blank" data-field="learningObjectives.2"></td></tr>
+          <tr><td>3</td><td class="blank" data-field="learningObjectives.3"></td></tr>
+          <tr><td>4</td><td class="blank" data-field="learningObjectives.4"></td></tr>
         </tbody>
       </table>
+      <button type="button" class="secondary add-row no-print" onclick="addObjective()">+ Añadir objetivo</button>
 
       <div class="grid">
         <div>
           <h3>Dirigido a</h3>
-          <div class="field large"></div>
+          <div class="field large" data-field="targetAudience"></div>
         </div>
         <div>
           <h3>Requisitos previos</h3>
-          <div class="field large"></div>
+          <div class="field large" data-field="requirements"></div>
         </div>
       </div>
 
       <h3>Competencias que desarrolla</h3>
-      <div class="field large"></div>
+      <div class="field large" data-field="competencies"></div>
+
+      <h3>Clasificación y publicación</h3>
+      <div class="grid">
+        <div>
+          <label>Rama de la ciencia</label>
+          <div class="field" data-field="scienceBranch"></div>
+        </div>
+        <div>
+          <label>Temáticas</label>
+          <div class="field" data-field="topics">Separadas por comas</div>
+        </div>
+        <div>
+          <label>Palabras clave</label>
+          <div class="field" data-field="keywords">Separadas por comas</div>
+        </div>
+        <div>
+          <label>Imagen de portada (URL)</label>
+          <div class="field" data-field="coverImageUrl"></div>
+        </div>
+      </div>
+
+      <h3>Edición inicial</h3>
+      <p class="small">Una edición es una convocatoria concreta del curso. Use “Edición 1” si el curso aún no tiene calendario; indique las fechas cuando exista una convocatoria con inicio y cierre definidos. Las nuevas ediciones se administran después desde el CMS.</p>
+      <div class="grid">
+        <div>
+          <label>Nombre de la edición</label>
+          <div class="field" data-field="edition.name">Edición 1</div>
+        </div>
+        <div>
+          <label>Fecha de inicio</label>
+          <div class="field" data-field="edition.startsAt">AAAA-MM-DD</div>
+        </div>
+        <div>
+          <label>Fecha de cierre</label>
+          <div class="field" data-field="edition.endsAt">AAAA-MM-DD</div>
+        </div>
+        <div>
+          <label>Capacidad máxima</label>
+          <div class="field" data-field="edition.capacity"></div>
+        </div>
+      </div>
     </section>
 
     <section class="page-break">
@@ -383,30 +449,33 @@
             <th style="width: 120px;">Horas estimadas</th>
           </tr>
         </thead>
-        <tbody>
-          <tr><td>1</td><td class="blank"></td><td></td><td></td></tr>
-          <tr><td>2</td><td class="blank"></td><td></td><td></td></tr>
-          <tr><td>3</td><td class="blank"></td><td></td><td></td></tr>
-          <tr><td>4</td><td class="blank"></td><td></td><td></td></tr>
-          <tr><td>5</td><td class="blank"></td><td></td><td></td></tr>
+        <tbody id="moduleRows">
+            <tr data-module-row="1"><td>1</td><td class="blank" data-field="module.1.title"></td><td data-field="module.1.description"></td><td data-field="module.1.hours"></td></tr>
+            <tr data-module-row="2"><td>2</td><td class="blank" data-field="module.2.title"></td><td data-field="module.2.description"></td><td data-field="module.2.hours"></td></tr>
+            <tr data-module-row="3"><td>3</td><td class="blank" data-field="module.3.title"></td><td data-field="module.3.description"></td><td data-field="module.3.hours"></td></tr>
+            <tr data-module-row="4"><td>4</td><td class="blank" data-field="module.4.title"></td><td data-field="module.4.description"></td><td data-field="module.4.hours"></td></tr>
+            <tr data-module-row="5"><td>5</td><td class="blank" data-field="module.5.title"></td><td data-field="module.5.description"></td><td data-field="module.5.hours"></td></tr>
         </tbody>
       </table>
+      <button type="button" class="secondary add-row no-print" onclick="addModuleRow()">+ Añadir módulo</button>
     </section>
 
     <section>
       <h2>4. Plantilla de módulo</h2>
-      <p class="small">Duplique esta sección por cada módulo del curso.</p>
+      <p class="note">Primero registre los módulos en la sección 3. Si necesita otro, puede añadirlo desde cualquiera de los botones “Añadir módulo”. Después use esta sección para completar el objetivo, el resultado esperado y las sesiones de cada módulo.</p>
+      <button type="button" class="secondary add-row no-print" onclick="addModuleRow()">+ Añadir módulo a la estructura</button>
 
-      <div class="section-box">
-        <h3 class="module-title">Módulo ___: ________________________________</h3>
+      <div id="moduleDetailBlocks">
+      <div class="section-box" data-module-detail-block="1">
+        <h3 class="module-title" data-field="moduleDetail.1.title">Módulo ___: ________________________________</h3>
         <div class="grid">
           <div>
             <label>Objetivo del módulo</label>
-            <div class="field large"></div>
+            <div class="field large" data-field="moduleDetail.1.objective"></div>
           </div>
           <div>
             <label>Resultado esperado</label>
-            <div class="field large"></div>
+            <div class="field large" data-field="moduleDetail.1.result"></div>
           </div>
         </div>
 
@@ -421,36 +490,40 @@
               <th>¿Vista previa?</th>
             </tr>
           </thead>
-          <tbody>
-            <tr><td>1</td><td class="blank"></td><td>Grabada / En vivo / Híbrida</td><td></td><td>Sí / No</td></tr>
-            <tr><td>2</td><td class="blank"></td><td>Grabada / En vivo / Híbrida</td><td></td><td>Sí / No</td></tr>
-            <tr><td>3</td><td class="blank"></td><td>Grabada / En vivo / Híbrida</td><td></td><td>Sí / No</td></tr>
-            <tr><td>4</td><td class="blank"></td><td>Grabada / En vivo / Híbrida</td><td></td><td>Sí / No</td></tr>
+          <tbody data-module-session-rows="1">
+            <tr><td>1</td><td class="blank" data-field="moduleDetail.1.session.1.title"></td><td data-field="moduleDetail.1.session.1.type">Grabada</td><td data-field="moduleDetail.1.session.1.duration"></td><td data-field="moduleDetail.1.session.1.preview">No</td></tr>
+            <tr><td>2</td><td class="blank" data-field="moduleDetail.1.session.2.title"></td><td data-field="moduleDetail.1.session.2.type">Grabada</td><td data-field="moduleDetail.1.session.2.duration"></td><td data-field="moduleDetail.1.session.2.preview">No</td></tr>
+            <tr><td>3</td><td class="blank" data-field="moduleDetail.1.session.3.title"></td><td data-field="moduleDetail.1.session.3.type">Grabada</td><td data-field="moduleDetail.1.session.3.duration"></td><td data-field="moduleDetail.1.session.3.preview">No</td></tr>
+            <tr><td>4</td><td class="blank" data-field="moduleDetail.1.session.4.title"></td><td data-field="moduleDetail.1.session.4.type">Grabada</td><td data-field="moduleDetail.1.session.4.duration"></td><td data-field="moduleDetail.1.session.4.preview">No</td></tr>
           </tbody>
         </table>
+        <button type="button" class="secondary add-row no-print" onclick="addModuleSessionRow(this)">+ Añadir sesión al módulo</button>
       </div>
+      </div>
+      <button type="button" class="secondary add-row no-print" onclick="addModuleDetail()">+ Añadir detalle de otro módulo</button>
     </section>
 
     <section class="page-break">
       <h2>5. Plantilla de sesión</h2>
-      <p class="small">Duplique esta sección por cada sesión o lección del curso.</p>
+      <p class="note">Añada una sesión o lección por cada unidad breve de aprendizaje. Use “Añadir sesión” al final de esta sección. Cada sesión debe tener título, descripción, video o recurso principal, práctica y materiales complementarios.</p>
+      <div id="sessionBlocks">
 
-      <div class="section-box">
-        <h3 class="module-title">Sesión ___: ________________________________</h3>
+      <div class="section-box" data-session-block="1">
+        <h3 class="module-title" data-field="session.1.title">Sesión ___: ________________________________</h3>
 
         <div class="grid">
           <div>
             <label>Módulo al que pertenece</label>
-            <div class="field"></div>
+            <div class="field" data-field="session.1.module"></div>
           </div>
           <div>
             <label>Duración estimada de estudio</label>
-            <div class="field">_____ minutos</div>
+            <div class="field" data-field="session.1.studyMinutes">_____ minutos</div>
           </div>
         </div>
 
         <h3>Descripción de la sesión</h3>
-        <div class="field large"></div>
+        <div class="field large" data-field="session.1.description"></div>
 
         <h3>Video de la sesión</h3>
         <table>
@@ -461,11 +534,11 @@
             </tr>
             <tr>
               <th>URL del video o ubicación del archivo</th>
-              <td class="blank"></td>
+              <td class="blank" data-field="session.1.videoUrl"></td>
             </tr>
             <tr>
               <th>Duración del video</th>
-              <td>_____ minutos</td>
+              <td data-field="session.1.durationMinutes">_____ minutos</td>
             </tr>
             <tr>
               <th>Observaciones técnicas</th>
@@ -476,7 +549,7 @@
 
         <h3>Actividad de práctica</h3>
         <p class="small">Debe orientar al estudiante a aplicar lo aprendido. Puede no ser calificable.</p>
-        <div class="field xlarge"></div>
+        <div class="field xlarge" data-field="session.1.practicePrompt"></div>
 
         <h3>Bibliografía y materiales complementarios</h3>
         <p class="small">Pueden estar subidos a la plataforma o venir desde un repositorio de objetos de aprendizaje.</p>
@@ -491,12 +564,14 @@
             </tr>
           </thead>
           <tbody>
-            <tr><td class="blank"></td><td>PDF / enlace / presentación / lectura / dataset / otro</td><td>Repositorio / externo / subida</td><td></td><td></td></tr>
-            <tr><td class="blank"></td><td>PDF / enlace / presentación / lectura / dataset / otro</td><td>Repositorio / externo / subida</td><td></td><td></td></tr>
-            <tr><td class="blank"></td><td>PDF / enlace / presentación / lectura / dataset / otro</td><td>Repositorio / externo / subida</td><td></td><td></td></tr>
+            <tr><td class="blank" data-field="session.1.resource.1.title"></td><td data-field="session.1.resource.1.type">PDF / enlace / presentación / lectura / dataset / otro</td><td data-field="session.1.resource.1.source">Repositorio / externo / subida</td><td data-field="session.1.resource.1.url"></td><td data-field="session.1.resource.1.use"></td></tr>
+            <tr><td class="blank" data-field="session.1.resource.2.title"></td><td data-field="session.1.resource.2.type">PDF / enlace / presentación / lectura / dataset / otro</td><td data-field="session.1.resource.2.source">Repositorio / externo / subida</td><td data-field="session.1.resource.2.url"></td><td data-field="session.1.resource.2.use"></td></tr>
+            <tr><td class="blank" data-field="session.1.resource.3.title"></td><td data-field="session.1.resource.3.type">PDF / enlace / presentación / lectura / dataset / otro</td><td data-field="session.1.resource.3.source">Repositorio / externo / subida</td><td data-field="session.1.resource.3.url"></td><td data-field="session.1.resource.3.use"></td></tr>
           </tbody>
         </table>
       </div>
+      </div>
+      <button type="button" class="secondary add-row no-print" onclick="addSession()">+ Añadir sesión</button>
     </section>
 
     <section class="page-break">
@@ -517,32 +592,35 @@
           </tr>
         </thead>
         <tbody>
-          <tr><td>1</td><td></td><td>Baja / Media / Alta</td><td></td><td>Opción múltiple / V-F</td><td class="blank"></td></tr>
-          <tr><td>2</td><td></td><td>Baja / Media / Alta</td><td></td><td>Opción múltiple / V-F</td><td class="blank"></td></tr>
-          <tr><td>3</td><td></td><td>Baja / Media / Alta</td><td></td><td>Opción múltiple / V-F</td><td class="blank"></td></tr>
-          <tr><td>4</td><td></td><td>Baja / Media / Alta</td><td></td><td>Opción múltiple / V-F</td><td class="blank"></td></tr>
+            <tr data-question-row="1"><td>1</td><td data-field="question.1.topic"></td><td data-field="question.1.difficulty">Baja / Media / Alta</td><td data-field="question.1.tags"></td><td data-field="question.1.type">Opción múltiple / V-F</td><td class="blank" data-field="question.1.prompt"></td></tr>
+            <tr data-question-row="2"><td>2</td><td data-field="question.2.topic"></td><td data-field="question.2.difficulty">Baja / Media / Alta</td><td data-field="question.2.tags"></td><td data-field="question.2.type">Opción múltiple / V-F</td><td class="blank" data-field="question.2.prompt"></td></tr>
+            <tr data-question-row="3"><td>3</td><td data-field="question.3.topic"></td><td data-field="question.3.difficulty">Baja / Media / Alta</td><td data-field="question.3.tags"></td><td data-field="question.3.type">Opción múltiple / V-F</td><td class="blank" data-field="question.3.prompt"></td></tr>
+            <tr data-question-row="4"><td>4</td><td data-field="question.4.topic"></td><td data-field="question.4.difficulty">Baja / Media / Alta</td><td data-field="question.4.tags"></td><td data-field="question.4.type">Opción múltiple / V-F</td><td class="blank" data-field="question.4.prompt"></td></tr>
         </tbody>
       </table>
 
       <h3>Detalle de pregunta</h3>
-      <p class="small">Duplique este bloque para cada pregunta.</p>
-      <div class="section-box">
+      <p class="note">Añada una pregunta por cada ítem autocorregible. Para cada pregunta indique el enunciado, las opciones, la respuesta correcta y la retroalimentación. Use el botón “Añadir pregunta” para crear otra.</p>
+      <div id="questionBlocks">
+      <div class="section-box" data-question-block="1">
         <label>Enunciado</label>
-        <div class="field large"></div>
+        <div class="field large" data-field="questionDetail.prompt"></div>
         <label>Opciones de respuesta</label>
         <table>
           <tbody>
-            <tr><td style="width: 60px;">A</td><td class="blank"></td><td style="width: 130px;">Correcta: Sí / No</td></tr>
-            <tr><td>B</td><td class="blank"></td><td>Correcta: Sí / No</td></tr>
-            <tr><td>C</td><td class="blank"></td><td>Correcta: Sí / No</td></tr>
-            <tr><td>D</td><td class="blank"></td><td>Correcta: Sí / No</td></tr>
+            <tr><td style="width: 60px;">A</td><td class="blank" data-field="questionDetail.option.A"></td><td style="width: 130px;" data-field="questionDetail.correct.A">Correcta: Sí / No</td></tr>
+            <tr><td>B</td><td class="blank" data-field="questionDetail.option.B"></td><td data-field="questionDetail.correct.B">Correcta: Sí / No</td></tr>
+            <tr><td>C</td><td class="blank" data-field="questionDetail.option.C"></td><td data-field="questionDetail.correct.C">Correcta: Sí / No</td></tr>
+            <tr><td>D</td><td class="blank" data-field="questionDetail.option.D"></td><td data-field="questionDetail.correct.D">Correcta: Sí / No</td></tr>
           </tbody>
         </table>
         <label>Retroalimentación para respuesta correcta</label>
-        <div class="field large"></div>
+        <div class="field large" data-field="questionDetail.feedbackCorrect"></div>
         <label>Retroalimentación para respuesta incorrecta</label>
-        <div class="field large"></div>
+        <div class="field large" data-field="questionDetail.feedbackIncorrect"></div>
       </div>
+      </div>
+      <button type="button" class="secondary add-row no-print" onclick="addQuestion()">+ Añadir pregunta</button>
     </section>
 
     <section>
@@ -550,19 +628,23 @@
       <div class="grid-3">
         <div>
           <label>Puntuación mínima de aprobación</label>
-          <div class="field">_____%</div>
+          <div class="field" data-field="evaluation.passingScore">_____%</div>
         </div>
         <div>
           <label>Número de intentos</label>
-          <div class="field">_____</div>
+          <div class="field" data-field="evaluation.maxAttempts">_____</div>
         </div>
         <div>
           <label>Selección de preguntas</label>
-          <div class="field">Fija / Aleatoria por etiqueta</div>
+          <select class="field-select" data-field="evaluation.selection">
+            <option value="FIXED">Preguntas fijas</option>
+            <option value="RANDOM_TAG">Selección aleatoria por etiqueta</option>
+          </select>
         </div>
       </div>
 
       <h3>Reglas de selección aleatoria, si aplica</h3>
+      <p class="note">Esta tabla solo se usa si eligió “Selección aleatoria por etiqueta”. Indique, por ejemplo: etiqueta “módulo-1”, 5 preguntas y dificultad “básica”. La plataforma seleccionará ese número de preguntas del banco que cumplan la regla.</p>
       <table>
         <thead>
           <tr>
@@ -572,11 +654,12 @@
           </tr>
         </thead>
         <tbody>
-          <tr><td class="blank"></td><td></td><td></td></tr>
-          <tr><td class="blank"></td><td></td><td></td></tr>
-          <tr><td class="blank"></td><td></td><td></td></tr>
+            <tr><td class="blank" data-field="evaluation.rule.1.tag"></td><td data-field="evaluation.rule.1.count"></td><td data-field="evaluation.rule.1.difficulty"></td></tr>
+            <tr><td class="blank" data-field="evaluation.rule.2.tag"></td><td data-field="evaluation.rule.2.count"></td><td data-field="evaluation.rule.2.difficulty"></td></tr>
+            <tr><td class="blank" data-field="evaluation.rule.3.tag"></td><td data-field="evaluation.rule.3.count"></td><td data-field="evaluation.rule.3.difficulty"></td></tr>
         </tbody>
       </table>
+      <button type="button" class="secondary add-row no-print" onclick="addEvaluationRule()">+ Añadir regla</button>
 
       <h3>Criterios para certificación</h3>
       <div class="field large">
@@ -615,7 +698,7 @@
   </main>
 
   <script>
-    const STORAGE_KEY = "plantilla-mooc-profesores-v1";
+    const STORAGE_KEY = "plantilla-mooc-profesores-v2";
     let INITIAL_DATA = {};
 
     function shouldMakeCellEditable(cell) {
@@ -630,17 +713,26 @@
       return Array.from(document.querySelectorAll("[data-editable-id]"));
     }
 
+    function elementValue(element) {
+      return element instanceof HTMLSelectElement ? element.value : element.innerHTML;
+    }
+
+    function setElementValue(element, value) {
+      if (element instanceof HTMLSelectElement) element.value = value;
+      else element.innerHTML = value;
+    }
+
     function prepareEditableFields() {
-      const fields = Array.from(document.querySelectorAll(".field"));
+      const fields = Array.from(document.querySelectorAll(".field, [data-field]"));
       const tableCells = Array.from(document.querySelectorAll("td")).filter(shouldMakeCellEditable);
-      const targets = [...fields, ...tableCells];
+      const targets = Array.from(new Set([...fields, ...tableCells]));
 
       targets.forEach((element, index) => {
-        element.contentEditable = "true";
-        element.classList.add("editable");
-        if (!element.dataset.editableId) {
-          element.dataset.editableId = `campo-${index + 1}`;
+        if (!(element instanceof HTMLSelectElement)) {
+          element.contentEditable = "true";
+          element.classList.add("editable");
         }
+        if (!element.dataset.editableId) element.dataset.editableId = element.dataset.field || `campo-${index + 1}`;
       });
       INITIAL_DATA = {};
       editableElements().forEach((element) => {
@@ -651,7 +743,7 @@
     function saveData() {
       const data = {};
       editableElements().forEach((element) => {
-        data[element.dataset.editableId] = element.innerHTML;
+        data[element.dataset.editableId] = elementValue(element);
       });
       localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
       const status = document.getElementById("saveStatus");
@@ -667,7 +759,7 @@
         const data = JSON.parse(raw);
         editableElements().forEach((element) => {
           if (Object.prototype.hasOwnProperty.call(data, element.dataset.editableId)) {
-            element.innerHTML = data[element.dataset.editableId];
+            setElementValue(element, data[element.dataset.editableId]);
           }
         });
         const status = document.getElementById("saveStatus");
@@ -700,10 +792,264 @@
       downloadBlob("mooc-completado.html", html, "text/html;charset=utf-8");
     }
 
+    function fieldValue(name) {
+      const element = document.querySelector(`[data-field="${name}"]`);
+      if (!element) return "";
+      return elementValue(element).replace(/\u00a0/g, " ").trim();
+    }
+
+    function cleanValue(value) {
+      return value
+        .replace(/^Principiante \/ Intermedio \/ Avanzado$/i, "")
+        .replace(/^Autodirigido \/ Por edición$/i, "")
+        .replace(/^Sí \/ No$/i, "")
+        .replace(/^Separadas por comas$/i, "")
+        .replace(/^AAAA-MM-DD$/i, "")
+        .replace(/^_____.*$/, "")
+        .trim();
+    }
+
+    function listValue(name) {
+      return fieldValue(name).split(/[\n;,]+/).map((item) => cleanValue(item)).filter(Boolean);
+    }
+
+    function numberValue(name) {
+      const match = cleanValue(fieldValue(name)).match(/\d+(?:[.,]\d+)?/);
+      return match ? Number(match[0].replace(",", ".")) : null;
+    }
+
+    function yesValue(name, fallback) {
+      const value = cleanValue(fieldValue(name)).toLowerCase();
+      if (value === "true") return true;
+      if (value === "false") return false;
+      if (value === "sí" || value === "si" || value === "yes") return true;
+      if (value === "no") return false;
+      return fallback;
+    }
+
+    function makeSlug(title) {
+      return title.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "curso-importado";
+    }
+
+    function addObjective() {
+      const body = document.getElementById("objectivesRows");
+      const number = body.querySelectorAll("tr").length + 1;
+      const row = document.createElement("tr");
+      row.innerHTML = `<td>${number}</td><td class="blank" data-field="learningObjectives.${number}"></td>`;
+      body.appendChild(row);
+      prepareEditableFields();
+    }
+
+    function addModuleRow() {
+      const body = document.getElementById("moduleRows");
+      const number = body.querySelectorAll("tr").length + 1;
+      const row = document.createElement("tr");
+      row.dataset.moduleRow = String(number);
+      row.innerHTML = `<td>${number}</td><td class="blank" data-field="module.${number}.title"></td><td data-field="module.${number}.description"></td><td data-field="module.${number}.hours"></td>`;
+      body.appendChild(row);
+      prepareEditableFields();
+    }
+
+    function addModuleDetail() {
+      const container = document.getElementById("moduleDetailBlocks");
+      const current = container.querySelectorAll("[data-module-detail-block]");
+      const number = current.length + 1;
+      const clone = current[0].cloneNode(true);
+      clone.dataset.moduleDetailBlock = String(number);
+      renumberCloneFields(clone, "moduleDetail.1", `moduleDetail.${number}`);
+      clone.querySelectorAll("[data-module-session-rows]").forEach((body) => { body.dataset.moduleSessionRows = String(number); });
+      clearCloneFields(clone);
+      const title = clone.querySelector(`[data-field="moduleDetail.${number}.title"]`);
+      if (title) title.textContent = `Módulo ${number}: `;
+      container.appendChild(clone);
+      prepareEditableFields();
+    }
+
+    function addModuleSessionRow(button) {
+      const body = button.previousElementSibling;
+      const moduleNumber = body.dataset.moduleSessionRows;
+      const number = body.querySelectorAll("tr").length + 1;
+      const row = document.createElement("tr");
+      row.innerHTML = `<td>${number}</td><td class="blank" data-field="moduleDetail.${moduleNumber}.session.${number}.title"></td><td data-field="moduleDetail.${moduleNumber}.session.${number}.type">Grabada</td><td data-field="moduleDetail.${moduleNumber}.session.${number}.duration"></td><td data-field="moduleDetail.${moduleNumber}.session.${number}.preview">No</td>`;
+      body.appendChild(row);
+      prepareEditableFields();
+    }
+
+    function renumberCloneFields(root, from, to) {
+      root.querySelectorAll("[data-field], [data-editable-id]").forEach((element) => {
+        ["data-field", "data-editable-id"].forEach((attribute) => {
+          const value = element.getAttribute(attribute);
+          if (value) element.setAttribute(attribute, value.replace(from, to));
+        });
+      });
+    }
+
+    function clearCloneFields(root) {
+      root.querySelectorAll("[data-field]").forEach((element) => {
+        if (element instanceof HTMLSelectElement) element.selectedIndex = 0;
+        else element.innerHTML = "";
+      });
+    }
+
+    function addSession() {
+      const container = document.getElementById("sessionBlocks");
+      const current = container.querySelectorAll("[data-session-block]");
+      const number = current.length + 1;
+      const clone = current[0].cloneNode(true);
+      clone.dataset.sessionBlock = String(number);
+      renumberCloneFields(clone, "session.1", `session.${number}`);
+      clearCloneFields(clone);
+      const title = clone.querySelector(`[data-field="session.${number}.title"]`);
+      if (title) title.textContent = `Sesión ${number}: `;
+      container.appendChild(clone);
+      prepareEditableFields();
+    }
+
+    function addQuestion() {
+      const container = document.getElementById("questionBlocks");
+      const current = container.querySelectorAll("[data-question-block]");
+      const number = current.length + 1;
+      const clone = current[0].cloneNode(true);
+      clone.dataset.questionBlock = String(number);
+      renumberCloneFields(clone, "questionDetail", `questionDetail.${number}`);
+      clearCloneFields(clone);
+      container.appendChild(clone);
+      prepareEditableFields();
+    }
+
+    function addEvaluationRule() {
+      const body = document.querySelector("[data-field=\"evaluation.rule.1.tag\"]").closest("tbody");
+      const number = body.querySelectorAll("tr").length + 1;
+      const row = document.createElement("tr");
+      row.innerHTML = `<td class="blank" data-field="evaluation.rule.${number}.tag"></td><td data-field="evaluation.rule.${number}.count"></td><td data-field="evaluation.rule.${number}.difficulty"></td>`;
+      body.appendChild(row);
+      prepareEditableFields();
+    }
+
+    function localized(es, en) {
+      return { es: es || en || "", en: en || es || "" };
+    }
+
+    function buildCoursePackage() {
+      const titleEs = cleanValue(fieldValue("title.es"));
+      const titleEn = cleanValue(fieldValue("title.en"));
+      const description = cleanValue(fieldValue("description.es"));
+      const modules = Array.from(document.querySelectorAll("[data-module-row]")).map((row, index) => {
+        const number = index + 1;
+        const title = cleanValue(fieldValue(`module.${number}.title`));
+        if (!title) return null;
+        return {
+          title: localized(title, title),
+          description: localized(cleanValue(fieldValue(`module.${number}.description`)), ""),
+          order: number,
+          status: "DRAFT",
+          sessions: [],
+        };
+      }).filter(Boolean);
+
+      const sessions = Array.from(document.querySelectorAll("[data-session-block]")).map((block) => {
+        const number = block.dataset.sessionBlock;
+        const prefix = `session.${number}`;
+        const sessionTitle = cleanValue(fieldValue(`${prefix}.title`)).replace(/^Sesión\s+(?:___|\d+)\s*:\s*/i, "");
+        const resources = [1, 2, 3].map((resourceNumber) => {
+          const title = cleanValue(fieldValue(`${prefix}.resource.${resourceNumber}.title`));
+          const url = cleanValue(fieldValue(`${prefix}.resource.${resourceNumber}.url`));
+          if (!title && !url) return null;
+          return { title, type: cleanValue(fieldValue(`${prefix}.resource.${resourceNumber}.type`)), source: cleanValue(fieldValue(`${prefix}.resource.${resourceNumber}.source`)), url, use: cleanValue(fieldValue(`${prefix}.resource.${resourceNumber}.use`)) };
+        }).filter(Boolean);
+        if (!sessionTitle) return null;
+        return {
+          moduleName: cleanValue(fieldValue(`${prefix}.module`)),
+          session: {
+            title: localized(sessionTitle, sessionTitle),
+            description: localized(cleanValue(fieldValue(`${prefix}.description`)), ""),
+            keywords: listValue("keywords"),
+            sessionType: "RECORDED",
+            preview: false,
+            videoUrl: cleanValue(fieldValue(`${prefix}.videoUrl`)) || null,
+            videoPlatform: "EXTERNAL",
+            durationMinutes: numberValue(`${prefix}.durationMinutes`),
+            resources,
+            practicePrompt: localized(cleanValue(fieldValue(`${prefix}.practicePrompt`)), ""),
+            order: Number(number),
+            status: "DRAFT",
+          },
+        };
+      }).filter(Boolean);
+      sessions.forEach((entry) => {
+        if (!modules.length) return;
+        const target = modules.find((module) => entry.moduleName && module.title.es.toLowerCase() === entry.moduleName.toLowerCase()) || modules[0];
+        target.sessions.push(entry.session);
+      });
+
+      const questions = Array.from(document.querySelectorAll("[data-question-block]")).map((block) => {
+        const number = block.dataset.questionBlock;
+        const prefix = number === "1" ? "questionDetail" : `questionDetail.${number}`;
+        const question = cleanValue(fieldValue(`${prefix}.prompt`));
+        const options = ["A", "B", "C", "D"].map((letter) => ({ id: letter, text: cleanValue(fieldValue(`${prefix}.option.${letter}`)), correct: /sí|si|yes/i.test(fieldValue(`${prefix}.correct.${letter}`)) })).filter((option) => option.text);
+        if (!question) return null;
+        return { type: "MCQ", prompt: localized(question, question), options, correctAnswer: options.filter((option) => option.correct).map((option) => option.id), feedback: localized(cleanValue(fieldValue(`${prefix}.feedbackCorrect`)), ""), tags: listValue(`question.${number}.tags`), difficulty: cleanValue(fieldValue(`question.${number}.difficulty`)) || "BASIC", topic: cleanValue(fieldValue(`question.${number}.topic`)) };
+      }).filter(Boolean);
+
+      const priceText = cleanValue(fieldValue("pricing"));
+      const paid = priceText === "PAID" || /pago|paid/i.test(priceText);
+      const course = {
+        slug: makeSlug(titleEs),
+        title: localized(titleEs, titleEn),
+        description: localized(description, description),
+        learningObjectives: Array.from(document.querySelectorAll('[data-field^="learningObjectives."]')).map((element) => cleanValue(elementValue(element))).filter(Boolean),
+        targetAudience: listValue("targetAudience"),
+        requirements: listValue("requirements"),
+        competencies: listValue("competencies"),
+        coverImageUrl: cleanValue(fieldValue("coverImageUrl")) || null,
+        scienceBranch: cleanValue(fieldValue("scienceBranch")) || null,
+        topics: listValue("topics"),
+        keywords: listValue("keywords"),
+        estimatedHours: numberValue("estimatedHours"),
+        weeklyHours: numberValue("weeklyHours"),
+        level: cleanValue(fieldValue("level")) || null,
+        language: cleanValue(fieldValue("language")) || "es",
+        certificateAvailable: yesValue("certificateAvailable", true),
+        selfPaced: yesValue("selfPaced", true),
+        pricingModel: paid ? "PAID" : "FREE",
+        price: paid ? numberValue("price") : null,
+        currency: "USD",
+        instructors: fieldValue("instructor.email") ? [{ name: cleanValue(fieldValue("instructor.name")), email: cleanValue(fieldValue("instructor.email")), role: "LEAD" }] : [],
+        editions: [{
+          name: localized(cleanValue(fieldValue("edition.name")) || "Edición 1", cleanValue(fieldValue("edition.name")) || "Edición 1"),
+          startsAt: cleanValue(fieldValue("edition.startsAt")) || null,
+          endsAt: cleanValue(fieldValue("edition.endsAt")) || null,
+          capacity: numberValue("edition.capacity"),
+          status: "DRAFT",
+          isDefault: true,
+        }],
+        modules,
+        sessions: [],
+        evaluation: {
+          title: localized("Evaluación final", "Final evaluation"),
+          description: localized("Evaluación automática del curso", "Automatic course evaluation"),
+          passingScore: numberValue("evaluation.passingScore") || 80,
+          maxAttempts: numberValue("evaluation.maxAttempts") || 3,
+          showFeedback: true,
+          shuffleQuestions: fieldValue("evaluation.selection") === "RANDOM_TAG",
+          shuffleOptions: true,
+          questions,
+        },
+        questionBank: questions,
+      };
+      const templateFields = {};
+      editableElements().forEach((element) => { templateFields[element.dataset.editableId] = element.innerHTML; });
+      return { format: "cursos-enlinea-mooc", formatVersion: 1, exportedAt: new Date().toISOString(), templateFields, course };
+    }
+
     function exportJson() {
       saveData();
-      const raw = localStorage.getItem(STORAGE_KEY) || "{}";
-      downloadBlob("mooc-respaldo.json", raw, "application/json;charset=utf-8");
+      const payload = buildCoursePackage();
+      if (!payload.course.title.es || !payload.course.description.es) {
+        alert("Complete al menos el título y la descripción del curso antes de exportar.");
+        return;
+      }
+      downloadBlob(`${payload.course.slug}-mooc.json`, JSON.stringify(payload, null, 2), "application/json;charset=utf-8");
     }
 
     function importJson(event) {
@@ -713,7 +1059,9 @@
       reader.onload = () => {
         try {
           const data = JSON.parse(String(reader.result || "{}"));
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+          const fields = data.templateFields || data;
+          if (!fields || typeof fields !== "object" || Array.isArray(fields)) throw new Error("Formato no válido");
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(fields));
           loadData();
           saveData();
         } catch {
@@ -728,7 +1076,7 @@
       if (!confirm("¿Desea limpiar todos los campos guardados en esta plantilla?")) return;
       localStorage.removeItem(STORAGE_KEY);
       editableElements().forEach((element) => {
-        element.innerHTML = INITIAL_DATA[element.dataset.editableId] || "";
+        setElementValue(element, INITIAL_DATA[element.dataset.editableId] || "");
       });
       const status = document.getElementById("saveStatus");
       if (status) status.textContent = "Formulario limpio";

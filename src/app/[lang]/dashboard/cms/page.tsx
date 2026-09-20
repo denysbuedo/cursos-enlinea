@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { Award, BarChart3, BookOpen, ExternalLink, Eye, Layers, Loader2, Plus, RefreshCw, Save, Trash2, Upload, Users, Video } from "lucide-react";
+import { Award, BarChart3, BookOpen, Download, ExternalLink, Eye, Layers, Loader2, Plus, RefreshCw, Save, Trash2, Upload, Users, Video } from "lucide-react";
 import { getLangFromParams } from "@/lib/i18n";
 import { resolveVideoRender } from "@/lib/video";
 
@@ -11,7 +11,7 @@ type LocalizedText = { es: string; en: string };
 type LocalizedListText = { es: string; en: string };
 type SessionType = "RECORDED" | "LIVE" | "HYBRID";
 type QuestionType = "MCQ" | "TRUEFALSE" | "SHORT";
-type CmsSection = "course" | "analytics" | "editions" | "modules" | "sessions" | "questionBank" | "evaluation";
+type CmsSection = "course" | "analytics" | "editions" | "modules" | "sessions" | "questionBank" | "evaluation" | "reviews";
 
 interface CmsSession {
   id: string;
@@ -46,6 +46,10 @@ interface CmsCourse {
   targetAudience?: { es?: string[]; en?: string[] } | null;
   requirements?: { es?: string[]; en?: string[] } | null;
   competencies?: { es?: string[]; en?: string[] } | null;
+  coverImageUrl?: string | null;
+  scienceBranch?: string | null;
+  topics?: string[];
+  keywords?: string[];
   questionBank?: CmsQuestion[] | null;
   estimatedHours?: number | null;
   weeklyHours?: number | null;
@@ -113,6 +117,10 @@ interface CourseFormState {
   targetAudience: LocalizedListText;
   requirements: LocalizedListText;
   competencies: LocalizedListText;
+  coverImageUrl: string;
+  scienceBranch: string;
+  topics: string;
+  keywords: string;
   estimatedHours: string;
   weeklyHours: string;
   level: string;
@@ -150,7 +158,7 @@ interface SessionFormState {
 }
 
 interface SessionResource {
-  id: string;
+  id?: string;
   title: string;
   url: string;
   type: string;
@@ -211,6 +219,29 @@ interface CmsUser {
   preferredLang?: string | null;
 }
 
+interface InstructorProfileForm {
+  name: string;
+  email: string;
+  bio: string;
+  institution: string;
+  avatarUrl: string;
+}
+
+interface CourseInstructorAssignment {
+  id: string;
+  role: string;
+  user: { id: string; name: string; email: string };
+}
+
+interface CmsReview {
+  id: string;
+  rating: number;
+  testimonial?: string | null;
+  status: "PENDING" | "PUBLISHED" | "REJECTED";
+  createdAt: string;
+  user: { name: string; email: string };
+}
+
 interface AnalyticsSummary {
   totalEnrollments: number;
   activeEnrollments: number;
@@ -235,6 +266,11 @@ interface CourseAnalytics {
     edition: CmsEdition;
   } & AnalyticsSummary>;
   withoutEdition: AnalyticsSummary | null;
+  views: {
+    total: number;
+    unique: number;
+    byDay: Array<{ day: string; views: number }>;
+  };
 }
 
 function createQuestion(type: QuestionType = "MCQ"): CmsQuestion {
@@ -267,6 +303,10 @@ function textToList(value: LocalizedListText) {
   };
 }
 
+function commaTextToList(value: string) {
+  return value.split(",").map((item) => item.trim()).filter(Boolean);
+}
+
 export default function CmsPage() {
   const params = useParams<{ lang: string }>();
   const router = useRouter();
@@ -275,12 +315,28 @@ export default function CmsPage() {
   const [selectedCourseId, setSelectedCourseId] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [uploadingCover, setUploadingCover] = useState(false);
   const [uploadingVideo, setUploadingVideo] = useState(false);
   const [uploadingResource, setUploadingResource] = useState(false);
   const [loadingEnrollments, setLoadingEnrollments] = useState(false);
   const [loadingAnalytics, setLoadingAnalytics] = useState(false);
   const [loadingQuestionBank, setLoadingQuestionBank] = useState(false);
+  const [loadingReviews, setLoadingReviews] = useState(false);
+  const [courseReviews, setCourseReviews] = useState<CmsReview[]>([]);
   const [error, setError] = useState("");
+  const [profileSaving, setProfileSaving] = useState(false);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [instructorProfile, setInstructorProfile] = useState<InstructorProfileForm>({
+    name: "",
+    email: "",
+    bio: "",
+    institution: "",
+    avatarUrl: "",
+  });
+  const [courseInstructors, setCourseInstructors] = useState<CourseInstructorAssignment[]>([]);
+  const [instructorCandidates, setInstructorCandidates] = useState<CmsUser[]>([]);
+  const [selectedInstructorId, setSelectedInstructorId] = useState("");
+  const [selectedInstructorRole, setSelectedInstructorRole] = useState("INSTRUCTOR");
   const [activeSection, setActiveSection] = useState<CmsSection>("course");
   const [selectedEditionId, setSelectedEditionId] = useState("");
   const [editionEnrollments, setEditionEnrollments] = useState<CmsEnrollment[]>([]);
@@ -314,6 +370,10 @@ export default function CmsPage() {
     targetAudience: { es: "", en: "" },
     requirements: { es: "", en: "" },
     competencies: { es: "", en: "" },
+    coverImageUrl: "",
+    scienceBranch: "",
+    topics: "",
+    keywords: "",
     estimatedHours: "",
     weeklyHours: "",
     level: "BEGINNER",
@@ -383,6 +443,163 @@ export default function CmsPage() {
     return response;
   }
 
+  async function loadInstructorProfile() {
+    try {
+      const res = await cmsFetch("/api/profile");
+      if (!res.ok) return;
+      const json = await res.json();
+      const profile = json.data;
+      if (profile) {
+        setInstructorProfile({
+          name: profile.name || "",
+          email: profile.email || "",
+          bio: profile.bio || "",
+          institution: profile.institution || "",
+          avatarUrl: profile.avatarUrl || "",
+        });
+      }
+    } catch {
+      // El perfil no bloquea la edición del curso.
+    }
+  }
+
+  async function saveInstructorProfile() {
+    setProfileSaving(true);
+    setError("");
+    try {
+      const res = await cmsFetch("/api/profile", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          bio: instructorProfile.bio,
+          institution: instructorProfile.institution,
+          avatarUrl: instructorProfile.avatarUrl,
+        }),
+      });
+      if (!res.ok) {
+        const json = await res.json().catch(() => ({}));
+        throw new Error(json.error || t("No se pudo guardar el perfil.", "Could not save profile."));
+      }
+      await loadCourses(selectedCourseId || undefined);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : t("No se pudo guardar el perfil.", "Could not save profile."));
+    } finally {
+      setProfileSaving(false);
+    }
+  }
+
+  async function uploadInstructorAvatar(file: File | null) {
+    if (!file) return;
+    setUploadingAvatar(true);
+    setError("");
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await cmsFetch("/api/profile/avatar/upload", { method: "POST", body: formData });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(json.error || t("No se pudo subir la foto.", "Could not upload photo."));
+      setInstructorProfile((current) => ({ ...current, avatarUrl: json.data?.avatarUrl || current.avatarUrl }));
+    } catch (e) {
+      setError(e instanceof Error ? e.message : t("No se pudo subir la foto.", "Could not upload photo."));
+    } finally {
+      setUploadingAvatar(false);
+    }
+  }
+
+  async function loadCourseInstructors(courseId: string) {
+    try {
+      const res = await cmsFetch(`/api/courses/${courseId}/instructors`);
+      if (!res.ok) return;
+      const json = await res.json();
+      setCourseInstructors(json.data || []);
+    } catch {
+      setCourseInstructors([]);
+    }
+  }
+
+  async function loadCourseReviews(courseId: string) {
+    setLoadingReviews(true);
+    try {
+      const res = await cmsFetch(`/api/courses/${courseId}/reviews?moderation=1`);
+      if (!res.ok) throw new Error();
+      const json = await res.json();
+      setCourseReviews(json.data || []);
+    } catch {
+      setError(t("No se pudieron cargar las reseñas.", "Could not load reviews."));
+    } finally {
+      setLoadingReviews(false);
+    }
+  }
+
+  async function moderateReview(reviewId: string, status: CmsReview["status"]) {
+    if (!selectedCourseId) return;
+    setSaving(true);
+    setError("");
+    try {
+      const res = await cmsFetch(`/api/courses/${selectedCourseId}/reviews/${reviewId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status }),
+      });
+      if (!res.ok) throw new Error();
+      await loadCourseReviews(selectedCourseId);
+    } catch {
+      setError(t("No se pudo actualizar la reseña.", "Could not update review."));
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function loadInstructorCandidates() {
+    try {
+      const res = await cmsFetch("/api/cms/users?role=INSTRUCTOR&pageSize=100");
+      if (!res.ok) return;
+      const json = await res.json();
+      setInstructorCandidates(json.data || []);
+    } catch {
+      setInstructorCandidates([]);
+    }
+  }
+
+  async function assignInstructor() {
+    if (!selectedCourseId || !selectedInstructorId) return;
+    setSaving(true);
+    setError("");
+    try {
+      const res = await cmsFetch(`/api/courses/${selectedCourseId}/instructors`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: selectedInstructorId, role: selectedInstructorRole }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(json.error || t("No se pudo asignar el instructor.", "Could not assign instructor."));
+      setSelectedInstructorId("");
+      await loadCourseInstructors(selectedCourseId);
+      await loadCourses(selectedCourseId);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : t("No se pudo asignar el instructor.", "Could not assign instructor."));
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function removeInstructor(userId: string) {
+    if (!selectedCourseId) return;
+    setSaving(true);
+    setError("");
+    try {
+      const res = await cmsFetch(`/api/courses/${selectedCourseId}/instructors?userId=${encodeURIComponent(userId)}`, { method: "DELETE" });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(json.error || t("No se pudo retirar el instructor.", "Could not remove instructor."));
+      await loadCourseInstructors(selectedCourseId);
+      await loadCourses(selectedCourseId);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : t("No se pudo retirar el instructor.", "Could not remove instructor."));
+    } finally {
+      setSaving(false);
+    }
+  }
+
   const selectedCourse = courses.find((course) => course.id === selectedCourseId);
   const selectedEvaluation = selectedCourse?.evaluations?.[0];
   const selectedSessionCount =
@@ -410,6 +627,7 @@ export default function CmsPage() {
     { id: "sessions", label: t("Sesiones", "Sessions"), icon: Video, disabled: !selectedCourse },
     { id: "questionBank", label: t("Banco", "Bank"), icon: BookOpen, disabled: !selectedCourse },
     { id: "evaluation", label: t("Evaluación", "Evaluation"), icon: Award, disabled: !selectedCourse },
+    { id: "reviews", label: t("Reseñas", "Reviews"), icon: Award, disabled: !selectedCourse },
   ];
 
   function resetCourseForm() {
@@ -418,6 +636,7 @@ export default function CmsPage() {
     setEditionEnrollments([]);
     setAnalytics(null);
     setQuestionBank([]);
+    setCourseInstructors([]);
     setActiveSection("course");
     setCourseForm({
       id: "",
@@ -428,6 +647,10 @@ export default function CmsPage() {
       targetAudience: { es: "", en: "" },
       requirements: { es: "", en: "" },
       competencies: { es: "", en: "" },
+      coverImageUrl: "",
+      scienceBranch: "",
+      topics: "",
+      keywords: "",
       estimatedHours: "",
       weeklyHours: "",
       level: "BEGINNER",
@@ -469,7 +692,11 @@ export default function CmsPage() {
     setError("");
     try {
       const res = await fetch(`/api/courses/${selectedCourse.id}/editions/${editionId}/enrollments`);
-      if (!res.ok) throw new Error();
+      if (!res.ok) {
+        const json = await res.json().catch(() => ({}));
+        const details = Array.isArray(json.missing) ? ` ${json.missing.join("; ")}` : "";
+        throw new Error(json.error ? `${json.error}.${details}` : t("No se pudo guardar el curso.", "Could not save course."));
+      }
       const json = await res.json();
       setEditionEnrollments(json.data || []);
     } catch {
@@ -638,6 +865,9 @@ export default function CmsPage() {
 
   useEffect(() => {
     loadCourses();
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    loadInstructorProfile();
+    loadInstructorCandidates();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -648,6 +878,8 @@ export default function CmsPage() {
     setEditionEnrollments([]);
     setAnalytics(null);
     setQuestionBank(Array.isArray(course.questionBank) ? course.questionBank : []);
+    void loadCourseInstructors(course.id);
+    void loadCourseReviews(course.id);
     setActiveSection("course");
     setCourseForm({
       id: course.id,
@@ -658,6 +890,10 @@ export default function CmsPage() {
       targetAudience: listToText(course.targetAudience),
       requirements: listToText(course.requirements),
       competencies: listToText(course.competencies),
+      coverImageUrl: course.coverImageUrl || "",
+      scienceBranch: course.scienceBranch || "",
+      topics: (course.topics || []).join(", "),
+      keywords: (course.keywords || []).join(", "),
       estimatedHours: course.estimatedHours ? String(course.estimatedHours) : "",
       weeklyHours: course.weeklyHours ? String(course.weeklyHours) : "",
       level: course.level || "BEGINNER",
@@ -707,6 +943,10 @@ export default function CmsPage() {
           targetAudience: textToList(courseForm.targetAudience),
           requirements: textToList(courseForm.requirements),
           competencies: textToList(courseForm.competencies),
+          coverImageUrl: courseForm.coverImageUrl,
+          scienceBranch: courseForm.scienceBranch,
+          topics: commaTextToList(courseForm.topics),
+          keywords: commaTextToList(courseForm.keywords),
           estimatedHours: courseForm.estimatedHours ? Number(courseForm.estimatedHours) : null,
           weeklyHours: courseForm.weeklyHours ? Number(courseForm.weeklyHours) : null,
           level: courseForm.level,
@@ -725,10 +965,74 @@ export default function CmsPage() {
       await loadCourses(json.data.id);
       setSelectedCourseId(json.data.id);
       setCourseForm((prev) => ({ ...prev, id: json.data.id, status: json.data.status || "DRAFT" }));
-    } catch {
-      setError(t("No se pudo guardar el curso.", "Could not save course."));
+    } catch (e) {
+      setError(e instanceof Error ? e.message : t("No se pudo guardar el curso.", "Could not save course."));
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function exportCourse() {
+    if (!selectedCourseId) return;
+    setError("");
+    try {
+      const res = await cmsFetch(`/api/courses/${selectedCourseId}/export`);
+      if (!res.ok) throw new Error(t("No se pudo exportar el curso.", "Could not export course."));
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `${selectedCourse?.slug || "curso"}-mooc.json`;
+      link.click();
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : t("No se pudo exportar el curso.", "Could not export course."));
+    }
+  }
+
+  async function importCourse(file: File | null) {
+    if (!file) return;
+    setSaving(true);
+    setError("");
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await cmsFetch("/api/courses/import", { method: "POST", body: formData });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(json.error || t("No se pudo importar el curso.", "Could not import course."));
+      await loadCourses(json.data?.id);
+      const refreshed = await fetch("/api/cms/courses");
+      if (refreshed.ok) {
+        const coursesData = await refreshed.json();
+        const importedCourse = (coursesData.data || []).find((course: CmsCourse) => course.id === json.data?.id);
+        if (importedCourse) editCourse(importedCourse);
+      }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : t("No se pudo importar el curso.", "Could not import course."));
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function uploadCover(file: File | null) {
+    if (!file || !courseForm.id) return;
+    setUploadingCover(true);
+    setError("");
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await fetch(`/api/courses/${courseForm.id}/cover/upload`, {
+        method: "POST",
+        body: formData,
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || t("No se pudo subir la portada.", "Could not upload cover."));
+      setCourseForm((prev) => ({ ...prev, coverImageUrl: json.data.coverImageUrl || "" }));
+      await loadCourses(courseForm.id);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t("No se pudo subir la portada.", "Could not upload cover."));
+    } finally {
+      setUploadingCover(false);
     }
   }
 
@@ -758,6 +1062,10 @@ export default function CmsPage() {
           targetAudience: textToList(courseForm.targetAudience),
           requirements: textToList(courseForm.requirements),
           competencies: textToList(courseForm.competencies),
+          coverImageUrl: courseForm.coverImageUrl,
+          scienceBranch: courseForm.scienceBranch,
+          topics: commaTextToList(courseForm.topics),
+          keywords: commaTextToList(courseForm.keywords),
           estimatedHours: courseForm.estimatedHours ? Number(courseForm.estimatedHours) : null,
           weeklyHours: courseForm.weeklyHours ? Number(courseForm.weeklyHours) : null,
           level: courseForm.level,
@@ -951,10 +1259,10 @@ export default function CmsPage() {
     setResourceForm({ title: "", url: "", type: "LINK", source: "EXTERNAL" });
   }
 
-  function removeResource(resourceId: string) {
+  function removeResource(resourceId: string | undefined, resourceIndex: number) {
     setSessionForm((prev) => ({
       ...prev,
-      resources: prev.resources.filter((resource) => resource.id !== resourceId),
+      resources: prev.resources.filter((resource, index) => resource.id ? resource.id !== resourceId : index !== resourceIndex),
     }));
   }
 
@@ -1263,11 +1571,34 @@ export default function CmsPage() {
                 );
               })}
               {selectedCourse && (
-                <Link href={`/${lang}/courses/${selectedCourse.slug}`} target="_blank" className="ml-auto inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm font-medium hover:bg-accent">
-                  <Eye className="h-4 w-4" />
-                  {t("Vista pública", "Public view")}
-                </Link>
+                <div className="ml-auto flex flex-wrap gap-2">
+                  <button onClick={() => void exportCourse()} disabled={saving} className="inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm font-medium hover:bg-accent disabled:opacity-50">
+                    <Download className="h-4 w-4" />
+                    {t("Exportar", "Export")}
+                  </button>
+                  <Link href={`/${lang}/courses/${selectedCourse.slug}`} target="_blank" className="inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm font-medium hover:bg-accent">
+                    <Eye className="h-4 w-4" />
+                    {t("Vista pública", "Public view")}
+                  </Link>
+                </div>
               )}
+            </div>
+            <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-[#52667a]">
+              <label className="inline-flex cursor-pointer items-center gap-2 rounded-md border px-3 py-2 font-medium hover:bg-accent">
+                <Upload className="h-4 w-4" />
+                {t("Importar curso JSON", "Import JSON course")}
+                <input
+                  type="file"
+                  accept="application/json,.json"
+                  className="sr-only"
+                  disabled={saving}
+                  onChange={(event) => {
+                    void importCourse(event.target.files?.[0] || null);
+                    event.currentTarget.value = "";
+                  }}
+                />
+              </label>
+              <span>{t("La importación crea un borrador y conserva videos y materiales como enlaces.", "Import creates a draft and keeps videos and materials as links.")}</span>
             </div>
           </div>
 
@@ -1299,9 +1630,102 @@ export default function CmsPage() {
               <input className="rounded-md border px-3 py-2 text-sm" placeholder="Title EN" value={courseForm.title.en} onChange={(e) => setCourseForm({ ...courseForm, title: { ...courseForm.title, en: e.target.value } })} />
               <textarea className="rounded-md border px-3 py-2 text-sm md:col-span-2" placeholder="Descripción ES" value={courseForm.description.es} onChange={(e) => setCourseForm({ ...courseForm, description: { ...courseForm.description, es: e.target.value } })} />
               <textarea className="rounded-md border px-3 py-2 text-sm md:col-span-2" placeholder="Description EN" value={courseForm.description.en} onChange={(e) => setCourseForm({ ...courseForm, description: { ...courseForm.description, en: e.target.value } })} />
+              <div className="md:col-span-2 grid gap-3 rounded-md border bg-[#f4f7fb] p-3 md:grid-cols-[minmax(0,1fr)_220px]">
+                <div className="space-y-3">
+                  <input className="w-full rounded-md border bg-white px-3 py-2 text-sm" placeholder={t("URL de imagen de portada", "Cover image URL")} value={courseForm.coverImageUrl} onChange={(e) => setCourseForm({ ...courseForm, coverImageUrl: e.target.value })} />
+                  <label className={`inline-flex cursor-pointer items-center gap-2 rounded-md border bg-white px-3 py-2 text-sm font-medium ${!courseForm.id || uploadingCover ? "pointer-events-none opacity-50" : "hover:bg-accent"}`}>
+                    {uploadingCover ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+                    {t("Subir portada", "Upload cover")}
+                    <input
+                      type="file"
+                      accept="image/png,image/jpeg,image/webp"
+                      className="sr-only"
+                      disabled={!courseForm.id || uploadingCover}
+                      onChange={(e) => {
+                        void uploadCover(e.target.files?.[0] || null);
+                        e.currentTarget.value = "";
+                      }}
+                    />
+                  </label>
+                  {!courseForm.id && (
+                    <p className="text-xs text-[#52667a]">
+                      {t("Guarda primero el curso para habilitar la subida de portada.", "Save the course first to enable cover upload.")}
+                    </p>
+                  )}
+                </div>
+                <div className="overflow-hidden rounded-md border bg-white">
+                  {courseForm.coverImageUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={courseForm.coverImageUrl} alt={t("Portada del curso", "Course cover")} className="h-32 w-full object-cover" />
+                  ) : (
+                    <div className="flex h-32 items-center justify-center text-xs text-[#7b8fa1]">
+                      {t("Sin portada", "No cover")}
+                    </div>
+                  )}
+                </div>
+              </div>
               <div className="md:col-span-2 mt-2 border-t pt-4">
                 <h3 className="text-sm font-semibold">{t("Ficha MOOC", "MOOC profile")}</h3>
               </div>
+              <input className="rounded-md border px-3 py-2 text-sm" placeholder={t("Rama de la ciencia", "Science branch")} value={courseForm.scienceBranch} onChange={(e) => setCourseForm({ ...courseForm, scienceBranch: e.target.value })} />
+              <input className="rounded-md border px-3 py-2 text-sm" placeholder={t("Temáticas, separadas por coma", "Topics, comma-separated")} value={courseForm.topics} onChange={(e) => setCourseForm({ ...courseForm, topics: e.target.value })} />
+              <input className="rounded-md border px-3 py-2 text-sm md:col-span-2" placeholder={t("Palabras clave, separadas por coma", "Keywords, comma-separated")} value={courseForm.keywords} onChange={(e) => setCourseForm({ ...courseForm, keywords: e.target.value })} />
+              <div className="md:col-span-2 mt-2 border-t pt-4">
+                <h3 className="text-sm font-semibold">{t("Conozca a su instructor", "Meet your instructor")}</h3>
+                <p className="mt-1 text-xs text-[#52667a]">
+                  {t("Este perfil se mostrará en los cursos publicados que usted imparte.", "This profile appears on published courses you teach.")}
+                </p>
+              </div>
+              <input className="rounded-md border bg-[#f4f7fb] px-3 py-2 text-sm text-[#52667a]" value={instructorProfile.name} readOnly aria-label={t("Nombre del instructor", "Instructor name")} />
+              <input className="rounded-md border bg-[#f4f7fb] px-3 py-2 text-sm text-[#52667a]" value={instructorProfile.email} readOnly aria-label={t("Correo del instructor", "Instructor email")} />
+              <input className="rounded-md border px-3 py-2 text-sm" placeholder={t("Institución", "Institution")} value={instructorProfile.institution} onChange={(e) => setInstructorProfile({ ...instructorProfile, institution: e.target.value })} />
+              <div className="flex flex-wrap items-center gap-2">
+                <label className={`inline-flex cursor-pointer items-center gap-2 rounded-md border bg-white px-3 py-2 text-sm font-medium ${uploadingAvatar ? "pointer-events-none opacity-50" : "hover:bg-accent"}`}>
+                  {uploadingAvatar ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+                  {t("Subir foto", "Upload photo")}
+                  <input type="file" accept="image/png,image/jpeg,image/webp" className="sr-only" disabled={uploadingAvatar} onChange={(e) => { void uploadInstructorAvatar(e.target.files?.[0] || null); e.currentTarget.value = ""; }} />
+                </label>
+                <input className="min-w-0 flex-1 rounded-md border px-3 py-2 text-sm" placeholder={t("o URL de la foto", "or photo URL")} value={instructorProfile.avatarUrl} onChange={(e) => setInstructorProfile({ ...instructorProfile, avatarUrl: e.target.value })} />
+              </div>
+              <textarea className="rounded-md border px-3 py-2 text-sm md:col-span-2" rows={3} placeholder={t("Resumen profesional del instructor", "Instructor professional bio")} value={instructorProfile.bio} onChange={(e) => setInstructorProfile({ ...instructorProfile, bio: e.target.value })} />
+              <div className="md:col-span-2">
+                <button onClick={saveInstructorProfile} disabled={profileSaving} className="inline-flex items-center gap-2 rounded-md border border-primary px-3 py-2 text-sm font-medium text-primary hover:bg-primary/5 disabled:opacity-50">
+                  {profileSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                  {t("Guardar perfil del instructor", "Save instructor profile")}
+                </button>
+              </div>
+              {courseForm.id && (
+                <div className="md:col-span-2 rounded-md border bg-[#f4f7fb] p-3">
+                  <h4 className="text-sm font-semibold">{t("Profesores del curso", "Course instructors")}</h4>
+                  <div className="mt-2 space-y-2">
+                    {courseInstructors.map((assignment) => (
+                      <div key={assignment.id} className="flex items-center justify-between gap-3 rounded-md border bg-white px-3 py-2 text-sm">
+                        <span><strong>{assignment.user.name}</strong> <span className="text-xs text-[#7b8fa1]">{assignment.role}</span></span>
+                        {assignment.role !== "LEAD" && (
+                          <button type="button" onClick={() => void removeInstructor(assignment.user.id)} className="text-xs font-medium text-red-700 hover:underline">
+                            {t("Retirar", "Remove")}
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                  <div className="mt-3 grid gap-2 sm:grid-cols-[1fr_auto_auto]">
+                    <select className="rounded-md border px-3 py-2 text-sm" value={selectedInstructorId} onChange={(e) => setSelectedInstructorId(e.target.value)}>
+                      <option value="">{t("Seleccionar instructor registrado", "Select registered instructor")}</option>
+                      {instructorCandidates.map((candidate) => (
+                        <option key={candidate.id} value={candidate.id}>{candidate.name} · {candidate.email}</option>
+                      ))}
+                    </select>
+                    <select className="rounded-md border px-3 py-2 text-sm" value={selectedInstructorRole} onChange={(e) => setSelectedInstructorRole(e.target.value)}>
+                      <option value="INSTRUCTOR">Instructor</option>
+                      <option value="EDITOR">Editor</option>
+                    </select>
+                    <button type="button" onClick={() => void assignInstructor()} disabled={!selectedInstructorId || saving} className="rounded-md border border-primary px-3 py-2 text-sm font-medium text-primary disabled:opacity-50">
+                      {t("Asignar", "Assign")}
+                    </button>
+                  </div>
+                </div>
+              )}
               <select className="rounded-md border px-3 py-2 text-sm" value={courseForm.level} onChange={(e) => setCourseForm({ ...courseForm, level: e.target.value })}>
                 <option value="BEGINNER">{t("Principiante", "Beginner")}</option>
                 <option value="INTERMEDIATE">{t("Intermedio", "Intermediate")}</option>
@@ -1380,6 +1804,26 @@ export default function CmsPage() {
                 ) : (
                   <div className="space-y-6">
                     {renderAnalyticsCards(analytics.overall)}
+
+                    <div className="rounded-md border p-4">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <div>
+                          <p className="text-sm font-medium">{t("Visitas del curso", "Course views")}</p>
+                          <p className="mt-1 text-xs text-[#7b8fa1]">{analytics.views.total} {t("visitas", "views")} · {analytics.views.unique} {t("visitantes únicos", "unique visitors")}</p>
+                        </div>
+                        <span className="text-xs text-[#7b8fa1]">{t("Últimos 30 días", "Last 30 days")}</span>
+                      </div>
+                      <div className="mt-5 flex h-32 items-end gap-1 border-b border-l border-[#d8e1ea] px-2 pb-0">
+                        {(() => {
+                          const maxViews = Math.max(...analytics.views.byDay.map((item) => item.views), 1);
+                          return analytics.views.byDay.map((item) => (
+                            <div key={item.day} className="group relative flex h-full flex-1 items-end" title={`${item.day}: ${item.views}`}>
+                              <div className="w-full rounded-t-sm bg-primary/70 transition-colors group-hover:bg-primary" style={{ height: `${Math.max(item.views > 0 ? (item.views / maxViews) * 100 : 0, item.views > 0 ? 4 : 0)}%` }} />
+                            </div>
+                          ));
+                        })()}
+                      </div>
+                    </div>
 
                     <div className="grid gap-3 md:grid-cols-2">
                       <div className="rounded-md border p-4">
@@ -1818,8 +2262,8 @@ export default function CmsPage() {
                     </div>
                     {sessionForm.resources.length > 0 && (
                       <div className="space-y-2">
-                        {sessionForm.resources.map((resource) => (
-                          <div key={resource.id} className="flex flex-col gap-2 rounded-md bg-[#f7f9fb] p-3 text-sm sm:flex-row sm:items-center sm:justify-between">
+                        {sessionForm.resources.map((resource, resourceIndex) => (
+                          <div key={`${resource.id || resource.url || resource.title || "resource"}-${resourceIndex}`} className="flex flex-col gap-2 rounded-md bg-[#f7f9fb] p-3 text-sm sm:flex-row sm:items-center sm:justify-between">
                             <div className="min-w-0">
                               <a href={resource.url} target="_blank" rel="noopener noreferrer" className="inline-flex max-w-full items-center gap-1 font-medium text-primary underline">
                                 <span className="truncate">{resource.title}</span>
@@ -1827,7 +2271,7 @@ export default function CmsPage() {
                               </a>
                               <p className="mt-1 text-xs text-[#7b8fa1]">{resource.type} · {resource.source}</p>
                             </div>
-                            <button type="button" onClick={() => removeResource(resource.id)} className="inline-flex items-center gap-1 rounded-md border px-3 py-1.5 text-xs text-red-600 hover:bg-red-50">
+                            <button type="button" onClick={() => removeResource(resource.id, resourceIndex)} className="inline-flex items-center gap-1 rounded-md border px-3 py-1.5 text-xs text-red-600 hover:bg-red-50">
                               <Trash2 className="h-3.5 w-3.5" />
                               {t("Quitar", "Remove")}
                             </button>
@@ -2170,6 +2614,49 @@ export default function CmsPage() {
                     {t("Guardar evaluación", "Save evaluation")}
                   </button>
                 </div>
+              </section>
+              )}
+
+              {activeSection === "reviews" && (
+              <section className="rounded-lg border bg-white p-5">
+                <div className="mb-4 flex items-center justify-between gap-3">
+                  <div>
+                    <h2 className="font-semibold">{t("Moderación de reseñas", "Review moderation")}</h2>
+                    <p className="mt-1 text-xs text-[#7b8fa1]">{t("Solo las reseñas aprobadas aparecen públicamente.", "Only approved reviews appear publicly.")}</p>
+                  </div>
+                  <button onClick={() => loadCourseReviews(selectedCourse.id)} disabled={loadingReviews} className="inline-flex items-center gap-2 rounded-md border px-3 py-1.5 text-xs hover:bg-accent disabled:opacity-50">
+                    {loadingReviews ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
+                    {t("Actualizar", "Refresh")}
+                  </button>
+                </div>
+                {courseReviews.length === 0 ? (
+                  <div className="rounded-md border border-dashed p-8 text-center text-sm text-[#7b8fa1]">{t("Aún no hay reseñas.", "There are no reviews yet.")}</div>
+                ) : (
+                  <div className="space-y-3">
+                    {courseReviews.map((review) => (
+                      <article key={review.id} className="rounded-md border p-4">
+                        <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                          <div>
+                            <p className="font-medium">{review.user.name}</p>
+                            <p className="text-xs text-[#7b8fa1]">{review.user.email} · {review.rating}/5 · {review.status}</p>
+                          </div>
+                          <div className="flex flex-wrap items-center justify-end gap-2">
+                            <span className={`rounded-full px-2 py-1 text-[11px] font-semibold ${review.status === "PUBLISHED" ? "bg-green-100 text-green-800" : review.status === "REJECTED" ? "bg-red-100 text-red-800" : "bg-amber-100 text-amber-800"}`}>
+                              {review.status === "PUBLISHED" ? t("Aprobada", "Approved") : review.status === "REJECTED" ? t("Rechazada", "Rejected") : t("Pendiente", "Pending")}
+                            </span>
+                            {review.status !== "PUBLISHED" && (
+                              <button onClick={() => void moderateReview(review.id, "PUBLISHED")} disabled={saving} className="rounded-md border border-green-700 px-2.5 py-1 text-xs font-medium text-green-700 hover:bg-green-50 disabled:opacity-50">{t("Aprobar", "Approve")}</button>
+                            )}
+                            {review.status !== "REJECTED" && (
+                              <button onClick={() => void moderateReview(review.id, "REJECTED")} disabled={saving} className="rounded-md border border-red-700 px-2.5 py-1 text-xs font-medium text-red-700 hover:bg-red-50 disabled:opacity-50">{t("Rechazar", "Reject")}</button>
+                            )}
+                          </div>
+                        </div>
+                        {review.testimonial && <p className="mt-3 text-sm leading-6 text-[#52667a]">“{review.testimonial}”</p>}
+                      </article>
+                    ))}
+                  </div>
+                )}
               </section>
               )}
             </>

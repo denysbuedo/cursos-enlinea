@@ -1,0 +1,48 @@
+{
+  "format": "cursos-enlinea-mooc-offline",
+  "formatVersion": 1,
+  "generatedAt": "2026-09-20T01:36:09.250Z",
+  "includedResources": [
+    {
+      "originalUrl": "/api/uploads/resources/8681a5ff-557b-46b4-b6da-1defeabd2030/1789867204725-manual-profesores-montar-curso.pdf",
+      "localPath": "resources/resource-3/manual-profesores-montar-curso.pdf",
+      "title": "manual-profesores-montar-curso.pdf"
+    },
+    {
+      "originalUrl": "/api/uploads/resources/8681a5ff-557b-46b4-b6da-1defeabd2030/1789866846569-manual-profesores-montar-curso.pdf",
+      "localPath": "resources/resource-6/manual-profesores-montar-curso.pdf",
+      "title": "manual-profesores-montar-curso.pdf"
+    }
+  ],
+  "externalResources": [
+    {
+      "url": "https://www.edx.org/",
+      "title": "Lista de comprobación del estudiante",
+      "reason": "Es una página web, no un archivo descargable"
+    },
+    {
+      "url": "https://exelearning.net/",
+      "title": "Definición y características de un MOOC",
+      "reason": "Es una página web, no un archivo descargable"
+    },
+    {
+      "url": "https://oercommons.org/",
+      "title": "Repositorio de objetos de aprendizaje",
+      "reason": "HTTP 403"
+    },
+    {
+      "url": "https://www.mes.gob.cu/",
+      "title": "Plantilla de diseño de curso",
+      "reason": "Es una página web, no un archivo descargable"
+    },
+    {
+      "url": "https://www.coursera.org/",
+      "title": "Banco de preguntas de ejemplo",
+      "reason": "Es una página web, no un archivo descargable"
+    }
+  ],
+  "limits": {
+    "maxResourceBytes": 26214400,
+    "maxPackageBytes": 104857600
+  }
+}

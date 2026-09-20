@@ -56,7 +56,8 @@ async function uploadToLocal(
   file: Buffer
 ): Promise<string> {
   const safeFilePath = normalizeObjectPath(filePath);
-  const root = path.join(process.cwd(), "uploads", bucket);
+  const uploadsRoot = process.env.UPLOADS_DIR || path.join(process.cwd(), "uploads");
+  const root = path.join(uploadsRoot, bucket);
   const fullPath = path.join(root, safeFilePath);
   const resolvedRoot = path.resolve(root);
   const resolvedFullPath = path.resolve(fullPath);
