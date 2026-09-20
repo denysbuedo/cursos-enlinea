@@ -471,7 +471,7 @@ test.describe("R1 critical flows", () => {
     expect(html).toBeTruthy();
     expect(html).toContain("/api/offline/sync");
 
-    const courseJson = JSON.parse(html!.match(/const COURSE=(.*?);const key/s)![1]) as {
+    const courseJson = JSON.parse(html!.match(/const COURSE=([\s\S]*?);const key/)![1]) as {
       syncToken: string;
       syncEndpoint: string;
     };
