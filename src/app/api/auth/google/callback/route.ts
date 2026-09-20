@@ -1,9 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
+import { fetch as undiciFetch, ProxyAgent } from "undici";
 import { createRefreshToken, signAccessToken } from "@/lib/auth";
 import { googleConfigured, googleRedirectUri, GOOGLE_PROVIDER } from "@/lib/google-oauth";
 import { prisma } from "@/lib/prisma";
 
 type GoogleProfile = { sub?: string; email?: string; email_verified?: boolean; name?: string; picture?: string };
+
+const proxyUrl = process.env.HTTPS_PROXY || process.env.HTTP_PROXY;
+const dispatcher = proxyUrl ? new ProxyAgent(proxyUrl) : undefined;
 
 function clearOAuthCookies(response: NextResponse) {
   for (const name of ["google_oauth_state", "google_oauth_verifier", "google_oauth_lang"]) {
@@ -27,16 +31,17 @@ export async function GET(request: NextRequest) {
   if (!code || !state || !storedState || state !== storedState || !verifier) return failure("No se pudo validar el acceso con Google");
 
   try {
-    const tokenResponse = await fetch("https://oauth2.googleapis.com/token", {
+    const tokenResponse = await undiciFetch("https://oauth2.googleapis.com/token", {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
       body: new URLSearchParams({ code, client_id: process.env.GOOGLE_CLIENT_ID!, client_secret: process.env.GOOGLE_CLIENT_SECRET!, redirect_uri: googleRedirectUri(), grant_type: "authorization_code", code_verifier: verifier }),
+      dispatcher,
     });
     if (!tokenResponse.ok) return failure("Google no pudo validar la autorización");
     const tokens = await tokenResponse.json() as { access_token?: string };
     if (!tokens.access_token) return failure("Google no devolvió un token válido");
 
-    const profileResponse = await fetch("https://openidconnect.googleapis.com/v1/userinfo", { headers: { Authorization: `Bearer ${tokens.access_token}` } });
+    const profileResponse = await undiciFetch("https://openidconnect.googleapis.com/v1/userinfo", { headers: { Authorization: `Bearer ${tokens.access_token}` }, dispatcher });
     if (!profileResponse.ok) return failure("No se pudo consultar el perfil de Google");
     const profile = await profileResponse.json() as GoogleProfile;
     if (!profile.sub || !profile.email || profile.email_verified !== true) return failure("Google no devolvió un correo verificado");
