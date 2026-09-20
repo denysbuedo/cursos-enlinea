@@ -22,7 +22,11 @@ export function Navbar({ lang, dict, session }: { lang: string; dict: Dict; sess
   const otherLang = lang === "es" ? "en" : "es";
   const otherLangPath = pathname.replace(/^\/(es|en)/, `/${otherLang}`);
 
-  const handleLogout = async () => { setLoggingOut(true); await fetch("/api/auth/logout", { method: "POST" }); router.push(`/${lang}`); router.refresh(); };
+  const handleLogout = async () => {
+    setLoggingOut(true);
+    try { await fetch("/api/auth/logout", { method: "POST" }); }
+    finally { router.push(`/${lang}`); router.refresh(); }
+  };
 
   const linkClass = (path: string) =>
     `text-sm font-medium transition-colors px-3 py-1.5 rounded-lg ${pathname.includes(path) ? "bg-white text-primary" : "text-white/90 hover:text-white hover:bg-white/10"}`;
@@ -49,7 +53,7 @@ export function Navbar({ lang, dict, session }: { lang: string; dict: Dict; sess
         <div className="flex items-center gap-2">
           <Link href={otherLangPath} className="text-xs px-2.5 py-1.5 rounded-lg bg-white/10 text-white/90 hover:bg-white hover:text-primary transition-colors">{lang === "es" ? "EN" : "ES"}</Link>
           {session ? (
-            <button onClick={handleLogout} disabled={loggingOut} className="inline-flex items-center gap-1.5 text-sm text-white/80 hover:text-white transition-colors disabled:opacity-50 ml-1">
+            <button onClick={handleLogout} disabled={loggingOut} title={dict.nav.logout} aria-label={dict.nav.logout} className="inline-flex items-center gap-1.5 text-sm text-white/80 hover:text-white transition-colors disabled:opacity-50 ml-1">
               <LogOut className="w-4 h-4" /><span className="hidden sm:inline">{loggingOut ? "..." : dict.nav.logout}</span>
             </button>
           ) : (
@@ -66,6 +70,7 @@ export function Navbar({ lang, dict, session }: { lang: string; dict: Dict; sess
           <Link href={`/${lang}/dashboard`} className="block px-3 py-2.5 rounded-lg text-white/90 hover:bg-white/10 hover:text-white" onClick={() => setMobileOpen(false)}>{dict.nav.dashboard}</Link>
           {(session?.role === "ADMIN" || session?.role === "INSTRUCTOR") && <Link href={`/${lang}/dashboard/cms`} className="block px-3 py-2.5 rounded-lg text-white/90 hover:bg-white/10 hover:text-white" onClick={() => setMobileOpen(false)}>CMS</Link>}
           {session?.role === "ADMIN" && <Link href={`/${lang}/dashboard/admin`} className="block px-3 py-2.5 rounded-lg text-white hover:bg-white/10" onClick={() => setMobileOpen(false)}>{dict.nav.admin}</Link>}
+          {session && <button onClick={handleLogout} disabled={loggingOut} className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-white/90 hover:bg-white/10 hover:text-white disabled:opacity-50"><LogOut className="h-4 w-4" />{loggingOut ? "..." : dict.nav.logout}</button>}
         </div>
       )}
     </header>
