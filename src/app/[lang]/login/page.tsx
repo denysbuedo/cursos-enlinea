@@ -1,19 +1,20 @@
 "use client";
 
 import { useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { getDictionary, getLangFromParams } from "@/lib/i18n";
 
 export default function LoginPage() {
   const params = useParams<{ lang: string }>();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const lang = getLangFromParams(params);
   const dict = getDictionary(lang);
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+  const [error, setError] = useState(searchParams.get("error") || "");
   const [loading, setLoading] = useState(false);
 
   const t = (es: string, en: string) => (lang === "en" ? en : es);
@@ -119,6 +120,19 @@ export default function LoginPage() {
           )}
         </button>
       </form>
+
+      <div className="my-5 flex items-center gap-3 text-xs text-muted-foreground">
+        <span className="h-px flex-1 bg-border" />
+        <span>{lang === "en" ? "or" : "o"}</span>
+        <span className="h-px flex-1 bg-border" />
+      </div>
+      <a
+        href={`/api/auth/google/start?lang=${lang}`}
+        className="flex w-full items-center justify-center gap-3 rounded-lg border border-border bg-white px-6 py-3 font-semibold transition-colors hover:bg-muted"
+      >
+        <span className="text-base font-bold" aria-hidden="true">G</span>
+        {lang === "en" ? "Continue with Google" : "Continuar con Google"}
+      </a>
 
       <div className="mt-4 text-center">
         <Link href={`/${lang}/forgot-password`} className="text-sm text-primary hover:underline">

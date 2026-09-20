@@ -12,7 +12,7 @@ export async function POST(request: NextRequest) {
   if (passwordError) return NextResponse.json({ error: passwordError }, { status: 400 });
 
   const user = await prisma.user.findUnique({ where: { id: session.userId } });
-  if (!user || !(await verifyPassword(String(currentPassword || ""), user.passwordHash))) {
+  if (!user || !user.passwordHash || !(await verifyPassword(String(currentPassword || ""), user.passwordHash))) {
     return NextResponse.json({ error: "La contraseña actual no es correcta" }, { status: 400 });
   }
   if (currentPassword === password) return NextResponse.json({ error: "La nueva contraseña debe ser diferente" }, { status: 400 });

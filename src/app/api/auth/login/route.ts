@@ -63,7 +63,7 @@ export async function POST(request: NextRequest) {
     return fail("Credenciales inválidas");
   }
 
-  const valid = await verifyPassword(password, user.passwordHash);
+  const valid = user.passwordHash ? await verifyPassword(password, user.passwordHash) : false;
   if (!valid) {
     return fail("Credenciales inválidas");
   }
