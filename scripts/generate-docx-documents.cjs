@@ -241,9 +241,9 @@ function writeDocx(filename, title, blocks) {
 
 function manualBlocks() {
   const b = [];
-  b.push(paragraph("Manual de usuario para profesores: cómo montar un curso", "Title"));
-  b.push(paragraph("Guía práctica para diseñar, organizar y publicar cursos en la plataforma.", "Subtitle"));
-  b.push(note("Este documento está pensado para acompañar el trabajo de diseño y carga de cursos. Puede editarse libremente antes de circularlo al equipo docente."));
+  b.push(paragraph("Manual de usuario para profesores y estudiantes", "Title"));
+  b.push(paragraph("Cómo preparar, publicar y completar cursos en la plataforma.", "Subtitle"));
+  b.push(note("Este manual presenta los procedimientos principales para el trabajo docente y la experiencia del estudiante. Puede editarse libremente antes de circularlo al equipo."));
   b.push(pageBreak());
   b.push(paragraph("1. Objetivo del manual", "Heading1"));
   b.push(paragraph("Este manual explica, paso a paso, cómo preparar y registrar un curso tipo MOOC en la plataforma. El objetivo es que cada profesor pueda organizar la información académica, cargar los contenidos, configurar las evaluaciones y revisar el curso antes de publicarlo."));
@@ -357,6 +357,91 @@ function manualBlocks() {
     ["Autoevaluación", "Actividad que ayuda al estudiante a comprobar su aprendizaje."],
     ["Retroalimentación", "Explicación que recibe el estudiante después de responder una pregunta o completar una actividad."]
   ]));
+  b.push(paragraph("20. Recorrido del estudiante", "Heading1"));
+  b.push(paragraph("El estudiante utiliza la plataforma para encontrar cursos, matricularse, estudiar las sesiones, consultar materiales, completar actividades, realizar evaluaciones y obtener un certificado cuando cumple los requisitos."));
+  b.push(paragraph("20.1 Crear una cuenta e iniciar sesión", "Heading2"));
+  [
+    "Abra la dirección de la plataforma en el navegador.",
+    "Seleccione la opción para crear una cuenta si todavía no tiene usuario.",
+    "Complete nombre, correo electrónico y contraseña.",
+    "Inicie sesión con sus credenciales.",
+    "Si no recuerda la contraseña, utilice el procedimiento de recuperación disponible o contacte con el administrador."
+  ].forEach((item) => b.push(bullet(item)));
+  b.push(paragraph("20.2 Buscar un curso", "Heading2"));
+  [
+    "Abra Catálogo de cursos desde la página principal.",
+    "Revise el título, la rama de la ciencia, la temática, la duración, el nivel, el certificado y la modalidad del curso.",
+    "Abra la ficha del curso para consultar sus objetivos, requisitos, instructores, módulos y edición disponible.",
+    "Compruebe la fecha de inicio. Cuando el curso no tenga fecha fija, se mostrará como de inicio abierto."
+  ].forEach((item) => b.push(bullet(item)));
+  b.push(paragraph("21. Matricularse y comenzar un curso", "Heading1"));
+  [
+    "Abra la ficha del curso que desea realizar.",
+    "Seleccione la edición disponible. Si existen varias ediciones, elija la que corresponda a sus fechas y condiciones.",
+    "Pulse Matricularme o la opción equivalente.",
+    "Confirme la matrícula y abra Mi panel para encontrar el curso.",
+    "Seleccione Continuar curso para comenzar por la primera sesión."
+  ].forEach((item) => b.push(bullet(item)));
+  b.push(note("La edición que aparece en la ficha pública representa la opción principal del curso. La selección completa de ediciones se realiza durante la matrícula cuando hay más de una convocatoria disponible."));
+  b.push(paragraph("22. Estudiar una sesión y consultar materiales", "Heading1"));
+  [
+    "Abra el curso desde Mi panel.",
+    "Seleccione un módulo y, dentro de él, una sesión publicada.",
+    "Consulte el video principal. Puede estar alojado en la plataforma o en un servicio externo como YouTube.",
+    "Revise la bibliografía y los materiales complementarios en su sección propia. Allí pueden aparecer PDF, presentaciones, enlaces o recursos de repositorios de objetos de aprendizaje.",
+    "Realice la práctica indicada y pulse Completar sesión cuando haya terminado.",
+    "Utilice la barra de progreso para saber qué parte del curso ha completado y qué actividades faltan."
+  ].forEach((item) => b.push(bullet(item)));
+  b.push(paragraph("23. Realizar la evaluación", "Heading1"));
+  [
+    "Abra la evaluación cuando haya revisado las sesiones requeridas.",
+    "Lea cada pregunta y seleccione o escriba la respuesta solicitada.",
+    "Envíe la evaluación cuando haya terminado.",
+    "Revise la puntuación y la retroalimentación inmediata, si está habilitada.",
+    "Si el curso permite nuevos intentos, revise la retroalimentación antes de volver a responder."
+  ].forEach((item) => b.push(bullet(item)));
+  b.push(paragraph("24. Completar el curso y descargar el certificado", "Heading1"));
+  b.push(paragraph("Para emitir el certificado, el curso debe tener habilitada la certificación y el estudiante debe completar el progreso requerido y aprobar la evaluación configurada. Cuando se cumplan las condiciones, el certificado estará disponible en el panel del estudiante."));
+  [
+    "Abra la sección Certificados o el curso completado desde Mi panel.",
+    "Descargue el certificado en PDF cuando esté disponible.",
+    "Conserve el identificador o código de verificación para demostrar su autenticidad.",
+    "Compruebe el certificado desde la página pública de verificación si necesita compartirlo."
+  ].forEach((item) => b.push(bullet(item)));
+  b.push(paragraph("25. Valorar un curso y dejar una reseña", "Heading1"));
+  b.push(paragraph("Después de participar en un curso, el estudiante puede enviar una valoración de una a cinco estrellas y escribir una reseña cuando la opción esté habilitada. La reseña puede quedar pendiente de moderación antes de hacerse pública."));
+  b.push(paragraph("Escriba comentarios concretos y respetuosos sobre la claridad de los contenidos, la organización, los materiales y la utilidad del curso. No incluya contraseñas ni datos personales de otras personas."));
+  b.push(paragraph("26. Descargar y usar un curso sin conexión", "Heading1"));
+  b.push(paragraph("Cuando el curso tenga disponible una exportación offline, el estudiante puede descargar un archivo ZIP con la estructura del curso, sus materiales descargables y los enlaces a videos externos. Los videos alojados en Internet requieren conexión para reproducirse."));
+  [
+    "Descargue el ZIP desde la opción Exportar o Descargar curso.",
+    "Extraiga el contenido en una carpeta local y abra el archivo de inicio indicado.",
+    "Estudie las sesiones y marque el progreso mientras trabaja sin conexión.",
+    "Cuando vuelva a tener Internet, abra el paquete o la plataforma según las instrucciones y permita la sincronización.",
+    "Revise que las sesiones completadas y los resultados de evaluación hayan quedado registrados en el servidor."
+  ].forEach((item) => b.push(bullet(item)));
+  b.push(note("La sincronización necesita que el estudiante vuelva a autenticarse. Si el mismo contenido fue modificado en el navegador y en el servidor, prevalece el registro más reciente según las reglas de sincronización de la plataforma."));
+  b.push(paragraph("27. Ayuda rápida para estudiantes", "Heading1"));
+  b.push(table([
+    ["Problema", "Qué revisar"],
+    ["No encuentro el curso", "Compruebe que inició sesión, revise el catálogo y confirme que el curso está publicado."],
+    ["No puedo matricularme", "Revise la edición disponible, el cupo y el estado de su cuenta."],
+    ["El video no se reproduce", "Compruebe su conexión y abra el enlace externo en otra pestaña si corresponde."],
+    ["El progreso no cambia", "Complete la sesión y pulse el control de finalización. Actualice la página si la conexión fue inestable."],
+    ["No aparece el certificado", "Confirme que completó todas las sesiones y aprobó la evaluación."],
+    ["El material no abre", "Compruebe el formato, vuelva a descargarlo o comunique el enlace al equipo de soporte."]
+  ]));
+  b.push(paragraph("28. Checklist del estudiante", "Heading1"));
+  [
+    "Tengo una cuenta y puedo iniciar sesión.",
+    "Revisé los objetivos, requisitos, duración y fecha de inicio del curso.",
+    "Me matriculé en la edición correcta.",
+    "Consulté los videos, materiales y prácticas de cada módulo.",
+    "Completé las sesiones y verifiqué mi progreso.",
+    "Realicé la evaluación y revisé la retroalimentación.",
+    "Descargué el certificado, si cumplí los requisitos.",
+    "Dejé una valoración o reseña cuando correspondía."
+  ].forEach((item) => b.push(bullet(item)));
   return b;
 }
 
@@ -444,10 +529,10 @@ function analysisBlocks() {
 
 fs.mkdirSync(docsDir, { recursive: true });
 fs.mkdirSync(tmpRoot, { recursive: true });
-writeDocx("manual-profesores-montar-curso.docx", "Manual de usuario para profesores: cómo montar un curso", manualBlocks());
+writeDocx("manual-usuario-profesores-estudiantes.docx", "Manual de usuario para profesores y estudiantes", manualBlocks());
 writeDocx("analisis-mejoras-plataforma-mooc.docx", "Análisis de mejoras para la plataforma MOOC", analysisBlocks());
 fs.rmSync(tmpRoot, { recursive: true, force: true });
 
 console.log("Documentos generados:");
-console.log(" - docs/manual-profesores-montar-curso.docx");
+console.log(" - docs/manual-usuario-profesores-estudiantes.docx");
 console.log(" - docs/analisis-mejoras-plataforma-mooc.docx");
