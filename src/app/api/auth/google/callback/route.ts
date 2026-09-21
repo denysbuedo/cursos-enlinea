@@ -65,8 +65,9 @@ export async function GET(request: NextRequest) {
     const response = NextResponse.redirect(new URL(`/${lang}/dashboard`, publicOrigin));
     response.headers.set("Cache-Control", "no-store");
     const secure = process.env.NODE_ENV === "production";
-    response.cookies.set("access_token", accessToken, { httpOnly: true, secure, sameSite: "strict", path: "/", maxAge: 15 * 60 });
-    response.cookies.set("refresh_token", refreshToken, { httpOnly: true, secure, sameSite: "strict", path: "/", maxAge: 7 * 24 * 60 * 60 });
+    // Lax permite que el navegador conserve la sesión al volver desde Google.
+    response.cookies.set("access_token", accessToken, { httpOnly: true, secure, sameSite: "lax", path: "/", maxAge: 15 * 60 });
+    response.cookies.set("refresh_token", refreshToken, { httpOnly: true, secure, sameSite: "lax", path: "/", maxAge: 7 * 24 * 60 * 60 });
     clearOAuthCookies(response);
     return response;
   } catch (error) {
