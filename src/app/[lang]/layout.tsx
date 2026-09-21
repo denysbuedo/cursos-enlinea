@@ -4,6 +4,9 @@ import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { APP_DESCRIPTION, APP_NAME, APP_URL } from "@/lib/app-config";
 
+// The navbar depends on the current authentication cookies.
+export const dynamic = "force-dynamic";
+
 export async function generateMetadata({
   params,
 }: {
