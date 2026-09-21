@@ -527,10 +527,174 @@ function analysisBlocks() {
   return b;
 }
 
+function stakeholderBlocks() {
+  const b = [];
+  b.push(paragraph("Plataforma institucional de aprendizaje en línea", "Title"));
+  b.push(paragraph("Documento de presentación para profesores y expertos", "Subtitle"));
+  b.push(note("Documento de carácter funcional y académico. Su propósito es explicar qué ofrece la plataforma y cómo puede utilizarse para diseñar experiencias de aprendizaje tipo MOOC."));
+  b.push(pageBreak());
+
+  b.push(paragraph("1. Presentación", "Heading1"));
+  b.push(paragraph("La plataforma es un entorno institucional para crear, publicar y desarrollar cursos en línea dirigidos a un número amplio de estudiantes. Está concebida para apoyar experiencias de aprendizaje autónomas, organizadas y accesibles desde distintos dispositivos."));
+  b.push(paragraph("Su objetivo no es trasladar literalmente el aula presencial a Internet. La plataforma ayuda a que el estudiante pueda avanzar con claridad, consultar contenidos, practicar, comprobar sus resultados y conocer en todo momento qué ha completado y qué le falta."));
+
+  b.push(paragraph("2. Qué entendemos por un curso MOOC", "Heading1"));
+  b.push(paragraph("Un MOOC es un curso masivo, abierto y en línea. Para que sea realmente un MOOC no basta con publicar videos: debe ofrecer objetivos claros, contenidos organizados, actividades, evaluación, seguimiento y una experiencia que pueda sostenerse con muchos participantes."));
+  [
+    "Masivo: puede atender a cientos o miles de participantes.",
+    "Abierto: facilita el acceso y reduce barreras de entrada.",
+    "En línea: se desarrolla a distancia y con flexibilidad de horario.",
+    "Curso: tiene una estructura, objetivos, actividades y criterios de finalización."
+  ].forEach((item) => b.push(bullet(item)));
+  b.push(note("La plataforma favorece el aprendizaje autónomo y la evaluación automatizada, sin impedir que cada equipo docente incorpore acompañamiento, orientación o actividades complementarias."));
+
+  b.push(paragraph("3. Qué puede hacer la plataforma", "Heading1"));
+  [
+    "Presentar un catálogo de cursos con información académica clara.",
+    "Organizar cada curso en módulos y sesiones breves.",
+    "Incorporar videos, lecturas, presentaciones, enlaces y recursos de repositorios.",
+    "Proponer actividades de práctica y reflexión.",
+    "Aplicar evaluaciones automáticas con retroalimentación.",
+    "Mostrar el avance individual del estudiante.",
+    "Emitir certificados cuando se cumplen los requisitos del curso.",
+    "Permitir el estudio offline en los cursos preparados para ese propósito.",
+    "Recoger valoraciones y reseñas para mejorar la experiencia formativa."
+  ].forEach((item) => b.push(bullet(item)));
+
+  b.push(paragraph("4. Cómo se organiza un curso", "Heading1"));
+  b.push(table([
+    ["Elemento", "Función"],
+    ["Ficha del curso", "Explica qué aprenderá el estudiante, a quién va dirigido, requisitos, duración, competencias y certificado."],
+    ["Edición", "Representa una convocatoria o versión del curso, con sus fechas y condiciones de matrícula."],
+    ["Módulo", "Agrupa contenidos relacionados y marca una etapa del recorrido formativo."],
+    ["Sesión", "Es una lección concreta con video, explicación, práctica y materiales complementarios."],
+    ["Evaluación", "Comprueba el aprendizaje mediante preguntas y retroalimentación."],
+    ["Certificado", "Reconoce el cumplimiento de los criterios definidos para el curso."]
+  ]));
+
+  b.push(paragraph("5. Información que debe conocer el estudiante", "Heading1"));
+  b.push(paragraph("Antes de matricularse, el estudiante debe poder responder con facilidad a estas preguntas:"));
+  [
+    "¿Qué aprenderé al terminar el curso?",
+    "¿A quién está dirigido?",
+    "¿Necesito conocimientos o recursos previos?",
+    "¿Cuánto dura y cuánto tiempo semanal debo dedicar?",
+    "¿Cuándo comienza la edición?",
+    "¿Quiénes son los instructores?",
+    "¿Existe evaluación y certificado?",
+    "¿Qué modalidad de acceso y matrícula tiene?"
+  ].forEach((item) => b.push(bullet(item)));
+
+  b.push(paragraph("6. Trabajo del profesor", "Heading1"));
+  b.push(paragraph("En un MOOC, el profesor actúa principalmente como diseñador de experiencias de aprendizaje. Su tarea consiste en seleccionar y organizar el conocimiento, explicar con claridad, proponer actividades y construir evaluaciones que permitan al estudiante avanzar con autonomía."));
+  [
+    "Definir objetivos observables y alcanzables.",
+    "Organizar los contenidos de lo simple a lo complejo.",
+    "Dividir las explicaciones extensas en sesiones breves.",
+    "Relacionar cada sesión con una práctica o pregunta de reflexión.",
+    "Preparar materiales complementarios pertinentes y accesibles.",
+    "Diseñar preguntas que comprueben comprensión y aplicación.",
+    "Revisar el curso desde la perspectiva de un estudiante antes de publicarlo."
+  ].forEach((item) => b.push(bullet(item)));
+
+  b.push(paragraph("7. Creación de un curso", "Heading1"));
+  b.push(paragraph("El profesor comienza por la ficha académica y trabaja el curso como borrador. Luego organiza los módulos, registra las sesiones y añade los recursos de cada lección. El curso se publica solo después de revisar el contenido completo y probar el recorrido como estudiante."));
+  [
+    "Completar el título, descripción, objetivos, destinatarios y requisitos.",
+    "Definir duración, dedicación semanal, competencias y disponibilidad de certificado.",
+    "Crear una edición con sus fechas o establecer un inicio abierto.",
+    "Crear los módulos en el orden pedagógico adecuado.",
+    "Crear las sesiones y asociar el video principal.",
+    "Agregar prácticas, bibliografía y materiales complementarios.",
+    "Preparar el banco de preguntas y configurar la evaluación.",
+    "Revisar la presentación pública, publicar y realizar una prueba de matrícula."
+  ].forEach((item) => b.push(bullet(item)));
+
+  b.push(paragraph("8. Videos, bibliografía y materiales", "Heading1"));
+  b.push(paragraph("El video es un recurso importante, pero no debe ser el único componente de la sesión. La plataforma permite utilizar un video externo, como YouTube o Vimeo, o subir un archivo cuando sea necesario."));
+  b.push(paragraph("La bibliografía y los materiales complementarios se presentan como una sección independiente. Allí pueden incorporarse artículos, capítulos, PDF, presentaciones, enlaces, guías de trabajo y objetos de aprendizaje disponibles en repositorios externos."));
+  b.push(note("Una buena sesión responde a tres preguntas: ¿qué debe comprender el estudiante?, ¿qué debe hacer para practicarlo? y ¿qué material puede consultar para profundizar?"));
+
+  b.push(paragraph("9. Evaluación y retroalimentación", "Heading1"));
+  b.push(paragraph("La plataforma permite construir evaluaciones automáticas a partir de un banco de preguntas. Las preguntas pueden organizarse por tema, módulo, etiqueta y dificultad. El profesor puede utilizar una selección fija o establecer reglas para seleccionar preguntas de forma aleatoria."));
+  [
+    "Redactar preguntas relacionadas directamente con los objetivos.",
+    "Evitar preguntas ambiguas o que dependan de memorizar detalles irrelevantes.",
+    "Indicar la respuesta correcta y explicar el motivo.",
+    "Utilizar la retroalimentación para orientar el aprendizaje, no solo para señalar errores.",
+    "Definir una puntuación mínima y, cuando proceda, un número de intentos."
+  ].forEach((item) => b.push(bullet(item)));
+
+  b.push(paragraph("10. Experiencia del estudiante", "Heading1"));
+  [
+    "Consulta el catálogo y compara los cursos disponibles.",
+    "Lee la ficha y selecciona la edición correspondiente.",
+    "Se matricula y encuentra el curso en su panel personal.",
+    "Avanza por módulos y sesiones según su ritmo.",
+    "Consulta videos, materiales y actividades de práctica.",
+    "Marca las sesiones completadas y observa su progreso.",
+    "Realiza la evaluación y recibe retroalimentación.",
+    "Obtiene y descarga el certificado cuando cumple los criterios."
+  ].forEach((item) => b.push(bullet(item)));
+
+  b.push(paragraph("11. Certificación y reconocimiento", "Heading1"));
+  b.push(paragraph("La certificación se vincula al cumplimiento de los criterios académicos del curso. De forma general, el estudiante debe completar las sesiones requeridas y aprobar la evaluación. El certificado puede descargarse y cuenta con un identificador que permite comprobar su autenticidad."));
+  b.push(paragraph("La certificación no sustituye la evaluación académica del curso. Es el resultado visible de un recorrido formativo que debe estar respaldado por objetivos, contenidos, actividades y criterios de aprobación coherentes."));
+
+  b.push(paragraph("12. Estudio sin conexión", "Heading1"));
+  b.push(paragraph("Los cursos preparados para trabajo offline pueden descargarse como un paquete. El estudiante puede consultar la estructura, los textos y los materiales incluidos, marcar sesiones y registrar una evaluación en su dispositivo. Al recuperar la conexión, el progreso puede sincronizarse con la plataforma."));
+  b.push(note("Los videos alojados en servicios externos se mantienen como enlaces. Para reproducirlos es necesario disponer de conexión a Internet."));
+
+  b.push(paragraph("13. Recomendaciones para diseñar buenos cursos", "Heading1"));
+  [
+    "Presentar objetivos claros y relacionados con las actividades.",
+    "Mantener las sesiones breves y centradas en una idea principal.",
+    "Combinar explicación, ejemplo, práctica y retroalimentación.",
+    "Usar un lenguaje directo y evitar textos innecesariamente extensos.",
+    "Indicar al estudiante qué debe hacer después de cada sesión.",
+    "Revisar la accesibilidad y la calidad de los materiales.",
+    "Probar el curso con una persona que no haya participado en su diseño.",
+    "Actualizar periódicamente enlaces, referencias y actividades."
+  ].forEach((item) => b.push(bullet(item)));
+
+  b.push(paragraph("14. Recorrido recomendado para presentar la plataforma", "Heading1"));
+  b.push(paragraph("Para una demostración ante profesores y expertos se recomienda seguir este orden:"));
+  [
+    "Mostrar la página de inicio y el catálogo.",
+    "Abrir la ficha de un curso y explicar sus objetivos, edición e instructores.",
+    "Entrar como estudiante y mostrar la matrícula.",
+    "Recorrer un módulo con video, práctica y materiales complementarios.",
+    "Completar una sesión y mostrar el progreso.",
+    "Realizar una evaluación y observar la retroalimentación.",
+    "Mostrar el certificado y su verificación.",
+    "Cerrar con el CMS para explicar cómo el profesor crea y publica el contenido."
+  ].forEach((item) => b.push(bullet(item)));
+
+  b.push(paragraph("15. Preguntas para el intercambio con profesores", "Heading1"));
+  [
+    "¿Qué tipo de cursos de la institución se beneficiarían más del formato MOOC?",
+    "¿Qué contenidos deben ser obligatorios y cuáles pueden quedar como ampliación?",
+    "¿Qué actividades permiten comprobar mejor el aprendizaje autónomo?",
+    "¿Qué criterios de aprobación debe tener cada curso?",
+    "¿Qué materiales ya existentes podrían reutilizarse como recursos complementarios?",
+    "¿Qué información necesita conocer el estudiante antes de matricularse?",
+    "¿Cómo debe actualizarse y revisarse cada curso después de su publicación?"
+  ].forEach((item) => b.push(bullet(item)));
+
+  b.push(paragraph("Conclusión", "Heading1"));
+  b.push(paragraph("La plataforma ofrece un espacio común para transformar propuestas docentes en cursos en línea estructurados, evaluables y accesibles. Su valor depende tanto de las herramientas disponibles como de la calidad del diseño pedagógico: objetivos claros, contenidos bien organizados, actividades pertinentes, retroalimentación y una experiencia sencilla para el estudiante."));
+  return b;
+}
+
 fs.mkdirSync(docsDir, { recursive: true });
 fs.mkdirSync(tmpRoot, { recursive: true });
-writeDocx("manual-usuario-profesores-estudiantes.docx", "Manual de usuario para profesores y estudiantes", manualBlocks());
-writeDocx("analisis-mejoras-plataforma-mooc.docx", "Análisis de mejoras para la plataforma MOOC", analysisBlocks());
+if (process.env.DOCS_DOCUMENT === "stakeholder") {
+  writeDocx("presentacion-plataforma-profesores-expertos.docx", "Plataforma institucional de aprendizaje en línea", stakeholderBlocks());
+  console.log("Documento generado: docs/presentacion-plataforma-profesores-expertos.docx");
+} else {
+  writeDocx("manual-usuario-profesores-estudiantes.docx", "Manual de usuario para profesores y estudiantes", manualBlocks());
+  writeDocx("analisis-mejoras-plataforma-mooc.docx", "Análisis de mejoras para la plataforma MOOC", analysisBlocks());
+}
 fs.rmSync(tmpRoot, { recursive: true, force: true });
 
 console.log("Documentos generados:");
