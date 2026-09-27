@@ -1103,11 +1103,14 @@ export default function CmsPage() {
           order: moduleForm.order ? Number(moduleForm.order) : undefined,
         }),
       });
-      if (!res.ok) throw new Error();
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || t("No se pudo guardar el módulo.", "Could not save module."));
+      }
       resetModuleForm();
       await loadCourses(selectedCourse.id);
-    } catch {
-      setError(t("No se pudo guardar el módulo.", "Could not save module."));
+    } catch (e) {
+      setError(e instanceof Error ? e.message : t("No se pudo guardar el módulo.", "Could not save module."));
     } finally {
       setSaving(false);
     }
