@@ -282,6 +282,12 @@ export async function POST(request: NextRequest) {
           visibility: visibility || "PUBLIC",
           status: nextStatus,
           instructorId: session.userId,
+          instructors: {
+            create: {
+              userId: session.userId,
+              role: "LEAD",
+            },
+          },
           editions: {
             create: {
               name: { es: "Edición inicial", en: "Initial edition" },
