@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { Award, BarChart3, BookOpen, Download, ExternalLink, Eye, Layers, Loader2, Plus, RefreshCw, Save, Trash2, Upload, Users, Video } from "lucide-react";
+import { Archive, Award, BarChart3, BookOpen, Download, ExternalLink, Eye, Layers, Loader2, Plus, RefreshCw, Save, Trash2, Upload, Users, Video } from "lucide-react";
 import { getLangFromParams } from "@/lib/i18n";
 import { resolveVideoRender } from "@/lib/video";
 
@@ -324,6 +324,7 @@ export default function CmsPage() {
   const [loadingReviews, setLoadingReviews] = useState(false);
   const [courseReviews, setCourseReviews] = useState<CmsReview[]>([]);
   const [error, setError] = useState("");
+  const [resourceNotice, setResourceNotice] = useState("");
   const [profileSaving, setProfileSaving] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [instructorProfile, setInstructorProfile] = useState<InstructorProfileForm>({
@@ -607,8 +608,8 @@ export default function CmsPage() {
     (selectedCourse?.modules || []).reduce((total, module) => total + module.sessions.length, 0);
   const hasPublishedEdition = Boolean(selectedCourse?.editions?.some((edition) => edition.status === "PUBLISHED"));
   const hasVideoSession = Boolean(
-    selectedCourse?.sessions?.some((session) => session.videoUrl) ||
-    selectedCourse?.modules?.some((module) => module.sessions.some((session) => session.videoUrl))
+    selectedCourse?.sessions?.some((session) => session.status === "PUBLISHED" && session.videoUrl) ||
+    selectedCourse?.modules?.some((module) => module.sessions.some((session) => session.status === "PUBLISHED" && session.videoUrl))
   );
   const paidCourseHasPrice = courseForm.pricingModel !== "PAID" || Number(courseForm.price || 0) > 0;
   const publishChecks = [
@@ -793,6 +794,7 @@ export default function CmsPage() {
       order: "",
     });
     setResourceForm({ title: "", url: "", type: "LINK", source: "EXTERNAL" });
+    setResourceNotice("");
   }
 
   async function loadCourses(nextSelectedId?: string) {
@@ -1261,6 +1263,10 @@ export default function CmsPage() {
           },
         ],
       }));
+      setResourceNotice(t(
+        "Material añadido a la sesión. Pulsa «Guardar sesión» para conservarlo.",
+        "Material added to the session. Click \"Save session\" to keep it."
+      ));
     } catch (e) {
       setError(e instanceof Error ? e.message : t("No se pudo subir el material.", "Could not upload resource."));
     } finally {
@@ -1270,6 +1276,7 @@ export default function CmsPage() {
 
   function addResource() {
     if (!resourceForm.title.trim() || !resourceForm.url.trim()) {
+      setResourceNotice("");
       setError(t("Indica título y URL del material.", "Add title and URL for the resource."));
       return;
     }
@@ -1288,6 +1295,10 @@ export default function CmsPage() {
       ],
     }));
     setResourceForm({ title: "", url: "", type: "LINK", source: "EXTERNAL" });
+    setResourceNotice(t(
+      "Recurso añadido a la sesión. Pulsa «Guardar sesión» para conservarlo.",
+      "Resource added to the session. Click \"Save session\" to keep it."
+    ));
   }
 
   function removeResource(resourceId: string | undefined, resourceIndex: number) {
@@ -1295,6 +1306,7 @@ export default function CmsPage() {
       ...prev,
       resources: prev.resources.filter((resource, index) => resource.id ? resource.id !== resourceId : index !== resourceIndex),
     }));
+    setResourceNotice(t("Recurso retirado de la sesión. Guarda la sesión para confirmar el cambio.", "Resource removed from the session. Save the session to confirm the change."));
   }
 
   async function archiveSession(sessionId: string) {
@@ -1305,7 +1317,7 @@ export default function CmsPage() {
     setSaving(true);
     setError("");
     try {
-      const res = await fetch(`/api/courses/${selectedCourse.id}/sessions/${sessionId}`, {
+      const res = await cmsFetch(`/api/courses/${selectedCourse.id}/sessions/${sessionId}`, {
         method: "DELETE",
       });
       if (!res.ok) {
@@ -1316,6 +1328,31 @@ export default function CmsPage() {
       await loadCourses(selectedCourse.id);
     } catch (e) {
       setError(e instanceof Error ? e.message : t("No se pudo archivar la sesión.", "Could not archive session."));
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function deleteSession(sessionId: string) {
+    if (!selectedCourse) return;
+    const confirmed = window.confirm(t(
+      "¿Eliminar definitivamente esta sesión? Solo debe usarse para borradores o sesiones archivadas sin progreso registrado.",
+      "Permanently delete this session? Use this only for drafts or archived sessions without recorded progress."
+    ));
+    if (!confirmed) return;
+
+    setSaving(true);
+    setError("");
+    try {
+      const res = await cmsFetch(`/api/courses/${selectedCourse.id}/sessions/${sessionId}?permanent=1`, {
+        method: "DELETE",
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || t("No se pudo eliminar la sesión.", "Could not delete the session."));
+      if (sessionForm.sessionId === sessionId) resetSessionForm();
+      await loadCourses(selectedCourse.id);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : t("No se pudo eliminar la sesión.", "Could not delete the session."));
     } finally {
       setSaving(false);
     }
@@ -2267,13 +2304,18 @@ export default function CmsPage() {
                   <textarea className="rounded-md border px-3 py-2 text-sm md:col-span-2" placeholder={t("Descripción de la sesión ES", "Session description ES")} value={sessionForm.description.es} onChange={(e) => setSessionForm({ ...sessionForm, description: { ...sessionForm.description, es: e.target.value } })} />
                   <textarea className="rounded-md border px-3 py-2 text-sm md:col-span-2" placeholder={t("Session description EN", "Session description EN")} value={sessionForm.description.en} onChange={(e) => setSessionForm({ ...sessionForm, description: { ...sessionForm.description, en: e.target.value } })} />
                   <p className="text-xs text-[#7b8fa1] md:col-span-2">
-                    {t("Recomendado: usar YouTube/Vimeo por URL. Usa subida solo para casos donde el video no estará en una app externa.", "Recommended: use YouTube/Vimeo by URL. Upload only when the video will not live in an external app.")}
+                    {t("El video es opcional. Puedes crear una sesión de lectura, material o actividad sin video. Cuando uses video, recomendamos YouTube/Vimeo por URL.", "Video is optional. You can create a reading, resource or activity session without video. When using video, YouTube/Vimeo by URL is recommended.")}
                   </p>
                   <textarea className="rounded-md border px-3 py-2 text-sm md:col-span-2" placeholder={t("Actividad de práctica ES", "Practice activity ES")} value={sessionForm.practicePrompt.es} onChange={(e) => setSessionForm({ ...sessionForm, practicePrompt: { ...sessionForm.practicePrompt, es: e.target.value } })} />
                   <textarea className="rounded-md border px-3 py-2 text-sm md:col-span-2" placeholder={t("Actividad de práctica EN", "Practice activity EN")} value={sessionForm.practicePrompt.en} onChange={(e) => setSessionForm({ ...sessionForm, practicePrompt: { ...sessionForm.practicePrompt, en: e.target.value } })} />
                   <div className="space-y-3 rounded-md border p-3 md:col-span-2">
                     <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                      <p className="text-sm font-medium">{t("Materiales complementarios", "Complementary resources")}</p>
+                      <div>
+                        <p className="text-sm font-medium">{t("Materiales complementarios", "Complementary resources")}</p>
+                        <p className="mt-1 text-xs text-[#7b8fa1]">
+                          {t("Añade lecturas, presentaciones, archivos o enlaces. Se guardarán al pulsar «Guardar sesión».", "Add readings, presentations, files or links. They are saved when you click \"Save session\".")}
+                        </p>
+                      </div>
                       <label className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-md border px-3 py-2 text-sm hover:bg-accent">
                         {uploadingResource ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
                         {uploadingResource ? t("Subiendo...", "Uploading...") : t("Subir material", "Upload resource")}
@@ -2300,6 +2342,9 @@ export default function CmsPage() {
                         {t("Agregar", "Add")}
                       </button>
                     </div>
+                    {resourceNotice && (
+                      <p className="rounded-md border border-green-200 bg-green-50 px-3 py-2 text-xs text-green-800">{resourceNotice}</p>
+                    )}
                     {sessionForm.resources.length > 0 && (
                       <div className="space-y-2">
                         {sessionForm.resources.map((resource, resourceIndex) => (
@@ -2357,7 +2402,7 @@ export default function CmsPage() {
                 <div className="mt-5 space-y-4">
                   {selectedSessionCount === 0 && (
                     <div className="rounded-md border border-dashed p-6 text-center text-sm text-[#7b8fa1]">
-                      {t("Aún no hay sesiones. Agrega la primera clase y su URL de video.", "No sessions yet. Add the first class and its video URL.")}
+                      {t("Aún no hay sesiones. Puedes añadir una sesión con video, lectura, material o actividad.", "No sessions yet. You can add a session with a video, reading, resource or activity.")}
                     </div>
                   )}
                   {selectedCourse.sessions && selectedCourse.sessions.length > 0 && (
@@ -2368,7 +2413,7 @@ export default function CmsPage() {
                           <div key={session.id} className="flex flex-col gap-2 rounded-md border p-3 text-sm sm:flex-row sm:items-center sm:justify-between">
                             <div>
                               <span className="font-medium">{session.order}. {t(session.title.es, session.title.en)}</span>
-                              <span className="ml-2 text-xs text-[#7b8fa1]">{session.videoPlatform || t("Sin video", "No video")}</span>
+                              <span className="ml-2 text-xs text-[#7b8fa1]">{session.status === "ARCHIVED" ? t("ARCHIVADA", "ARCHIVED") : session.videoPlatform || t("Sin video", "No video")}</span>
                             </div>
                             <div className="flex gap-2">
                               <button
@@ -2390,14 +2435,26 @@ export default function CmsPage() {
                               >
                                 {t("Editar", "Edit")}
                               </button>
-                              <button
-                                onClick={() => archiveSession(session.id)}
-                                disabled={saving}
-                                className="inline-flex items-center gap-1 rounded-md border px-3 py-1.5 text-xs text-red-600 hover:bg-red-50 disabled:opacity-50"
-                              >
-                                <Trash2 className="h-3.5 w-3.5" />
-                                {t("Archivar", "Archive")}
-                              </button>
+                              {session.status !== "ARCHIVED" && (
+                                <button
+                                  onClick={() => archiveSession(session.id)}
+                                  disabled={saving}
+                                  className="inline-flex items-center gap-1 rounded-md border px-3 py-1.5 text-xs text-amber-700 hover:bg-amber-50 disabled:opacity-50"
+                                >
+                                  <Archive className="h-3.5 w-3.5" />
+                                  {t("Archivar", "Archive")}
+                                </button>
+                              )}
+                              {(session.status === "DRAFT" || session.status === "ARCHIVED") && (
+                                <button
+                                  onClick={() => deleteSession(session.id)}
+                                  disabled={saving}
+                                  className="inline-flex items-center gap-1 rounded-md border px-3 py-1.5 text-xs text-red-600 hover:bg-red-50 disabled:opacity-50"
+                                >
+                                  <Trash2 className="h-3.5 w-3.5" />
+                                  {t("Eliminar", "Delete")}
+                                </button>
+                              )}
                             </div>
                           </div>
                         ))}
@@ -2412,7 +2469,7 @@ export default function CmsPage() {
                           <div key={session.id} className="flex flex-col gap-2 rounded-md border p-3 text-sm sm:flex-row sm:items-center sm:justify-between">
                             <div>
                               <span className="font-medium">{session.order}. {t(session.title.es, session.title.en)}</span>
-                              <span className="ml-2 text-xs text-[#7b8fa1]">{session.videoPlatform || t("Sin video", "No video")}</span>
+                              <span className="ml-2 text-xs text-[#7b8fa1]">{session.status === "ARCHIVED" ? t("ARCHIVADA", "ARCHIVED") : session.videoPlatform || t("Sin video", "No video")}</span>
                             </div>
                             <div className="flex gap-2">
                               <button
@@ -2434,14 +2491,26 @@ export default function CmsPage() {
                               >
                                 {t("Editar", "Edit")}
                               </button>
-                              <button
-                                onClick={() => archiveSession(session.id)}
-                                disabled={saving}
-                                className="inline-flex items-center gap-1 rounded-md border px-3 py-1.5 text-xs text-red-600 hover:bg-red-50 disabled:opacity-50"
-                              >
-                                <Trash2 className="h-3.5 w-3.5" />
-                                {t("Archivar", "Archive")}
-                              </button>
+                              {session.status !== "ARCHIVED" && (
+                                <button
+                                  onClick={() => archiveSession(session.id)}
+                                  disabled={saving}
+                                  className="inline-flex items-center gap-1 rounded-md border px-3 py-1.5 text-xs text-amber-700 hover:bg-amber-50 disabled:opacity-50"
+                                >
+                                  <Archive className="h-3.5 w-3.5" />
+                                  {t("Archivar", "Archive")}
+                                </button>
+                              )}
+                              {(session.status === "DRAFT" || session.status === "ARCHIVED") && (
+                                <button
+                                  onClick={() => deleteSession(session.id)}
+                                  disabled={saving}
+                                  className="inline-flex items-center gap-1 rounded-md border px-3 py-1.5 text-xs text-red-600 hover:bg-red-50 disabled:opacity-50"
+                                >
+                                  <Trash2 className="h-3.5 w-3.5" />
+                                  {t("Eliminar", "Delete")}
+                                </button>
+                              )}
                             </div>
                           </div>
                         ))}
