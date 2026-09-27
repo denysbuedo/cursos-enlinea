@@ -931,7 +931,7 @@ export default function CmsPage() {
     setSaving(true);
     setError("");
     try {
-      const res = await fetch("/api/courses", {
+      const res = await cmsFetch("/api/courses", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -960,7 +960,10 @@ export default function CmsPage() {
           status: courseForm.id ? courseForm.status : "DRAFT",
         }),
       });
-      if (!res.ok) throw new Error();
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || t("No se pudo guardar el curso.", "Could not save course."));
+      }
       const json = await res.json();
       await loadCourses(json.data.id);
       setSelectedCourseId(json.data.id);
@@ -1050,7 +1053,7 @@ export default function CmsPage() {
     setSaving(true);
     setError("");
     try {
-      const res = await fetch("/api/courses", {
+      const res = await cmsFetch("/api/courses", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -1079,11 +1082,36 @@ export default function CmsPage() {
           status,
         }),
       });
-      if (!res.ok) throw new Error();
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || t("No se pudo cambiar el estado del curso.", "Could not change course status."));
+      }
       setCourseForm((prev) => ({ ...prev, status }));
       await loadCourses(courseForm.id);
-    } catch {
-      setError(t("No se pudo cambiar el estado del curso.", "Could not change course status."));
+    } catch (e) {
+      setError(e instanceof Error ? e.message : t("No se pudo cambiar el estado del curso.", "Could not change course status."));
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function deleteCourse() {
+    if (!courseForm.id) return;
+    const confirmed = window.confirm(t(
+      "¿Eliminar definitivamente este curso? Esta acción solo está disponible para borradores o cursos archivados sin matrículas ni certificados.",
+      "Permanently delete this course? This is only available for drafts or archived courses without enrollments or certificates."
+    ));
+    if (!confirmed) return;
+    setSaving(true);
+    setError("");
+    try {
+      const res = await cmsFetch(`/api/courses/${courseForm.id}`, { method: "DELETE" });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || t("No se pudo eliminar el curso.", "Could not delete course."));
+      resetCourseForm();
+      await loadCourses();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : t("No se pudo eliminar el curso.", "Could not delete course."));
     } finally {
       setSaving(false);
     }
@@ -1525,6 +1553,15 @@ export default function CmsPage() {
                     >
                       {t("Archivar curso", "Archive course")}
                     </button>
+                    {(courseForm.status === "DRAFT" || courseForm.status === "ARCHIVED") && (
+                      <button
+                        onClick={deleteCourse}
+                        disabled={saving}
+                        className="rounded-md border border-red-600 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50 disabled:opacity-50"
+                      >
+                        {t("Eliminar curso", "Delete course")}
+                      </button>
+                    )}
                   </div>
                 </div>
               )}
