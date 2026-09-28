@@ -112,13 +112,12 @@ export async function POST(
 
     return NextResponse.json({ data: result }, { status: moduleId ? 200 : 201 });
   } catch (error) {
-    console.error("POST /api/courses/[id]/modules failed", error);
     if (error instanceof Error && error.message === "UNAUTHORIZED") {
       return NextResponse.json({ error: "No autorizado" }, { status: 401 });
     }
     if (error instanceof Error && error.message === "FORBIDDEN") {
       return NextResponse.json({ error: "Acceso denegado" }, { status: 403 });
     }
-    return NextResponse.json({ error: "No se pudo guardar el módulo" }, { status: 500 });
+    return NextResponse.json({ error: "Error del servidor" }, { status: 500 });
   }
 }

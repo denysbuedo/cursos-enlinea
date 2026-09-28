@@ -71,11 +71,6 @@ export function middleware(request: NextRequest) {
   response.headers.set("X-Content-Type-Options", "nosniff");
   response.headers.set("X-Frame-Options", "DENY");
   response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
-  // Evita que el navegador conserve HTML de un build anterior y solicite
-  // chunks que ya no existen después de un despliegue.
-  if (!pathname.startsWith("/api/")) {
-    response.headers.set("Cache-Control", "no-store, max-age=0");
-  }
 
   return response;
 }

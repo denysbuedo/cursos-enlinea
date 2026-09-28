@@ -7,7 +7,6 @@ type ImportedSession = Record<string, unknown>;
 type ImportedModule = { title: unknown; description?: unknown; order?: number; status?: string; sessions?: ImportedSession[] };
 type ImportedCourse = Record<string, unknown>;
 type ImportedInstructor = { email?: unknown; role?: unknown };
-type ImportedSessionType = "RECORDED" | "LIVE" | "HYBRID";
 
 function text(value: unknown, fallback: { es: string; en: string } = { es: "", en: "" }): { es: string; en: string } {
   if (value && typeof value === "object" && "es" in value && "en" in value) {
@@ -102,14 +101,12 @@ export async function POST(request: NextRequest) {
       for (const courseModule of modules) {
         const createdModule = await tx.courseModule.create({ data: { courseId: course.id, title: text(courseModule.title), description: jsonValue(courseModule.description), order: Number(courseModule.order || 1), status: "DRAFT" } });
         for (const sessionData of courseModule.sessions || []) {
-          const sessionType = ["RECORDED", "LIVE", "HYBRID"].includes(String(sessionData.sessionType)) ? String(sessionData.sessionType) as ImportedSessionType : "RECORDED";
-          await tx.session.create({ data: { courseId: course.id, moduleId: createdModule.id, title: text(sessionData.title), description: text(sessionData.description), keywords: Array.isArray(sessionData.keywords) ? sessionData.keywords.map(String) : [], sessionType, preview: Boolean(sessionData.preview), videoUrl: typeof sessionData.videoUrl === "string" ? sessionData.videoUrl : null, videoPlatform: typeof sessionData.videoPlatform === "string" ? sessionData.videoPlatform : null, durationMinutes: sessionData.durationMinutes ? Number(sessionData.durationMinutes) : null, resources: jsonValue(sessionData.resources), practicePrompt: jsonValue(sessionData.practicePrompt), scheduledAt: sessionData.scheduledAt ? new Date(String(sessionData.scheduledAt)) : null, order: Number(sessionData.order || 1), status: "DRAFT" } });
+          await tx.session.create({ data: { courseId: course.id, moduleId: createdModule.id, title: text(sessionData.title), description: text(sessionData.description), keywords: Array.isArray(sessionData.keywords) ? sessionData.keywords.map(String) : [], sessionType: "RECORDED", preview: Boolean(sessionData.preview), videoUrl: typeof sessionData.videoUrl === "string" ? sessionData.videoUrl : null, videoPlatform: typeof sessionData.videoPlatform === "string" ? sessionData.videoPlatform : null, durationMinutes: sessionData.durationMinutes ? Number(sessionData.durationMinutes) : null, resources: jsonValue(sessionData.resources), practicePrompt: jsonValue(sessionData.practicePrompt), scheduledAt: sessionData.scheduledAt ? new Date(String(sessionData.scheduledAt)) : null, order: Number(sessionData.order || 1), status: "DRAFT" } });
         }
       }
 
       for (const sessionData of (Array.isArray(source.sessions) ? source.sessions : []) as ImportedSession[]) {
-        const sessionType = ["RECORDED", "LIVE", "HYBRID"].includes(String(sessionData.sessionType)) ? String(sessionData.sessionType) as ImportedSessionType : "RECORDED";
-        await tx.session.create({ data: { courseId: course.id, title: text(sessionData.title), description: text(sessionData.description), keywords: Array.isArray(sessionData.keywords) ? sessionData.keywords.map(String) : [], sessionType, preview: Boolean(sessionData.preview), videoUrl: typeof sessionData.videoUrl === "string" ? sessionData.videoUrl : null, videoPlatform: typeof sessionData.videoPlatform === "string" ? sessionData.videoPlatform : null, durationMinutes: sessionData.durationMinutes ? Number(sessionData.durationMinutes) : null, resources: jsonValue(sessionData.resources), practicePrompt: jsonValue(sessionData.practicePrompt), scheduledAt: sessionData.scheduledAt ? new Date(String(sessionData.scheduledAt)) : null, order: Number(sessionData.order || 1), status: "DRAFT" } });
+        await tx.session.create({ data: { courseId: course.id, title: text(sessionData.title), description: text(sessionData.description), keywords: Array.isArray(sessionData.keywords) ? sessionData.keywords.map(String) : [], sessionType: "RECORDED", preview: Boolean(sessionData.preview), videoUrl: typeof sessionData.videoUrl === "string" ? sessionData.videoUrl : null, videoPlatform: typeof sessionData.videoPlatform === "string" ? sessionData.videoPlatform : null, durationMinutes: sessionData.durationMinutes ? Number(sessionData.durationMinutes) : null, resources: jsonValue(sessionData.resources), practicePrompt: jsonValue(sessionData.practicePrompt), scheduledAt: sessionData.scheduledAt ? new Date(String(sessionData.scheduledAt)) : null, order: Number(sessionData.order || 1), status: "DRAFT" } });
       }
 
       if (source.evaluation && typeof source.evaluation === "object") {

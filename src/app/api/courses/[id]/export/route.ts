@@ -18,7 +18,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
           include: { sessions: { orderBy: { order: "asc" } } },
         },
         sessions: { where: { moduleId: null }, orderBy: { order: "asc" } },
-        evaluations: { take: 1 },
+        evaluations: { where: { evaluationType: "FINAL" }, take: 1 },
       },
     });
     if (!course) return NextResponse.json({ error: "Curso no encontrado" }, { status: 404 });

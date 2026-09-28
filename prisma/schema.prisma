@@ -1,5 +1,5 @@
 generator client {
-  provider = "prisma-client-js"
+  provider   = "prisma-client-js"
   engineType = "binary"
 }
 
@@ -44,6 +44,12 @@ enum SessionType {
   HYBRID
 }
 
+enum EvaluationType {
+  FINAL
+  PARTIAL
+  AUTOEVALUATION
+}
+
 enum CourseStatus {
   DRAFT
   SCHEDULED
@@ -75,27 +81,27 @@ enum AuthTokenType {
 }
 
 model User {
-  id              String        @id @default(uuid())
-  email           String        @unique
-  passwordHash    String?
-  name            String
-  bio             String?
-  institution     String?
-  avatarUrl       String?
-  role            Role          @default(STUDENT)
-  country         String?
-  preferredLang   String        @default("es")
-  emailVerifiedAt DateTime?
-  refreshTokens   RefreshToken[]
-  authTokens      AuthToken[]
-  oauthAccounts   OAuthAccount[]
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
-  enrollments     Enrollment[]
-  courses         Course[]       @relation("CourseInstructor")
+  id                String             @id @default(uuid())
+  email             String             @unique
+  passwordHash      String?
+  name              String
+  bio               String?
+  institution       String?
+  avatarUrl         String?
+  role              Role               @default(STUDENT)
+  country           String?
+  preferredLang     String             @default("es")
+  emailVerifiedAt   DateTime?
+  refreshTokens     RefreshToken[]
+  authTokens        AuthToken[]
+  oauthAccounts     OAuthAccount[]
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  enrollments       Enrollment[]
+  courses           Course[]           @relation("CourseInstructor")
   courseAssignments CourseInstructor[]
-  courseReviews   CourseReview[]
-  paymentsReviewed Payment[]    @relation("PaymentReviewer")
+  courseReviews     CourseReview[]
+  paymentsReviewed  Payment[]          @relation("PaymentReviewer")
 }
 
 model RefreshToken {
@@ -111,60 +117,60 @@ model RefreshToken {
 }
 
 model Course {
-  id            String        @id @default(uuid())
-  slug          String        @unique
-  title         Json
-  description   Json
-  learningObjectives Json?
-  targetAudience Json?
-  requirements  Json?
-  competencies  Json?
-  coverImageUrl String?
-  scienceBranch String?
-  topics        String[]
-  keywords      String[]
-  questionBank  Json?
-  estimatedHours Int?
-  weeklyHours   Int?
-  level         String?
-  language      String        @default("es")
-  certificateAvailable Boolean @default(true)
-  selfPaced     Boolean       @default(true)
-  visibility    Visibility    @default(PUBLIC)
-  status        CourseStatus  @default(DRAFT)
-  pricingModel  String        @default("FREE")
-  price         Decimal?      @db.Decimal(10, 2)
-  currency      Currency      @default(USD)
-  instructorId  String
-  instructor    User          @relation("CourseInstructor", fields: [instructorId], references: [id])
-  instructors   CourseInstructor[]
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
-  viewCount     Int           @default(0)
-  uniqueVisitorCount Int       @default(0)
-  sessions      Session[]
-  modules       CourseModule[]
-  editions      CourseEdition[]
-  enrollments   Enrollment[]
-  certificates  Certificate[]
-  evaluations   Evaluation[]
-  visits        CourseVisit[]
-  viewEvents    CourseViewEvent[]
-  reviews       CourseReview[]
+  id                   String             @id @default(uuid())
+  slug                 String             @unique
+  title                Json
+  description          Json
+  learningObjectives   Json?
+  targetAudience       Json?
+  requirements         Json?
+  competencies         Json?
+  coverImageUrl        String?
+  scienceBranch        String?
+  topics               String[]
+  keywords             String[]
+  questionBank         Json?
+  estimatedHours       Int?
+  weeklyHours          Int?
+  level                String?
+  language             String             @default("es")
+  certificateAvailable Boolean            @default(true)
+  selfPaced            Boolean            @default(true)
+  visibility           Visibility         @default(PUBLIC)
+  status               CourseStatus       @default(DRAFT)
+  pricingModel         String             @default("FREE")
+  price                Decimal?           @db.Decimal(10, 2)
+  currency             Currency           @default(USD)
+  instructorId         String
+  instructor           User               @relation("CourseInstructor", fields: [instructorId], references: [id])
+  instructors          CourseInstructor[]
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+  viewCount            Int                @default(0)
+  uniqueVisitorCount   Int                @default(0)
+  sessions             Session[]
+  modules              CourseModule[]
+  editions             CourseEdition[]
+  enrollments          Enrollment[]
+  certificates         Certificate[]
+  evaluations          Evaluation[]
+  visits               CourseVisit[]
+  viewEvents           CourseViewEvent[]
+  reviews              CourseReview[]
 
   @@index([slug, status])
   @@index([instructorId])
 }
 
 model AuthToken {
-  id         String        @id @default(uuid())
-  tokenHash  String        @unique
-  type       AuthTokenType
-  userId     String
-  expiresAt  DateTime
-  usedAt     DateTime?
-  createdAt  DateTime      @default(now())
-  user       User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id        String        @id @default(uuid())
+  tokenHash String        @unique
+  type      AuthTokenType
+  userId    String
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime      @default(now())
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, type])
   @@index([expiresAt])
@@ -184,24 +190,24 @@ model OAuthAccount {
 }
 
 model CourseVisit {
-  id              String   @id @default(uuid())
-  courseId        String
-  visitorId       String
-  visitCount      Int      @default(1)
-  firstVisitedAt  DateTime @default(now())
-  lastVisitedAt   DateTime @updatedAt
-  course          Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  id             String   @id @default(uuid())
+  courseId       String
+  visitorId      String
+  visitCount     Int      @default(1)
+  firstVisitedAt DateTime @default(now())
+  lastVisitedAt  DateTime @updatedAt
+  course         Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
 
   @@unique([courseId, visitorId])
   @@index([courseId])
 }
 
 model CourseViewEvent {
-  id         String   @id @default(uuid())
-  courseId   String
-  visitorId  String
-  viewedAt   DateTime @default(now())
-  course     Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  id        String   @id @default(uuid())
+  courseId  String
+  visitorId String
+  viewedAt  DateTime @default(now())
+  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
 
   @@index([courseId, viewedAt])
 }
@@ -215,8 +221,8 @@ model CourseReview {
   status      ReviewStatus @default(PENDING)
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
-  course      Course      @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course      Course       @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([courseId, userId])
   @@index([courseId, status])
@@ -236,16 +242,16 @@ model CourseInstructor {
 }
 
 model CourseEdition {
-  id          String       @id @default(uuid())
-  courseId    String
-  name        Json
-  startsAt    DateTime?
-  endsAt      DateTime?
-  capacity    Int?
-  status      CourseStatus @default(PUBLISHED)
-  isDefault   Boolean      @default(false)
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
+  id        String       @id @default(uuid())
+  courseId  String
+  name      Json
+  startsAt  DateTime?
+  endsAt    DateTime?
+  capacity  Int?
+  status    CourseStatus @default(PUBLISHED)
+  isDefault Boolean      @default(false)
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
 
   course      Course       @relation(fields: [courseId], references: [id], onDelete: Cascade)
   enrollments Enrollment[]
@@ -264,32 +270,34 @@ model CourseModule {
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
 
-  course   Course    @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  sessions Session[]
+  course      Course       @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  sessions    Session[]
+  evaluations Evaluation[]
 
   @@index([courseId, order])
 }
 
 model Session {
-  id            String       @id @default(uuid())
-  courseId      String
-  moduleId      String?
-  title         Json
-  description   Json
-  keywords      String[]
-  sessionType   SessionType  @default(RECORDED)
-  preview       Boolean      @default(false)
-  videoUrl      String?
-  videoPlatform String?
+  id              String              @id @default(uuid())
+  courseId        String
+  moduleId        String?
+  title           Json
+  description     Json
+  keywords        String[]
+  sessionType     SessionType         @default(RECORDED)
+  preview         Boolean             @default(false)
+  videoUrl        String?
+  videoPlatform   String?
   durationMinutes Int?
-  resources     Json?
-  practicePrompt Json?
-  scheduledAt   DateTime?
-  order         Int
-  status        CourseStatus @default(DRAFT)
-  course        Course       @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  module        CourseModule? @relation(fields: [moduleId], references: [id], onDelete: SetNull)
-  completions   SessionCompletion[]
+  resources       Json?
+  practicePrompt  Json?
+  scheduledAt     DateTime?
+  order           Int
+  status          CourseStatus        @default(DRAFT)
+  course          Course              @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  module          CourseModule?       @relation(fields: [moduleId], references: [id], onDelete: SetNull)
+  completions     SessionCompletion[]
+  evaluations     Evaluation[]
 
   @@index([courseId, order])
   @@index([moduleId, order])
@@ -297,27 +305,27 @@ model Session {
 }
 
 model Enrollment {
-  id            String        @id @default(uuid())
+  id            String              @id @default(uuid())
   userId        String
   courseId      String
   editionId     String?
-  status        String        @default("ACTIVE")
-  progress      Float         @default(0.0)
-  admissionType String        @default("COMMERCIAL")
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
-  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  course        Course        @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  edition       CourseEdition? @relation(fields: [editionId], references: [id], onDelete: SetNull)
+  status        String              @default("ACTIVE")
+  progress      Float               @default(0.0)
+  admissionType String              @default("COMMERCIAL")
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+  user          User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course        Course              @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  edition       CourseEdition?      @relation(fields: [editionId], references: [id], onDelete: SetNull)
   payments      Payment[]
   certificate   Certificate?
   completions   SessionCompletion[]
   evalAttempts  EvaluationAttempt[]
 
+  @@unique([userId, courseId, editionId])
   @@index([userId])
   @@index([courseId, status])
   @@index([editionId])
-  @@unique([userId, courseId, editionId])
 }
 
 model Payment {
@@ -341,8 +349,8 @@ model Payment {
   expiresAt       DateTime?
   createdAt       DateTime      @default(now())
 
-  enrollment      Enrollment    @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
-  reviewer        User?         @relation("PaymentReviewer", fields: [reviewedBy], references: [id])
+  enrollment Enrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+  reviewer   User?      @relation("PaymentReviewer", fields: [reviewedBy], references: [id])
 
   @@index([status, currency])
   @@index([enrollmentId])
@@ -381,8 +389,8 @@ model Certificate {
   revocationReason  String?
   issuedAt          DateTime @default(now())
 
-  enrollment        Enrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
-  course            Course     @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  enrollment Enrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+  course     Course     @relation(fields: [courseId], references: [id], onDelete: Cascade)
 
   @@index([studentId, issuedAt])
   @@index([courseId])
@@ -403,31 +411,39 @@ model SessionCompletion {
 }
 
 model Evaluation {
-  id            String  @id @default(uuid())
-  courseId      String  @unique
-  title         Json    // {es: "...", en: "..."}
-  description   Json?   // {es: "...", en: "..."}
-  passingScore  Float   @default(80.0)
-  maxAttempts   Int     @default(3)
-  showFeedback  Boolean @default(true)
-  shuffleQuestions Boolean @default(true)
-  shuffleOptions Boolean @default(true)
-  questions     Json    // [{id, type:"MCQ"|"TRUEFALSE"|"SHORT", question:{es,en}, options:[{es,en}], correctAnswer, feedback:{es,en}, points}]
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id               String         @id @default(uuid())
+  courseId         String
+  moduleId         String?
+  sessionId        String?
+  evaluationType   EvaluationType @default(FINAL)
+  title            Json // {es: "...", en: "..."}
+  description      Json? // {es: "...", en: "..."}
+  passingScore     Float          @default(80.0)
+  maxAttempts      Int            @default(3)
+  showFeedback     Boolean        @default(true)
+  shuffleQuestions Boolean        @default(true)
+  shuffleOptions   Boolean        @default(true)
+  questions        Json // [{id, type:"MCQ"|"TRUEFALSE"|"SHORT", question:{es,en}, options:[{es,en}], correctAnswer, feedback:{es,en}, points}]
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
 
-  course    Course              @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  attempts  EvaluationAttempt[]
+  course   Course              @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  module   CourseModule?       @relation(fields: [moduleId], references: [id], onDelete: SetNull)
+  session  Session?            @relation(fields: [sessionId], references: [id], onDelete: SetNull)
+  attempts EvaluationAttempt[]
 
   @@index([courseId])
+  @@index([courseId, evaluationType])
+  @@index([sessionId])
+  @@index([moduleId])
 }
 
 model EvaluationAttempt {
   id           String   @id @default(uuid())
   evaluationId String
   enrollmentId String
-  answers      Json     // [{questionId, answer}]
-  score        Float    // 0-100
+  answers      Json // [{questionId, answer}]
+  score        Float // 0-100
   passed       Boolean
   submittedAt  DateTime @default(now())
 
