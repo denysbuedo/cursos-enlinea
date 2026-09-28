@@ -348,6 +348,7 @@ export default function CmsPage() {
   const [searchingStudents, setSearchingStudents] = useState(false);
   const [analytics, setAnalytics] = useState<CourseAnalytics | null>(null);
   const [questionBank, setQuestionBank] = useState<CmsQuestion[]>([]);
+  const [selectedBankQuestionIds, setSelectedBankQuestionIds] = useState<string[]>([]);
   const [bankSelection, setBankSelection] = useState<BankSelectionState>({
     count: "",
     tag: "",
@@ -637,6 +638,7 @@ export default function CmsPage() {
     setEditionEnrollments([]);
     setAnalytics(null);
     setQuestionBank([]);
+    setSelectedBankQuestionIds([]);
     setCourseInstructors([]);
     setActiveSection("course");
     setCourseForm({
@@ -857,7 +859,9 @@ export default function CmsPage() {
         throw new Error(data.error || "Error");
       }
       const json = await res.json();
-      setQuestionBank(Array.isArray(json.data) ? json.data : []);
+      const nextQuestions = Array.isArray(json.data) ? json.data : [];
+      setQuestionBank(nextQuestions);
+      setSelectedBankQuestionIds((current) => current.filter((id) => nextQuestions.some((question: CmsQuestion) => question.id === id)));
     } catch (e) {
       setError(e instanceof Error ? e.message : t("No se pudo cargar el banco de preguntas.", "Could not load question bank."));
     } finally {
@@ -880,6 +884,7 @@ export default function CmsPage() {
     setEditionEnrollments([]);
     setAnalytics(null);
     setQuestionBank(Array.isArray(course.questionBank) ? course.questionBank : []);
+    setSelectedBankQuestionIds([]);
     void loadCourseInstructors(course.id);
     void loadCourseReviews(course.id);
     setActiveSection("course");
@@ -1435,40 +1440,58 @@ export default function CmsPage() {
     }
   }
 
+  function getFilteredBankQuestions() {
+    const tag = bankSelection.tag.trim().toLowerCase();
+    const topic = bankSelection.topic.trim().toLowerCase();
+    return questionBank.filter((question) => {
+      const tagMatches = !tag || (question.tags || []).some((item) => item.toLowerCase() === tag);
+      const difficultyMatches = !bankSelection.difficulty || question.difficulty === bankSelection.difficulty;
+      const moduleMatches = !bankSelection.moduleId || question.moduleId === bankSelection.moduleId;
+      const topicMatches = !topic || (question.topic || "").toLowerCase().includes(topic);
+      return tagMatches && difficultyMatches && moduleMatches && topicMatches;
+    });
+  }
+
   function loadBankIntoEvaluation() {
     if (questionBank.length === 0) {
       setError(t("El banco de preguntas está vacío.", "Question bank is empty."));
       return;
     }
-    const requestedCount = Number(bankSelection.count || 0);
-    let candidates = questionBank.filter((question) => {
-      const tagMatches = !bankSelection.tag.trim() || (question.tags || []).some((tag) => tag.toLowerCase() === bankSelection.tag.trim().toLowerCase());
-      const difficultyMatches = !bankSelection.difficulty || question.difficulty === bankSelection.difficulty;
-      const moduleMatches = !bankSelection.moduleId || question.moduleId === bankSelection.moduleId;
-      const topicMatches = !bankSelection.topic.trim() || (question.topic || "").toLowerCase().includes(bankSelection.topic.trim().toLowerCase());
-      return tagMatches && difficultyMatches && moduleMatches && topicMatches;
-    });
-    candidates = candidates.sort(() => Math.random() - 0.5);
-    if (requestedCount > 0) {
-      candidates = candidates.slice(0, requestedCount);
+    let candidates = selectedBankQuestionIds.length > 0
+      ? questionBank.filter((question) => selectedBankQuestionIds.includes(question.id))
+      : getFilteredBankQuestions();
+    if (selectedBankQuestionIds.length === 0) {
+      const requestedCount = Number(bankSelection.count || 0);
+      candidates = candidates.sort(() => Math.random() - 0.5);
+      if (requestedCount > 0) {
+        candidates = candidates.slice(0, requestedCount);
+      }
     }
     if (candidates.length === 0) {
-      setError(t("No hay preguntas que coincidan con esos filtros.", "No questions match those filters."));
+      setError(selectedBankQuestionIds.length > 0
+        ? t("No hay preguntas marcadas para añadir.", "No questions are selected to add.")
+        : t("No hay preguntas que coincidan con esos filtros.", "No questions match those filters."));
+      return;
+    }
+    const existingIds = new Set(evaluationForm.questions.map((question) => question.id));
+    const additions = candidates.filter((question) => !existingIds.has(question.id));
+    if (additions.length === 0) {
+      setError(t("Las preguntas seleccionadas ya están en la evaluación.", "The selected questions are already in the assessment."));
       return;
     }
     setError("");
     setEvaluationForm((prev) => ({
       ...prev,
-      questions: candidates.map((question) => ({
+      questions: [...prev.questions, ...additions.map((question) => ({
         ...question,
-        id: `q-${Date.now()}-${question.id}`,
         feedback: question.feedback || { ...emptyText },
         tags: question.tags || [],
         difficulty: question.difficulty || "BASIC",
         topic: question.topic || "",
         moduleId: question.moduleId || "",
-      })),
+      }))],
     }));
+    setSelectedBankQuestionIds([]);
     setActiveSection("evaluation");
   }
 
@@ -2564,20 +2587,62 @@ export default function CmsPage() {
                   </select>
                   <input className="rounded-md border px-3 py-2 text-sm" placeholder={t("Tema", "Topic")} value={bankSelection.topic} onChange={(e) => setBankSelection({ ...bankSelection, topic: e.target.value })} />
                 </div>
+                <div className="mt-3 flex flex-col gap-3 rounded-md border border-primary/20 bg-[#f7fbff] p-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-[#17212b]">{t("Selección manual de preguntas", "Manual question selection")}</p>
+                    <p className="mt-1 text-xs text-[#52667a]">{t("Marca las preguntas que quieres añadir. Si no marcas ninguna, se aplicarán la cantidad y los filtros definidos arriba.", "Mark the questions you want to add. If none are marked, the count and filters above will be used.")}</p>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-xs font-medium text-[#52667a]">{selectedBankQuestionIds.length} {t("seleccionadas", "selected")}</span>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedBankQuestionIds((current) => Array.from(new Set([...current, ...getFilteredBankQuestions().map((question) => question.id)])))}
+                      disabled={getFilteredBankQuestions().length === 0}
+                      className="rounded-md border px-3 py-1.5 text-xs hover:bg-accent disabled:opacity-50"
+                    >
+                      {t("Seleccionar coincidencias", "Select matches")}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedBankQuestionIds([])}
+                      disabled={selectedBankQuestionIds.length === 0}
+                      className="rounded-md border px-3 py-1.5 text-xs hover:bg-accent disabled:opacity-50"
+                    >
+                      {t("Limpiar", "Clear")}
+                    </button>
+                  </div>
+                </div>
                 <div className="mt-5 space-y-2">
                   {questionBank.length === 0 ? (
                     <div className="rounded-md border border-dashed p-6 text-center text-sm text-[#7b8fa1]">
                       {t("El banco está vacío. Crea preguntas en Evaluación y guárdalas aquí para reutilizarlas.", "The bank is empty. Create questions in Evaluation and save them here for reuse.")}
                     </div>
-                  ) : questionBank.map((question, index) => (
+                  ) : getFilteredBankQuestions().length === 0 ? (
+                    <div className="rounded-md border border-dashed p-6 text-center text-sm text-[#7b8fa1]">
+                      {t("No hay preguntas que coincidan con los filtros actuales.", "No questions match the current filters.")}
+                    </div>
+                  ) : getFilteredBankQuestions().map((question, index) => (
                     <div key={question.id || index} className="rounded-md border p-3 text-sm">
-                      <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-                        <p className="font-medium">{index + 1}. {t(question.question.es, question.question.en)}</p>
-                        <span className="text-xs text-[#7b8fa1]">{question.type} · {question.points} pt</span>
+                      <div className="flex items-start gap-3">
+                        <input
+                          type="checkbox"
+                          checked={selectedBankQuestionIds.includes(question.id)}
+                          onChange={() => setSelectedBankQuestionIds((current) => current.includes(question.id)
+                            ? current.filter((id) => id !== question.id)
+                            : [...current, question.id])}
+                          aria-label={t(`Seleccionar pregunta ${index + 1}`, `Select question ${index + 1}`)}
+                          className="mt-1 h-4 w-4 shrink-0 accent-primary"
+                        />
+                        <div className="min-w-0 flex-1">
+                          <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                            <p className="font-medium">{index + 1}. {t(question.question.es, question.question.en)}</p>
+                            <span className="text-xs text-[#7b8fa1]">{question.type} · {question.points} pt</span>
+                          </div>
+                          <p className="mt-1 text-xs text-[#7b8fa1]">
+                            {[question.difficulty || "BASIC", question.topic, question.moduleId ? selectedCourse.modules.find((module) => module.id === question.moduleId)?.title.es : "", ...(question.tags || [])].filter(Boolean).join(" · ")}
+                          </p>
+                        </div>
                       </div>
-                      <p className="mt-1 text-xs text-[#7b8fa1]">
-                        {[question.difficulty || "BASIC", question.topic, question.moduleId ? selectedCourse.modules.find((module) => module.id === question.moduleId)?.title.es : "", ...(question.tags || [])].filter(Boolean).join(" · ")}
-                      </p>
                     </div>
                   ))}
                 </div>
