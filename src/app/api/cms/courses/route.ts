@@ -49,13 +49,12 @@ export async function GET(request: NextRequest) {
           orderBy: { order: "asc" },
           include: {
             sessions: {
-              where: { status: { not: "ARCHIVED" } },
               orderBy: { order: "asc" },
             },
           },
         },
         sessions: {
-          where: { moduleId: null, status: { not: "ARCHIVED" } },
+          where: { moduleId: null },
           orderBy: { order: "asc" },
         },
         evaluations: {

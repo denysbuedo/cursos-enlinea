@@ -14,7 +14,7 @@ async function getEditableCourse(courseIdOrSlug: string, userId: string, role: s
 }
 
 export async function DELETE(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string; sessionId: string }> }
 ) {
   try {
@@ -24,14 +24,36 @@ export async function DELETE(
     }
 
     const { id, sessionId } = await params;
+    const permanent = new URL(request.url).searchParams.get("permanent") === "1";
     const course = await getEditableCourse(id, session.userId, session.role);
     if (!course) return NextResponse.json({ error: "Curso no encontrado" }, { status: 404 });
 
     const existing = await prisma.session.findFirst({
       where: { id: sessionId, courseId: course.id },
-      select: { id: true, title: true, status: true },
+      select: { id: true, title: true, status: true, _count: { select: { completions: true } } },
     });
     if (!existing) return NextResponse.json({ error: "Sesión no encontrada" }, { status: 404 });
+
+    if (permanent) {
+      if (existing.status !== "DRAFT" && existing.status !== "ARCHIVED") {
+        return NextResponse.json({ error: "Solo se pueden eliminar sesiones en borrador o archivadas" }, { status: 409 });
+      }
+      if (existing._count.completions > 0) {
+        return NextResponse.json({ error: "No se puede eliminar una sesión con progreso registrado" }, { status: 409 });
+      }
+
+      await prisma.session.delete({ where: { id: sessionId } });
+      await prisma.auditLog.create({
+        data: {
+          action: "SESSION_DELETED",
+          entity: "Session",
+          entityId: sessionId,
+          userId: session.userId,
+          metadata: { courseId: course.id, previousStatus: existing.status, title: existing.title },
+        },
+      });
+      return NextResponse.json({ data: { id: sessionId, deleted: true } });
+    }
 
     const updated = await prisma.session.update({
       where: { id: sessionId },
