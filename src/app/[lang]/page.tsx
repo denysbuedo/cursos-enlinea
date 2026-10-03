@@ -1,13 +1,16 @@
 import { getLangFromParams } from "@/lib/i18n";
 import { APP_NAME } from "@/lib/app-config";
+import { PLATFORM_ID } from "@/lib/platform-config";
 import { prisma } from "@/lib/prisma";
 import { CourseCard } from "@/components/courses/CourseCard";
 import heroImage from "@/assets/mooc-hero-cuba.png";
+import naeHeroImage from "@/../assets/img/nae/home-hero.png";
 import Image from "next/image";
 import Link from "next/link";
 import {
   ArrowRight,
   Award,
+  ArrowUpRight,
   BookOpenCheck,
   ClipboardCheck,
   CheckCircle2,
@@ -94,6 +97,7 @@ export default async function HomePage({
       ),
     },
   ];
+  const isNae = PLATFORM_ID === "nae";
 
   return (
     <div className="app-surface">
@@ -109,8 +113,12 @@ export default async function HomePage({
             </h1>
             <p className="mt-4 max-w-2xl text-lg leading-8 text-muted-foreground">
               {t(
-                "Cursos en línea diseñados para aprendizaje autónomo, contenidos breves, evaluación automatizada y certificados verificables.",
-                "Online courses designed for self-paced learning, short content, automated assessment, and verifiable certificates.",
+                isNae
+                  ? "Fortalece tus capacidades para crear, gestionar y hacer crecer iniciativas de nuevos actores económicos."
+                  : "Cursos en línea diseñados para aprendizaje autónomo, contenidos breves, evaluación automatizada y certificados verificables.",
+                isNae
+                  ? "Strengthen your skills to create, manage, and grow initiatives led by new economic actors."
+                  : "Online courses designed for self-paced learning, short content, automated assessment, and verifiable certificates.",
               )}
             </p>
             <div className="mt-5 grid gap-2 sm:grid-cols-3">
@@ -142,23 +150,54 @@ export default async function HomePage({
             </div>
           </div>
 
-          <div className="visual-panel overflow-hidden rounded-lg p-3">
-            <div className="relative aspect-[16/9] overflow-hidden rounded-md bg-white">
-              <Image
-                src={heroImage}
-                alt={t(
-                  "Ambiente universitario moderno con aprendizaje en línea",
-                  "Modern university setting with online learning",
-                )}
-                fill
-                priority
-                className="object-cover"
-                sizes="(min-width: 1024px) 44vw, 100vw"
-              />
-              <span className="absolute left-3 top-3 rounded-full bg-white/95 px-3 py-1 text-xs font-semibold text-primary shadow-sm">
-                MOOC
-              </span>
-            </div>
+          <div className={`visual-panel overflow-hidden rounded-lg p-3 ${isNae ? "border-[#b9d5d8]" : ""}`}>
+            {isNae ? (
+              <div className="relative aspect-[16/9] overflow-hidden rounded-md bg-[#002b44] text-white">
+                <Image
+                  src={naeHeroImage}
+                  alt="Emprendedores colaborando en una actividad de formación para nuevos actores económicos"
+                  fill
+                  priority
+                  className="object-cover"
+                  sizes="(min-width: 1024px) 44vw, 100vw"
+                />
+                <div className="absolute inset-x-0 bottom-0 bg-[#002b44]/92 p-4 sm:p-5">
+                  <div className="flex items-center gap-3">
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#00b6a1] text-[#002b44]">
+                      <ArrowUpRight className="h-6 w-6" strokeWidth={2.5} />
+                    </span>
+                    <div>
+                      <div className="flex items-baseline gap-2">
+                        <p className="text-xl font-black tracking-[0.16em]">NAE</p>
+                        <p className="text-[10px] font-semibold uppercase tracking-[0.13em] text-[#bceee0]">
+                          Nuevos actores económicos
+                        </p>
+                      </div>
+                      <p className="mt-1 text-sm font-semibold text-[#f0bf43] sm:text-base">
+                        Impulso y fortalecimiento de capacidades
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="relative aspect-[16/9] overflow-hidden rounded-md bg-white">
+                <Image
+                  src={heroImage}
+                  alt={t(
+                    "Ambiente universitario moderno con aprendizaje en línea",
+                    "Modern university setting with online learning",
+                  )}
+                  fill
+                  priority
+                  className="object-cover"
+                  sizes="(min-width: 1024px) 44vw, 100vw"
+                />
+                <span className="absolute left-3 top-3 rounded-full bg-white/95 px-3 py-1 text-xs font-semibold text-primary shadow-sm">
+                  MOOC
+                </span>
+              </div>
+            )}
           </div>
         </div>
       </section>
