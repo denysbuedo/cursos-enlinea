@@ -2,6 +2,7 @@ import Link from "next/link";
 import { BookOpenCheck, GraduationCap, Mail, ShieldCheck } from "lucide-react";
 import type { getDictionary } from "@/lib/i18n";
 import { APP_DESCRIPTION, APP_NAME } from "@/lib/app-config";
+import { PLATFORM_CONFIG } from "@/lib/platform-config";
 type Dict = ReturnType<typeof getDictionary>;
 
 export function Footer({ lang, dict }: { lang: string; dict: Dict }) {
@@ -54,10 +55,7 @@ export function Footer({ lang, dict }: { lang: string; dict: Dict }) {
       <div className="border-t border-white/12 bg-black/10">
         <div className="container mx-auto px-4 py-3">
           <p className="mx-auto max-w-6xl text-center text-[11px] leading-4 text-white/70">
-            {t(
-              "Esta plataforma está soportada por la Red Nacional de Investigación y Educación de Avanzada (Reduniv) del Ministerio de Educación Superior de la República de Cuba.",
-              "This platform is supported by the National Advanced Research and Education Network (Reduniv) of the Ministry of Higher Education of the Republic of Cuba.",
-            )}
+            {t(PLATFORM_CONFIG.institutionalSupport.es, PLATFORM_CONFIG.institutionalSupport.en)}
           </p>
         </div>
         <div className="border-t border-white/10">

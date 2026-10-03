@@ -6,6 +6,7 @@ import { LogOut, GraduationCap, Menu, X } from "lucide-react";
 import { useState } from "react";
 import type { getDictionary } from "@/lib/i18n";
 import { APP_NAME } from "@/lib/app-config";
+import { PLATFORM_CONFIG, PLATFORM_ID } from "@/lib/platform-config";
 
 type Dict = ReturnType<typeof getDictionary>;
 
@@ -32,11 +33,12 @@ export function Navbar({ lang, dict, session }: { lang: string; dict: Dict; sess
     `text-sm font-medium transition-colors px-3 py-1.5 rounded-lg ${pathname.includes(path) ? "bg-white text-primary" : "text-white/90 hover:text-white hover:bg-white/10"}`;
 
   return (
-    <header className="sticky top-0 z-50 bg-primary shadow-sm" role="banner">
+    <>
+      <header className="sticky top-0 z-50 bg-primary shadow-sm" role="banner">
       <nav className="container mx-auto flex h-16 items-center justify-between px-4">
         <Link href={`/${lang}`} className="flex items-center gap-2.5 text-white font-bold text-lg">
           <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-white/12"><GraduationCap className="w-5 h-5" /></div>
-          <span className="hidden sm:inline">{APP_NAME}</span>
+          <span className="hidden sm:inline" title={APP_NAME}>{PLATFORM_ID === "nae" ? PLATFORM_CONFIG.shortName : APP_NAME}</span>
         </Link>
 
         <div className="hidden md:flex items-center gap-1">
@@ -73,6 +75,7 @@ export function Navbar({ lang, dict, session }: { lang: string; dict: Dict; sess
           {session && <button onClick={handleLogout} disabled={loggingOut} className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-white/90 hover:bg-white/10 hover:text-white disabled:opacity-50"><LogOut className="h-4 w-4" />{loggingOut ? "..." : dict.nav.logout}</button>}
         </div>
       )}
-    </header>
+      </header>
+    </>
   );
 }

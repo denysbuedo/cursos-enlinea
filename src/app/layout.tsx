@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
+import type { CSSProperties } from "react";
 import "@/app/globals.css";
 import { APP_DESCRIPTION, APP_NAME, APP_URL } from "@/lib/app-config";
+import { PLATFORM_CONFIG, PLATFORM_ID } from "@/lib/platform-config";
 
 export const metadata: Metadata = {
   title: {
@@ -45,9 +47,18 @@ export const metadata: Metadata = {
 export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
+  const platformStyle = {
+    "--platform-primary": PLATFORM_CONFIG.theme.primary,
+    "--platform-primary-hover": PLATFORM_CONFIG.theme.primaryHover,
+    "--platform-accent": PLATFORM_CONFIG.theme.accent,
+    "--platform-background": PLATFORM_CONFIG.theme.background,
+    "--platform-secondary": PLATFORM_CONFIG.theme.secondary,
+    "--platform-highlight": PLATFORM_CONFIG.theme.highlight,
+  } as CSSProperties;
+
   return (
-    <html lang="es" suppressHydrationWarning>
-      <body style={{background:"#fff",color:"#1a1a2e"}} className="min-h-screen font-sans antialiased">
+    <html lang="es" data-platform={PLATFORM_ID} suppressHydrationWarning>
+      <body style={{ ...platformStyle, background: "#fff", color: "#1a1a2e" }} className="min-h-screen font-sans antialiased">
         {children}
       </body>
     </html>

@@ -3,14 +3,20 @@
 :root {
   --background: #f6f8fa;
   --foreground: #1f2933;
+  --platform-primary: #0b5f9e;
+  --platform-primary-hover: #084f85;
+  --platform-accent: #e9f2f8;
+  --platform-background: #f6f8fa;
+  --platform-secondary: #0b5f9e;
+  --platform-highlight: #e9f2f8;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --color-primary: #0b5f9e;
+  --color-primary: var(--platform-primary);
   --color-primary-foreground: #ffffff;
-  --color-accent: #e9f2f8;
+  --color-accent: var(--platform-accent);
   --color-muted: #eef2f5;
   --color-muted-foreground: #607080;
   --color-card: #ffffff;
@@ -37,8 +43,8 @@ textarea {
 
 .app-surface {
   background:
-    linear-gradient(180deg, rgba(11, 95, 158, 0.06), rgba(11, 95, 158, 0) 340px),
-    var(--background);
+    linear-gradient(180deg, color-mix(in srgb, var(--platform-primary) 6%, transparent), transparent 340px),
+    var(--platform-background);
 }
 
 .visual-panel {
@@ -52,5 +58,5 @@ textarea {
 }
 
 .focus-ring:focus-visible {
-  box-shadow: 0 0 0 3px rgba(11, 95, 158, 0.2);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--platform-primary) 20%, transparent);
 }
