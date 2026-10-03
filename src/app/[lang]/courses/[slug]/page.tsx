@@ -105,6 +105,7 @@ interface SessionItem {
   scheduledAt?: string;
   order: number;
   status: string;
+  evaluations?: Array<{ id: string; title: { es: string; en: string }; evaluationType?: "PARTIAL" | "AUTOEVALUATION" }>;
 }
 
 interface EvaluationData {

@@ -21,7 +21,7 @@ type QuestionInput = {
 async function getEditableCourse(courseIdOrSlug: string, userId: string, role: string) {
   const course = await prisma.course.findFirst({
     where: { OR: [{ id: courseIdOrSlug }, { slug: courseIdOrSlug }] },
-    select: { id: true, instructorId: true, questionBank: true, evaluations: { take: 1, select: { questions: true } } },
+    select: { id: true, instructorId: true, questionBank: true, evaluations: { where: { evaluationType: "FINAL" }, take: 1, select: { questions: true } } },
   });
 
   if (!course) return null;
@@ -93,14 +93,15 @@ export async function GET(
     const course = await getEditableCourse(id, session.userId, session.role);
     if (!course) return NextResponse.json({ error: "Curso no encontrado" }, { status: 404 });
 
-    const bank = Array.isArray(course.questionBank) ? course.questionBank : [];
-    const fallback = bank.length > 0
+    const hasBank = Array.isArray(course.questionBank);
+    const bank = hasBank ? course.questionBank : [];
+    const fallback = hasBank
       ? bank
       : Array.isArray(course.evaluations[0]?.questions)
         ? course.evaluations[0].questions
         : [];
 
-    return NextResponse.json({ data: fallback, source: bank.length > 0 ? "BANK" : "EVALUATION" });
+    return NextResponse.json({ data: fallback, source: hasBank ? "BANK" : "EVALUATION" });
   } catch (error) {
     if (error instanceof Error && error.message === "UNAUTHORIZED") {
       return NextResponse.json({ error: "No autorizado" }, { status: 401 });

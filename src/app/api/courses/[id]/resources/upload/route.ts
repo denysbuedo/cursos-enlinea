@@ -20,6 +20,12 @@ const ALLOWED_RESOURCE_TYPES = [
   "image/png",
   "image/jpeg",
   "image/webp",
+  "audio/mpeg",
+  "audio/mp4",
+  "audio/x-m4a",
+  "audio/ogg",
+  "audio/wav",
+  "audio/x-wav",
 ];
 
 function safeFileName(name: string) {

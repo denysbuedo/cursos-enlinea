@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getSession, requireAuth } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { rateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 import { canViewCourseInCms } from "@/lib/course-access";
 
@@ -31,6 +31,12 @@ export async function GET(
           sessions: {
             where: { status: "PUBLISHED" },
             orderBy: { order: "asc" },
+            include: {
+              evaluations: {
+                where: { evaluationType: { in: ["PARTIAL", "AUTOEVALUATION"] } },
+                select: { id: true, title: true, description: true, passingScore: true, maxAttempts: true, showFeedback: true, shuffleQuestions: true, shuffleOptions: true, evaluationType: true },
+              },
+            },
           },
         },
       },
@@ -41,6 +47,12 @@ export async function GET(
       sessions: {
         where: { status: "PUBLISHED" },
         orderBy: [{ moduleId: "asc" }, { order: "asc" }],
+        include: {
+          evaluations: {
+            where: { evaluationType: { in: ["PARTIAL", "AUTOEVALUATION"] } },
+            select: { id: true, title: true, description: true, passingScore: true, maxAttempts: true, showFeedback: true, shuffleQuestions: true, shuffleOptions: true, evaluationType: true },
+          },
+        },
       },
       _count: {
         select: { enrollments: true },
@@ -123,49 +135,4 @@ export async function GET(
       "Cache-Control": "no-store, max-age=0",
     },
   });
-}
-
-export async function DELETE(
-  _request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
-    const session = await requireAuth();
-    const { id } = await params;
-    const course = await prisma.course.findFirst({
-      where: { OR: [{ id }, { slug: id }] },
-      select: {
-        id: true,
-        instructorId: true,
-        status: true,
-        _count: { select: { enrollments: true, certificates: true } },
-      },
-    });
-
-    if (!course) return NextResponse.json({ error: "Curso no encontrado" }, { status: 404 });
-    if (session.role !== "ADMIN" && course.instructorId !== session.userId) {
-      return NextResponse.json({ error: "Solo el responsable principal o un administrador puede eliminar el curso" }, { status: 403 });
-    }
-    if (course.status !== "DRAFT" && course.status !== "ARCHIVED") {
-      return NextResponse.json({ error: "Solo se pueden eliminar cursos en borrador o archivados" }, { status: 409 });
-    }
-    if (course._count.enrollments > 0 || course._count.certificates > 0) {
-      return NextResponse.json({ error: "No se puede eliminar un curso con matrículas o certificados" }, { status: 409 });
-    }
-
-    await prisma.course.delete({ where: { id: course.id } });
-    await prisma.auditLog.create({
-      data: {
-        action: "COURSE_DELETED",
-        entity: "Course",
-        entityId: course.id,
-        userId: session.userId,
-        metadata: { previousStatus: course.status },
-      },
-    });
-    return NextResponse.json({ data: { id: course.id } });
-  } catch (error) {
-    if (error instanceof Error && error.message === "UNAUTHORIZED") return NextResponse.json({ error: "No autorizado" }, { status: 401 });
-    return NextResponse.json({ error: "No se pudo eliminar el curso" }, { status: 500 });
-  }
 }

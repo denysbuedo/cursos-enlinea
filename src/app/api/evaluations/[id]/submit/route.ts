@@ -60,7 +60,7 @@ export async function POST(
     }
 
     // Verificar progreso 100%
-    if (progress < 100) {
+    if (evaluation.evaluationType === "FINAL" && progress < 100) {
       return NextResponse.json(
         {
           error:
