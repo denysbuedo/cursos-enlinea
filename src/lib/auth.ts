@@ -5,7 +5,7 @@ import { prisma } from "./prisma";
 
 const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET || "dev-secret-change-me");
 const JWT_REFRESH_SECRET = new TextEncoder().encode(process.env.JWT_REFRESH_SECRET || "dev-refresh-secret-change-me");
-const ACCESS_TOKEN_EXP = "15m";
+const ACCESS_TOKEN_EXP = "2h";
 const REFRESH_TOKEN_EXP_DAYS = 7;
 
 // ─── Password ───────────────────────────────────
@@ -94,7 +94,7 @@ export async function setAuthCookies(accessToken: string, refreshToken: string) 
     secure: process.env.NODE_ENV === "production",
     sameSite: "strict",
     path: "/",
-    maxAge: 15 * 60, // 15 min
+    maxAge: 2 * 60 * 60, // 2 horas
   });
   cookieStore.set("refresh_token", refreshToken, {
     httpOnly: true,

@@ -68,8 +68,9 @@ export async function GET(
     const course = await getEditableCourse(id, session.userId, session.role);
     if (!course) return NextResponse.json({ error: "Curso no encontrado" }, { status: 404 });
 
-    const evaluation = await prisma.evaluation.findUnique({
-      where: { courseId: course.id },
+    const evaluation = await prisma.evaluation.findFirst({
+      where: { courseId: course.id, evaluationType: "FINAL" },
+      orderBy: { createdAt: "asc" },
     });
 
     return NextResponse.json({ data: evaluation });
@@ -135,30 +136,37 @@ export async function POST(
       moduleId: String(question.moduleId || "").trim(),
     }));
 
-    const evaluation = await prisma.evaluation.upsert({
-      where: { courseId: course.id },
-      update: {
-        title,
-        description: description || {},
-        passingScore: Number(passingScore || 80),
-        maxAttempts: Math.max(1, Number(maxAttempts || 3)),
-        showFeedback: showFeedback !== false,
-        shuffleQuestions: shuffleQuestions !== false,
-        shuffleOptions: shuffleOptions !== false,
-        questions: normalizedQuestions as Prisma.InputJsonValue,
-      },
-      create: {
-        courseId: course.id,
-        title,
-        description: description || {},
-        passingScore: Number(passingScore || 80),
-        maxAttempts: Math.max(1, Number(maxAttempts || 3)),
-        showFeedback: showFeedback !== false,
-        shuffleQuestions: shuffleQuestions !== false,
-        shuffleOptions: shuffleOptions !== false,
-        questions: normalizedQuestions as Prisma.InputJsonValue,
-      },
+    const existing = await prisma.evaluation.findFirst({
+      where: { courseId: course.id, evaluationType: "FINAL" },
+      orderBy: { createdAt: "asc" },
+      select: { id: true },
     });
+
+    const data = {
+      title,
+      description: description || {},
+      evaluationType: "FINAL" as const,
+      moduleId: null,
+      sessionId: null,
+      passingScore: Number(passingScore || 80),
+      maxAttempts: Math.max(1, Number(maxAttempts || 3)),
+      showFeedback: showFeedback !== false,
+      shuffleQuestions: shuffleQuestions !== false,
+      shuffleOptions: shuffleOptions !== false,
+      questions: normalizedQuestions as Prisma.InputJsonValue,
+    };
+
+    const evaluation = existing
+      ? await prisma.evaluation.update({
+          where: { id: existing.id },
+          data,
+        })
+      : await prisma.evaluation.create({
+          data: {
+            courseId: course.id,
+            ...data,
+          },
+        });
 
     return NextResponse.json({ data: evaluation });
   } catch (error) {

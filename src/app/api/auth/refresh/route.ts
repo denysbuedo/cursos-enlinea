@@ -7,7 +7,7 @@ import {
 } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
-const ACCESS_TOKEN_MAX_AGE = 15 * 60;
+const ACCESS_TOKEN_MAX_AGE = 2 * 60 * 60;
 const REFRESH_TOKEN_MAX_AGE = 7 * 24 * 60 * 60;
 
 function setAuthCookies(response: NextResponse, accessToken: string, refreshToken: string) {

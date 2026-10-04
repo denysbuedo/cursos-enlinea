@@ -18,7 +18,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
           include: { sessions: { orderBy: { order: "asc" } } },
         },
         sessions: { where: { moduleId: null }, orderBy: { order: "asc" } },
-        evaluations: { take: 1 },
+        evaluations: { where: { evaluationType: "FINAL" }, take: 1 },
       },
     });
     if (!course) return NextResponse.json({ error: "Curso no encontrado" }, { status: 404 });
@@ -51,6 +51,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
         pricingModel: course.pricingModel,
         price: course.price?.toString() || null,
         currency: course.currency,
+        visibility: course.visibility,
         instructors: [
           { name: course.instructor.name, email: course.instructor.email, role: "LEAD" },
           ...course.instructors.filter((assignment) => assignment.user.email !== course.instructor.email).map((assignment) => ({

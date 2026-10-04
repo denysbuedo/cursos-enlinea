@@ -11,12 +11,14 @@ type LocalizedText = { es: string; en: string };
 type LocalizedListText = { es: string; en: string };
 type SessionType = "RECORDED" | "LIVE" | "HYBRID";
 type QuestionType = "MCQ" | "TRUEFALSE" | "SHORT";
+type EvaluationType = "FINAL" | "PARTIAL" | "AUTOEVALUATION";
 type CmsSection = "course" | "analytics" | "editions" | "modules" | "sessions" | "questionBank" | "evaluation" | "reviews";
 
 interface CmsSession {
   id: string;
   title: LocalizedText;
   description: LocalizedText;
+  moduleId?: string | null;
   sessionType: SessionType;
   preview: boolean;
   videoUrl?: string;
@@ -100,12 +102,15 @@ interface CmsEvaluation {
   id: string;
   title: LocalizedText;
   description?: LocalizedText;
+  evaluationType?: EvaluationType;
   passingScore: number;
   maxAttempts?: number;
   showFeedback?: boolean;
   shuffleQuestions?: boolean;
   shuffleOptions?: boolean;
   questions: CmsQuestion[];
+  session?: { id: string; title: LocalizedText; order: number } | null;
+  module?: { id: string; title: LocalizedText; order: number } | null;
 }
 
 interface CourseFormState {
@@ -182,6 +187,7 @@ interface BankSelectionState {
   difficulty: string;
   moduleId: string;
   topic: string;
+  selectionMode: "FIXED" | "RANDOM";
 }
 
 interface EditionFormState {
@@ -323,8 +329,10 @@ export default function CmsPage() {
   const [loadingQuestionBank, setLoadingQuestionBank] = useState(false);
   const [loadingReviews, setLoadingReviews] = useState(false);
   const [courseReviews, setCourseReviews] = useState<CmsReview[]>([]);
+  const [partialEvaluations, setPartialEvaluations] = useState<CmsEvaluation[]>([]);
   const [error, setError] = useState("");
   const [resourceNotice, setResourceNotice] = useState("");
+  const [bankNotice, setBankNotice] = useState("");
   const [profileSaving, setProfileSaving] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [instructorProfile, setInstructorProfile] = useState<InstructorProfileForm>({
@@ -348,12 +356,15 @@ export default function CmsPage() {
   const [searchingStudents, setSearchingStudents] = useState(false);
   const [analytics, setAnalytics] = useState<CourseAnalytics | null>(null);
   const [questionBank, setQuestionBank] = useState<CmsQuestion[]>([]);
+  const [selectedBankQuestionIds, setSelectedBankQuestionIds] = useState<string[]>([]);
+  const [bankQuestionForm, setBankQuestionForm] = useState<CmsQuestion | null>(null);
   const [bankSelection, setBankSelection] = useState<BankSelectionState>({
     count: "",
     tag: "",
     difficulty: "",
     moduleId: "",
     topic: "",
+    selectionMode: "FIXED",
   });
   const [resourceForm, setResourceForm] = useState({
     title: "",
@@ -429,8 +440,10 @@ export default function CmsPage() {
     showFeedback: true,
     shuffleQuestions: true,
     shuffleOptions: true,
-    questions: [createQuestion()],
+    questions: [],
   });
+  const [partialSessionId, setPartialSessionId] = useState("");
+  const [evaluationType, setEvaluationType] = useState<EvaluationType>("FINAL");
 
   const t = (es: string, en: string) => (lang === "en" ? en : es);
   async function cmsFetch(input: RequestInfo | URL, init?: RequestInit) {
@@ -520,6 +533,7 @@ export default function CmsPage() {
 
   async function loadCourseReviews(courseId: string) {
     setLoadingReviews(true);
+    setError("");
     try {
       const res = await cmsFetch(`/api/courses/${courseId}/reviews?moderation=1`);
       if (!res.ok) throw new Error();
@@ -529,6 +543,39 @@ export default function CmsPage() {
       setError(t("No se pudieron cargar las reseñas.", "Could not load reviews."));
     } finally {
       setLoadingReviews(false);
+    }
+  }
+
+  async function loadPartialEvaluations(courseId: string) {
+    try {
+      const res = await cmsFetch(`/api/courses/${courseId}/partial-evaluations`);
+      if (!res.ok) throw new Error();
+      const json = await res.json();
+      setPartialEvaluations(Array.isArray(json.data) ? json.data : []);
+    } catch {
+      setPartialEvaluations([]);
+      setError(t("No se pudieron cargar las evaluaciones del módulo.", "Could not load module assessments."));
+    }
+  }
+
+  async function deletePartialEvaluation(evaluationId: string) {
+    if (!selectedCourseId) return;
+    const confirmed = window.confirm(t(
+      "¿Quitar esta autoevaluación o evaluación parcial? También se eliminarán sus intentos registrados.",
+      "Remove this self-assessment or partial assessment? Its recorded attempts will also be deleted."
+    ));
+    if (!confirmed) return;
+    setSaving(true);
+    setError("");
+    try {
+      const res = await cmsFetch(`/api/courses/${selectedCourseId}/partial-evaluations?evaluationId=${encodeURIComponent(evaluationId)}`, { method: "DELETE" });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(json.error || t("No se pudo eliminar la evaluación.", "Could not delete the assessment."));
+      await loadPartialEvaluations(selectedCourseId);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : t("No se pudo eliminar la evaluación.", "Could not delete the assessment."));
+    } finally {
+      setSaving(false);
     }
   }
 
@@ -637,6 +684,22 @@ export default function CmsPage() {
     setEditionEnrollments([]);
     setAnalytics(null);
     setQuestionBank([]);
+    setSelectedBankQuestionIds([]);
+    setBankQuestionForm(null);
+    setBankNotice("");
+    setEvaluationType("FINAL");
+    setPartialSessionId("");
+    setEvaluationForm({
+      title: { es: "Evaluación final", en: "Final evaluation" },
+      description: { ...emptyText },
+      passingScore: "80",
+      maxAttempts: "3",
+      showFeedback: true,
+      shuffleQuestions: true,
+      shuffleOptions: true,
+      questions: [],
+    });
+    setPartialEvaluations([]);
     setCourseInstructors([]);
     setActiveSection("course");
     setCourseForm({
@@ -692,7 +755,7 @@ export default function CmsPage() {
     setLoadingEnrollments(true);
     setError("");
     try {
-      const res = await fetch(`/api/courses/${selectedCourse.id}/editions/${editionId}/enrollments`);
+      const res = await cmsFetch(`/api/courses/${selectedCourse.id}/editions/${editionId}/enrollments`);
       if (!res.ok) {
         const json = await res.json().catch(() => ({}));
         const details = Array.isArray(json.missing) ? ` ${json.missing.join("; ")}` : "";
@@ -712,7 +775,7 @@ export default function CmsPage() {
     setSaving(true);
     setError("");
     try {
-      const res = await fetch(`/api/courses/${selectedCourse.id}/editions/${selectedEditionId}/enrollments`, {
+      const res = await cmsFetch(`/api/courses/${selectedCourse.id}/editions/${selectedEditionId}/enrollments`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ enrollmentId, status }),
@@ -736,7 +799,7 @@ export default function CmsPage() {
     setSearchingStudents(true);
     setError("");
     try {
-      const res = await fetch(`/api/cms/users?role=STUDENT&search=${encodeURIComponent(query)}&pageSize=8`);
+      const res = await cmsFetch(`/api/cms/users?role=STUDENT&search=${encodeURIComponent(query)}&pageSize=8`);
       if (!res.ok) throw new Error();
       const json = await res.json();
       setStudentResults(json.data || []);
@@ -752,7 +815,7 @@ export default function CmsPage() {
     setSaving(true);
     setError("");
     try {
-      const res = await fetch(`/api/courses/${selectedCourse.id}/editions/${selectedEditionId}/enrollments`, {
+      const res = await cmsFetch(`/api/courses/${selectedCourse.id}/editions/${selectedEditionId}/enrollments`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -801,7 +864,7 @@ export default function CmsPage() {
     setLoading(true);
     setError("");
     try {
-      const res = await fetch("/api/cms/courses");
+      const res = await cmsFetch("/api/cms/courses");
       if (res.status === 401) {
         router.push(`/${lang}/login`);
         return;
@@ -832,7 +895,7 @@ export default function CmsPage() {
     setLoadingAnalytics(true);
     setError("");
     try {
-      const res = await fetch(`/api/courses/${courseId}/analytics`);
+      const res = await cmsFetch(`/api/courses/${courseId}/analytics`);
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
         throw new Error(data.error || "Error");
@@ -851,13 +914,15 @@ export default function CmsPage() {
     setLoadingQuestionBank(true);
     setError("");
     try {
-      const res = await fetch(`/api/courses/${courseId}/question-bank`);
+      const res = await cmsFetch(`/api/courses/${courseId}/question-bank`);
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
         throw new Error(data.error || "Error");
       }
       const json = await res.json();
-      setQuestionBank(Array.isArray(json.data) ? json.data : []);
+      const nextQuestions = Array.isArray(json.data) ? json.data : [];
+      setQuestionBank(nextQuestions);
+      setSelectedBankQuestionIds((current) => current.filter((id) => nextQuestions.some((question: CmsQuestion) => question.id === id)));
     } catch (e) {
       setError(e instanceof Error ? e.message : t("No se pudo cargar el banco de preguntas.", "Could not load question bank."));
     } finally {
@@ -880,8 +945,15 @@ export default function CmsPage() {
     setEditionEnrollments([]);
     setAnalytics(null);
     setQuestionBank(Array.isArray(course.questionBank) ? course.questionBank : []);
+    setSelectedBankQuestionIds([]);
+    setBankQuestionForm(null);
+    setBankNotice("");
+    setEvaluationType("FINAL");
+    setPartialSessionId("");
+    setPartialEvaluations([]);
     void loadCourseInstructors(course.id);
     void loadCourseReviews(course.id);
+    void loadPartialEvaluations(course.id);
     setActiveSection("course");
     setCourseForm({
       id: course.id,
@@ -925,7 +997,7 @@ export default function CmsPage() {
             topic: question.topic || "",
             moduleId: question.moduleId || "",
           }))
-        : [createQuestion()],
+        : [],
     });
   }
 
@@ -1006,7 +1078,7 @@ export default function CmsPage() {
       const json = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(json.error || t("No se pudo importar el curso.", "Could not import course."));
       await loadCourses(json.data?.id);
-      const refreshed = await fetch("/api/cms/courses");
+      const refreshed = await cmsFetch("/api/cms/courses");
       if (refreshed.ok) {
         const coursesData = await refreshed.json();
         const importedCourse = (coursesData.data || []).find((course: CmsCourse) => course.id === json.data?.id);
@@ -1026,7 +1098,7 @@ export default function CmsPage() {
     try {
       const formData = new FormData();
       formData.append("file", file);
-      const res = await fetch(`/api/courses/${courseForm.id}/cover/upload`, {
+      const res = await cmsFetch(`/api/courses/${courseForm.id}/cover/upload`, {
         method: "POST",
         body: formData,
       });
@@ -1124,7 +1196,7 @@ export default function CmsPage() {
     setSaving(true);
     setError("");
     try {
-      const res = await fetch(`/api/courses/${selectedCourse.id}/modules`, {
+      const res = await cmsFetch(`/api/courses/${selectedCourse.id}/modules`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -1151,7 +1223,7 @@ export default function CmsPage() {
     setSaving(true);
     setError("");
     try {
-      const res = await fetch(`/api/courses/${selectedCourse.id}/editions`, {
+      const res = await cmsFetch(`/api/courses/${selectedCourse.id}/editions`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -1380,15 +1452,41 @@ export default function CmsPage() {
     }));
   }
 
+  function changeEvaluationType(nextType: EvaluationType) {
+    setEvaluationType(nextType);
+    setEvaluationForm((current) => {
+      const defaultTitles = ["Evaluación final", "Evaluación parcial", "Autoevaluación"];
+      const currentTitle = current.title.es.trim();
+      const nextTitle = nextType === "FINAL" ? "Evaluación final" : nextType === "PARTIAL" ? "Evaluación parcial" : "Autoevaluación";
+      if (!defaultTitles.includes(currentTitle)) return current;
+      return {
+        ...current,
+        title: { es: nextTitle, en: nextType === "FINAL" ? "Final assessment" : nextType === "PARTIAL" ? "Partial assessment" : "Self-assessment" },
+      };
+    });
+  }
+
   async function saveEvaluation() {
     if (!selectedCourse) return;
+    if (evaluationForm.questions.length === 0) {
+      setError(t("Selecciona al menos una pregunta del banco.", "Select at least one question from the bank."));
+      return;
+    }
+    if (evaluationType !== "FINAL" && !partialSessionId) {
+      setError(t("Selecciona la sesión donde se realizará esta evaluación.", "Select the session for this assessment."));
+      return;
+    }
     setSaving(true);
     setError("");
     try {
-      const res = await fetch(`/api/courses/${selectedCourse.id}/evaluation`, {
+      const endpoint = evaluationType === "FINAL"
+        ? `/api/courses/${selectedCourse.id}/evaluation`
+        : `/api/courses/${selectedCourse.id}/partial-evaluations`;
+      const res = await cmsFetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          ...(evaluationType === "FINAL" ? {} : { sessionId: partialSessionId, evaluationType }),
           title: evaluationForm.title,
           description: evaluationForm.description,
           passingScore: Number(evaluationForm.passingScore || 80),
@@ -1404,35 +1502,118 @@ export default function CmsPage() {
         throw new Error(data.error || "Error");
       }
       await loadCourses(selectedCourse.id);
+      if (evaluationType !== "FINAL") await loadPartialEvaluations(selectedCourse.id);
     } catch (e) {
-      setError(e instanceof Error ? e.message : t("No se pudo guardar la evaluación.", "Could not save evaluation."));
+      setError(e instanceof Error ? e.message : t("No se pudo guardar la evaluación.", "Could not save the assessment."));
     } finally {
       setSaving(false);
     }
   }
 
-  async function saveQuestionBankFromEvaluation() {
-    if (!selectedCourse) return;
+  function updateBankQuestion(patch: Partial<CmsQuestion>) {
+    setBankQuestionForm((current) => current ? { ...current, ...patch } : current);
+  }
+
+  function updateBankQuestionOption(optionIndex: number, value: LocalizedText) {
+    setBankQuestionForm((current) => current ? {
+      ...current,
+      options: current.options.map((option, index) => index === optionIndex ? value : option),
+    } : current);
+  }
+
+  function startNewBankQuestion() {
+    setError("");
+    setBankQuestionForm(createQuestion());
+  }
+
+  function editBankQuestion(question: CmsQuestion) {
+    setError("");
+    setBankQuestionForm({
+      ...question,
+      feedback: question.feedback || { ...emptyText },
+      options: question.options || [],
+      tags: question.tags || [],
+      difficulty: question.difficulty || "BASIC",
+      topic: question.topic || "",
+      moduleId: question.moduleId || "",
+    });
+  }
+
+  async function persistQuestionBank(nextQuestions: CmsQuestion[], successMessage?: string) {
+    if (!selectedCourse) return false;
     setSaving(true);
     setError("");
     try {
-      const res = await fetch(`/api/courses/${selectedCourse.id}/question-bank`, {
+      const res = await cmsFetch(`/api/courses/${selectedCourse.id}/question-bank`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ questions: evaluationForm.questions }),
+        body: JSON.stringify({ questions: nextQuestions }),
       });
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data.error || "Error");
-      }
-      const json = await res.json();
-      setQuestionBank(Array.isArray(json.data) ? json.data : []);
-      await loadCourses(selectedCourse.id);
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || t("No se pudo guardar el banco de preguntas.", "Could not save the question bank."));
+      const savedQuestions = Array.isArray(data.data) ? data.data : [];
+      setQuestionBank(savedQuestions);
+      setSelectedBankQuestionIds((current) => current.filter((id) => savedQuestions.some((question: CmsQuestion) => question.id === id)));
+      if (successMessage) setBankNotice(successMessage);
+      return true;
     } catch (e) {
-      setError(e instanceof Error ? e.message : t("No se pudo guardar el banco.", "Could not save question bank."));
+      setError(e instanceof Error ? e.message : t("No se pudo guardar el banco de preguntas.", "Could not save the question bank."));
+      return false;
     } finally {
       setSaving(false);
     }
+  }
+
+  async function saveBankQuestion() {
+    if (!bankQuestionForm) return;
+    const question = bankQuestionForm;
+    if (!question.question.es.trim() && !question.question.en.trim()) {
+      setError(t("Escribe el enunciado de la pregunta.", "Enter the question text."));
+      return;
+    }
+    if (!question.correctAnswer.trim()) {
+      setError(t("Indica la respuesta correcta.", "Enter the correct answer."));
+      return;
+    }
+    if (question.type === "MCQ" && question.options.length < 2) {
+      setError(t("Una pregunta de selección múltiple necesita al menos dos opciones.", "A multiple-choice question needs at least two options."));
+      return;
+    }
+    const existingIndex = questionBank.findIndex((item) => item.id === question.id);
+    const nextQuestions = existingIndex >= 0
+      ? questionBank.map((item, index) => index === existingIndex ? question : item)
+      : [...questionBank, question];
+    const saved = await persistQuestionBank(nextQuestions, t("Pregunta guardada en el banco.", "Question saved in the bank."));
+    if (saved) setBankQuestionForm(null);
+  }
+
+  async function deleteBankQuestion(questionId: string) {
+    if (!window.confirm(t("¿Eliminar esta pregunta del banco? No se eliminará de evaluaciones ya guardadas.", "Delete this question from the bank? It will not be removed from saved evaluations."))) return;
+    const saved = await persistQuestionBank(questionBank.filter((question) => question.id !== questionId), t("Pregunta eliminada del banco.", "Question removed from the bank."));
+    if (saved && bankQuestionForm?.id === questionId) setBankQuestionForm(null);
+  }
+
+  async function saveQuestionBankFromEvaluation() {
+    if (!selectedCourse) return;
+    const merged = [...questionBank];
+    for (const question of evaluationForm.questions) {
+      const index = merged.findIndex((item) => item.id === question.id);
+      if (index >= 0) merged[index] = question;
+      else merged.push(question);
+    }
+    await persistQuestionBank(merged, t("Preguntas incorporadas al banco.", "Questions added to the bank."));
+  }
+
+  function getFilteredBankQuestions() {
+    const tag = bankSelection.tag.trim().toLowerCase();
+    const topic = bankSelection.topic.trim().toLowerCase();
+    return questionBank.filter((question) => {
+      const tagMatches = !tag || (question.tags || []).some((item) => item.toLowerCase() === tag);
+      const difficultyMatches = !bankSelection.difficulty || question.difficulty === bankSelection.difficulty;
+      const moduleMatches = !bankSelection.moduleId || question.moduleId === bankSelection.moduleId;
+      const topicMatches = !topic || (question.topic || "").toLowerCase().includes(topic);
+      return tagMatches && difficultyMatches && moduleMatches && topicMatches;
+    });
   }
 
   function loadBankIntoEvaluation() {
@@ -1440,35 +1621,43 @@ export default function CmsPage() {
       setError(t("El banco de preguntas está vacío.", "Question bank is empty."));
       return;
     }
-    const requestedCount = Number(bankSelection.count || 0);
-    let candidates = questionBank.filter((question) => {
-      const tagMatches = !bankSelection.tag.trim() || (question.tags || []).some((tag) => tag.toLowerCase() === bankSelection.tag.trim().toLowerCase());
-      const difficultyMatches = !bankSelection.difficulty || question.difficulty === bankSelection.difficulty;
-      const moduleMatches = !bankSelection.moduleId || question.moduleId === bankSelection.moduleId;
-      const topicMatches = !bankSelection.topic.trim() || (question.topic || "").toLowerCase().includes(bankSelection.topic.trim().toLowerCase());
-      return tagMatches && difficultyMatches && moduleMatches && topicMatches;
-    });
-    candidates = candidates.sort(() => Math.random() - 0.5);
-    if (requestedCount > 0) {
-      candidates = candidates.slice(0, requestedCount);
+    let candidates = selectedBankQuestionIds.length > 0
+      ? questionBank.filter((question) => selectedBankQuestionIds.includes(question.id))
+      : getFilteredBankQuestions();
+    if (selectedBankQuestionIds.length === 0) {
+      const requestedCount = Number(bankSelection.count || 0);
+      if (bankSelection.selectionMode === "RANDOM") {
+        candidates = candidates.sort(() => Math.random() - 0.5);
+      }
+      if (requestedCount > 0) {
+        candidates = candidates.slice(0, requestedCount);
+      }
     }
     if (candidates.length === 0) {
-      setError(t("No hay preguntas que coincidan con esos filtros.", "No questions match those filters."));
+      setError(selectedBankQuestionIds.length > 0
+        ? t("No hay preguntas marcadas para añadir.", "No questions are selected to add.")
+        : t("No hay preguntas que coincidan con esos filtros.", "No questions match those filters."));
+      return;
+    }
+    const selectedIds = new Set(evaluationForm.questions.map((question) => question.id));
+    const additions = candidates.filter((question) => !selectedIds.has(question.id)).map((question) => ({
+      ...question,
+      feedback: question.feedback || { ...emptyText },
+      tags: question.tags || [],
+      difficulty: question.difficulty || "BASIC",
+      topic: question.topic || "",
+      moduleId: question.moduleId || "",
+    }));
+    if (additions.length === 0) {
+      setError(t("Las preguntas que coinciden ya están en la evaluación.", "Matching questions are already in the assessment."));
       return;
     }
     setError("");
     setEvaluationForm((prev) => ({
       ...prev,
-      questions: candidates.map((question) => ({
-        ...question,
-        id: `q-${Date.now()}-${question.id}`,
-        feedback: question.feedback || { ...emptyText },
-        tags: question.tags || [],
-        difficulty: question.difficulty || "BASIC",
-        topic: question.topic || "",
-        moduleId: question.moduleId || "",
-      })),
+      questions: [...prev.questions, ...additions],
     }));
+    setSelectedBankQuestionIds([]);
     setActiveSection("evaluation");
   }
 
@@ -1842,6 +2031,14 @@ export default function CmsPage() {
                   <option value="CUP">CUP</option>
                 </select>
               </div>
+              <label className="text-sm">
+                <span className="mb-1 block text-[#7b8fa1]">{t("Visibilidad", "Visibility")}</span>
+                <select className="w-full rounded-md border px-3 py-2 text-sm" value={courseForm.visibility} onChange={(e) => setCourseForm({ ...courseForm, visibility: e.target.value })}>
+                  <option value="PUBLIC">{t("Público: visible en el catálogo", "Public: visible in catalog")}</option>
+                  <option value="ENROLLED_ONLY">{t("Solo personas matriculadas", "Enrolled learners only")}</option>
+                  <option value="PRIVATE">{t("Privado: no visible en el catálogo", "Private: hidden from catalog")}</option>
+                </select>
+              </label>
             </div>
             <button onClick={saveCourse} disabled={saving} className="mt-4 inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-white disabled:opacity-50">
               {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
@@ -2278,11 +2475,10 @@ export default function CmsPage() {
                       <option key={module.id} value={module.id}>{module.order}. {t(module.title.es, module.title.en)}</option>
                     ))}
                   </select>
-                  <select className="rounded-md border px-3 py-2 text-sm" value={sessionForm.sessionType} onChange={(e) => setSessionForm({ ...sessionForm, sessionType: e.target.value as SessionType })}>
-                    <option value="RECORDED">Recorded</option>
-                    <option value="LIVE">Live</option>
-                    <option value="HYBRID">Hybrid</option>
-                  </select>
+                  <div className="rounded-md border bg-[#f7f9fb] px-3 py-2 text-sm text-[#52667a]">
+                    <span className="font-medium text-[#17212b]">{t("Sesión grabada", "Recorded session")}</span>
+                    <span className="ml-2 text-xs">{t("Las modalidades en vivo e híbrida se habilitarán en una etapa posterior.", "Live and hybrid modes will be enabled in a later stage.")}</span>
+                  </div>
                   <input className="rounded-md border px-3 py-2 text-sm" placeholder="Sesión ES" value={sessionForm.title.es} onChange={(e) => setSessionForm({ ...sessionForm, title: { ...sessionForm.title, es: e.target.value } })} />
                   <input className="rounded-md border px-3 py-2 text-sm" placeholder="Session EN" value={sessionForm.title.en} onChange={(e) => setSessionForm({ ...sessionForm, title: { ...sessionForm.title, en: e.target.value } })} />
                   <div className="grid grid-cols-[1fr_90px] gap-3">
@@ -2319,7 +2515,7 @@ export default function CmsPage() {
                       <label className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-md border px-3 py-2 text-sm hover:bg-accent">
                         {uploadingResource ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
                         {uploadingResource ? t("Subiendo...", "Uploading...") : t("Subir material", "Upload resource")}
-                        <input type="file" accept=".pdf,.zip,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.csv,.png,.jpg,.jpeg,.webp" className="hidden" onChange={(e) => uploadResource(e.target.files?.[0] || null)} />
+                        <input type="file" accept=".pdf,.zip,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.csv,.png,.jpg,.jpeg,.webp,.mp3,.m4a,.ogg,.wav" className="hidden" onChange={(e) => uploadResource(e.target.files?.[0] || null)} />
                       </label>
                     </div>
                     <div className="grid gap-2 md:grid-cols-[1fr_1fr_130px_150px_auto]">
@@ -2330,6 +2526,7 @@ export default function CmsPage() {
                         <option value="PDF">PDF</option>
                         <option value="READING">{t("Lectura", "Reading")}</option>
                         <option value="SLIDES">{t("Diapositivas", "Slides")}</option>
+                        <option value="AUDIO">{t("Audio", "Audio")}</option>
                         <option value="DATASET">Dataset</option>
                         <option value="OTHER">{t("Otro", "Other")}</option>
                       </select>
@@ -2366,6 +2563,9 @@ export default function CmsPage() {
                     )}
                     <p className="text-xs text-[#7b8fa1]">
                       {t("Usa enlaces a repositorios de objetos de aprendizaje cuando existan; la subida local queda para materiales propios o cerrados.", "Use learning-object repository links when available; local upload is for owned or restricted materials.")}
+                    </p>
+                    <p className="text-xs text-[#7b8fa1]">
+                      {t("Límite técnico de recursos: 50 MB. Se admiten PDF, documentos, presentaciones, ZIP, imágenes y audio MP3/M4A/OGG/WAV.", "Technical resource limit: 50 MB. PDF, documents, presentations, ZIP, images and MP3/M4A/OGG/WAV audio are supported.")}
                     </p>
                   </div>
                   {videoPreview && (
@@ -2422,7 +2622,7 @@ export default function CmsPage() {
                                   moduleId: "",
                                   title: session.title,
                                   description: session.description,
-                                  sessionType: session.sessionType,
+                                  sessionType: "RECORDED",
                                   preview: session.preview,
                                   videoUrl: session.videoUrl || "",
                                   videoPlatform: session.videoPlatform || "",
@@ -2478,7 +2678,7 @@ export default function CmsPage() {
                                   moduleId: module.id,
                                   title: session.title,
                                   description: session.description,
-                                  sessionType: session.sessionType,
+                                  sessionType: "RECORDED",
                                   preview: session.preview,
                                   videoUrl: session.videoUrl || "",
                                   videoPlatform: session.videoPlatform || "",
@@ -2528,11 +2728,21 @@ export default function CmsPage() {
                     <BookOpen className="h-5 w-5 text-primary" />
                     <h2 className="font-semibold">{t("Banco de preguntas", "Question bank")}</h2>
                   </div>
-                  <button onClick={() => loadQuestionBank(selectedCourse.id)} disabled={loadingQuestionBank} className="inline-flex items-center gap-2 rounded-md border px-3 py-1.5 text-xs hover:bg-accent disabled:opacity-50">
-                    {loadingQuestionBank ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
-                    {t("Actualizar", "Refresh")}
-                  </button>
+                  <div className="flex flex-wrap gap-2">
+                    <button onClick={startNewBankQuestion} className="inline-flex items-center gap-2 rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-white hover:opacity-90">
+                      <Plus className="h-3.5 w-3.5" />
+                      {t("Nueva pregunta", "New question")}
+                    </button>
+                    <button onClick={() => loadQuestionBank(selectedCourse.id)} disabled={loadingQuestionBank} className="inline-flex items-center gap-2 rounded-md border px-3 py-1.5 text-xs hover:bg-accent disabled:opacity-50">
+                      {loadingQuestionBank ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
+                      {t("Actualizar", "Refresh")}
+                    </button>
+                  </div>
                 </div>
+                <p className="mb-4 text-sm leading-6 text-[#52667a]">
+                  {t("Crea y organiza aquí las preguntas reutilizables. Después selecciónalas para construir evaluaciones finales o parciales.", "Create and organize reusable questions here. Then select them to build final or partial assessments.")}
+                </p>
+                {bankNotice && <p className="mb-4 rounded-md border border-green-200 bg-green-50 px-3 py-2 text-xs text-green-800">{bankNotice}</p>}
                 <div className="grid gap-3 md:grid-cols-3">
                   <div className="rounded-md border p-4">
                     <p className="text-xs text-[#7b8fa1]">{t("Preguntas reutilizables", "Reusable questions")}</p>
@@ -2540,14 +2750,14 @@ export default function CmsPage() {
                   </div>
                   <button onClick={saveQuestionBankFromEvaluation} disabled={saving || evaluationForm.questions.length === 0} className="inline-flex items-center justify-center gap-2 rounded-md border p-4 text-sm font-medium hover:bg-accent disabled:opacity-50">
                     <Save className="h-4 w-4" />
-                    {t("Guardar evaluación como banco", "Save evaluation as bank")}
+                    {t("Importar preguntas de la evaluación", "Import evaluation questions")}
                   </button>
                   <button onClick={loadBankIntoEvaluation} disabled={questionBank.length === 0} className="inline-flex items-center justify-center gap-2 rounded-md bg-primary p-4 text-sm font-medium text-white disabled:opacity-50">
                     <Plus className="h-4 w-4" />
-                    {t("Usar banco en evaluación", "Use bank in evaluation")}
+                    {t("Añadir selección a evaluación", "Add selection to assessment")}
                   </button>
                 </div>
-                <div className="mt-4 grid gap-3 md:grid-cols-5">
+                <div className="mt-4 grid gap-3 md:grid-cols-6">
                   <input className="rounded-md border px-3 py-2 text-sm" placeholder={t("Cantidad", "Count")} value={bankSelection.count} onChange={(e) => setBankSelection({ ...bankSelection, count: e.target.value })} />
                   <input className="rounded-md border px-3 py-2 text-sm" placeholder={t("Etiqueta", "Tag")} value={bankSelection.tag} onChange={(e) => setBankSelection({ ...bankSelection, tag: e.target.value })} />
                   <select className="rounded-md border px-3 py-2 text-sm" value={bankSelection.difficulty} onChange={(e) => setBankSelection({ ...bankSelection, difficulty: e.target.value })}>
@@ -2563,21 +2773,144 @@ export default function CmsPage() {
                     ))}
                   </select>
                   <input className="rounded-md border px-3 py-2 text-sm" placeholder={t("Tema", "Topic")} value={bankSelection.topic} onChange={(e) => setBankSelection({ ...bankSelection, topic: e.target.value })} />
+                  <select className="rounded-md border px-3 py-2 text-sm" value={bankSelection.selectionMode} onChange={(e) => setBankSelection({ ...bankSelection, selectionMode: e.target.value as BankSelectionState["selectionMode"] })}>
+                    <option value="FIXED">{t("Selección fija", "Fixed selection")}</option>
+                    <option value="RANDOM">{t("Selección aleatoria", "Random selection")}</option>
+                  </select>
                 </div>
+                <div className="mt-3 flex flex-col gap-3 rounded-md border border-primary/20 bg-[#f7fbff] p-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-[#17212b]">{t("Selección manual de preguntas", "Manual question selection")}</p>
+                    <p className="mt-1 text-xs text-[#52667a]">{t("Marca las preguntas que quieres añadir. Si no marcas ninguna, se aplicarán la cantidad y los filtros definidos arriba.", "Mark the questions you want to add. If none are marked, the count and filters above will be used.")}</p>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-xs font-medium text-[#52667a]">{selectedBankQuestionIds.length} {t("seleccionadas", "selected")}</span>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedBankQuestionIds((current) => Array.from(new Set([...current, ...getFilteredBankQuestions().map((question) => question.id)])))}
+                      disabled={getFilteredBankQuestions().length === 0}
+                      className="rounded-md border px-3 py-1.5 text-xs hover:bg-accent disabled:opacity-50"
+                    >
+                      {t("Seleccionar coincidencias", "Select matches")}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedBankQuestionIds([])}
+                      disabled={selectedBankQuestionIds.length === 0}
+                      className="rounded-md border px-3 py-1.5 text-xs hover:bg-accent disabled:opacity-50"
+                    >
+                      {t("Limpiar", "Clear")}
+                    </button>
+                  </div>
+                </div>
+                {bankQuestionForm && (
+                  <div className="mt-5 rounded-md border border-primary/30 bg-[#f7fbff] p-4">
+                    <div className="mb-3 flex items-center justify-between gap-3">
+                      <div>
+                        <h3 className="text-sm font-semibold">{t("Editar pregunta del banco", "Edit bank question")}</h3>
+                        <p className="mt-1 text-xs text-[#7b8fa1]">{t("Esta pregunta podrá reutilizarse en varias evaluaciones.", "This question can be reused in several assessments.")}</p>
+                      </div>
+                      <button type="button" onClick={() => setBankQuestionForm(null)} className="rounded-md border px-3 py-1.5 text-xs hover:bg-accent">{t("Cancelar", "Cancel")}</button>
+                    </div>
+                    <div className="grid gap-3 md:grid-cols-2">
+                      <select className="rounded-md border px-3 py-2 text-sm" value={bankQuestionForm.type} onChange={(e) => {
+                        const nextType = e.target.value as QuestionType;
+                        updateBankQuestion({
+                          type: nextType,
+                          options: nextType === "MCQ" ? [{ ...emptyText }, { ...emptyText }] : [],
+                          correctAnswer: nextType === "TRUEFALSE" ? "true" : "",
+                        });
+                      }}>
+                        <option value="MCQ">{t("Selección múltiple", "Multiple choice")}</option>
+                        <option value="TRUEFALSE">{t("Verdadero/Falso", "True/False")}</option>
+                        <option value="SHORT">{t("Respuesta corta", "Short answer")}</option>
+                      </select>
+                      <input className="rounded-md border px-3 py-2 text-sm" type="number" min="1" placeholder={t("Puntos", "Points")} value={bankQuestionForm.points} onChange={(e) => updateBankQuestion({ points: Number(e.target.value || 1) })} />
+                      <input className="rounded-md border px-3 py-2 text-sm" placeholder="Pregunta ES" value={bankQuestionForm.question.es} onChange={(e) => updateBankQuestion({ question: { ...bankQuestionForm.question, es: e.target.value } })} />
+                      <input className="rounded-md border px-3 py-2 text-sm" placeholder="Question EN" value={bankQuestionForm.question.en} onChange={(e) => updateBankQuestion({ question: { ...bankQuestionForm.question, en: e.target.value } })} />
+                      <select className="rounded-md border px-3 py-2 text-sm" value={bankQuestionForm.difficulty || "BASIC"} onChange={(e) => updateBankQuestion({ difficulty: e.target.value as CmsQuestion["difficulty"] })}>
+                        <option value="BASIC">{t("Básica", "Basic")}</option>
+                        <option value="INTERMEDIATE">{t("Intermedia", "Intermediate")}</option>
+                        <option value="ADVANCED">{t("Avanzada", "Advanced")}</option>
+                      </select>
+                      <select className="rounded-md border px-3 py-2 text-sm" value={bankQuestionForm.moduleId || ""} onChange={(e) => updateBankQuestion({ moduleId: e.target.value })}>
+                        <option value="">{t("Sin módulo asociado", "No linked module")}</option>
+                        {selectedCourse.modules.map((module) => <option key={module.id} value={module.id}>{module.order}. {t(module.title.es, module.title.en)}</option>)}
+                      </select>
+                      <input className="rounded-md border px-3 py-2 text-sm" placeholder={t("Tema", "Topic")} value={bankQuestionForm.topic || ""} onChange={(e) => updateBankQuestion({ topic: e.target.value })} />
+                      <input className="rounded-md border px-3 py-2 text-sm" placeholder={t("Etiquetas separadas por coma", "Comma-separated tags")} value={(bankQuestionForm.tags || []).join(", ")} onChange={(e) => updateBankQuestion({ tags: e.target.value.split(",").map((tag) => tag.trim()).filter(Boolean) })} />
+                    </div>
+                    {bankQuestionForm.type === "MCQ" && (
+                      <div className="mt-3 space-y-2">
+                        {bankQuestionForm.options.map((option, optionIndex) => (
+                          <div key={`bank-option-${optionIndex}`} className="grid gap-2 md:grid-cols-[1fr_1fr_auto]">
+                            <input className="rounded-md border px-3 py-2 text-sm" placeholder={`Opción ${optionIndex + 1} ES`} value={option.es} onChange={(e) => updateBankQuestionOption(optionIndex, { ...option, es: e.target.value })} />
+                            <input className="rounded-md border px-3 py-2 text-sm" placeholder={`Option ${optionIndex + 1} EN`} value={option.en} onChange={(e) => updateBankQuestionOption(optionIndex, { ...option, en: e.target.value })} />
+                            <button type="button" onClick={() => updateBankQuestion({ correctAnswer: option.es || option.en })} className={`rounded-md border px-3 py-2 text-xs ${bankQuestionForm.correctAnswer === (option.es || option.en) ? "bg-primary text-white" : "hover:bg-accent"}`}>{t("Correcta", "Correct")}</button>
+                          </div>
+                        ))}
+                        <button type="button" onClick={() => updateBankQuestion({ options: [...bankQuestionForm.options, { ...emptyText }] })} className="rounded-md border px-3 py-1.5 text-xs hover:bg-accent">{t("Agregar opción", "Add option")}</button>
+                      </div>
+                    )}
+                    {bankQuestionForm.type === "TRUEFALSE" && (
+                      <select className="mt-3 rounded-md border px-3 py-2 text-sm" value={bankQuestionForm.correctAnswer} onChange={(e) => updateBankQuestion({ correctAnswer: e.target.value })}>
+                        <option value="true">{t("Verdadero", "True")}</option>
+                        <option value="false">{t("Falso", "False")}</option>
+                      </select>
+                    )}
+                    {bankQuestionForm.type === "SHORT" && <input className="mt-3 w-full rounded-md border px-3 py-2 text-sm" placeholder={t("Respuesta correcta", "Correct answer")} value={bankQuestionForm.correctAnswer} onChange={(e) => updateBankQuestion({ correctAnswer: e.target.value })} />}
+                    <div className="mt-3 grid gap-3 md:grid-cols-2">
+                      <textarea className="rounded-md border px-3 py-2 text-sm" placeholder={t("Retroalimentación ES", "Feedback ES")} value={bankQuestionForm.feedback.es} onChange={(e) => updateBankQuestion({ feedback: { ...bankQuestionForm.feedback, es: e.target.value } })} />
+                      <textarea className="rounded-md border px-3 py-2 text-sm" placeholder={t("Retroalimentación EN", "Feedback EN")} value={bankQuestionForm.feedback.en} onChange={(e) => updateBankQuestion({ feedback: { ...bankQuestionForm.feedback, en: e.target.value } })} />
+                    </div>
+                    <button type="button" onClick={() => void saveBankQuestion()} disabled={saving} className="mt-4 inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-white disabled:opacity-50">
+                      <Save className="h-4 w-4" />
+                      {t("Guardar pregunta", "Save question")}
+                    </button>
+                  </div>
+                )}
+
                 <div className="mt-5 space-y-2">
                   {questionBank.length === 0 ? (
                     <div className="rounded-md border border-dashed p-6 text-center text-sm text-[#7b8fa1]">
-                      {t("El banco está vacío. Crea preguntas en Evaluación y guárdalas aquí para reutilizarlas.", "The bank is empty. Create questions in Evaluation and save them here for reuse.")}
+                      {t("El banco está vacío. Pulsa «Nueva pregunta» para comenzar.", "The bank is empty. Click “New question” to begin.")}
                     </div>
-                  ) : questionBank.map((question, index) => (
+                  ) : getFilteredBankQuestions().length === 0 ? (
+                    <div className="rounded-md border border-dashed p-6 text-center text-sm text-[#7b8fa1]">
+                      {t("No hay preguntas que coincidan con los filtros actuales.", "No questions match the current filters.")}
+                    </div>
+                      ) : getFilteredBankQuestions().map((question, index) => (
                     <div key={question.id || index} className="rounded-md border p-3 text-sm">
-                      <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-                        <p className="font-medium">{index + 1}. {t(question.question.es, question.question.en)}</p>
-                        <span className="text-xs text-[#7b8fa1]">{question.type} · {question.points} pt</span>
+                      <div className="flex items-start gap-3">
+                        {(() => {
+                          const alreadySelected = evaluationForm.questions.some((item) => item.id === question.id);
+                          return (
+                        <input
+                          type="checkbox"
+                          checked={alreadySelected || selectedBankQuestionIds.includes(question.id)}
+                          disabled={alreadySelected}
+                          onChange={() => setSelectedBankQuestionIds((current) => current.includes(question.id)
+                            ? current.filter((id) => id !== question.id)
+                            : [...current, question.id])}
+                          aria-label={t(`Seleccionar pregunta ${index + 1}`, `Select question ${index + 1}`)}
+                          className="mt-1 h-4 w-4 shrink-0 accent-primary disabled:cursor-not-allowed disabled:opacity-50"
+                        />
+                          );
+                        })()}
+                        <div className="min-w-0 flex-1">
+                          <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                            <p className="font-medium">{index + 1}. {t(question.question.es, question.question.en)}</p>
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs text-[#7b8fa1]">{question.type} · {question.points} pt</span>
+                              <button type="button" onClick={() => editBankQuestion(question)} className="rounded-md border px-2 py-1 text-xs hover:bg-accent">{t("Editar", "Edit")}</button>
+                              <button type="button" onClick={() => void deleteBankQuestion(question.id)} disabled={saving} className="inline-flex items-center gap-1 rounded-md border px-2 py-1 text-xs text-red-600 hover:bg-red-50 disabled:opacity-50"><Trash2 className="h-3 w-3" />{t("Eliminar", "Delete")}</button>
+                            </div>
+                          </div>
+                          <p className="mt-1 text-xs text-[#7b8fa1]">
+                            {[question.difficulty || "BASIC", question.topic, question.moduleId ? selectedCourse.modules.find((module) => module.id === question.moduleId)?.title.es : "", ...(question.tags || [])].filter(Boolean).join(" · ")}
+                          </p>
+                        </div>
                       </div>
-                      <p className="mt-1 text-xs text-[#7b8fa1]">
-                        {[question.difficulty || "BASIC", question.topic, question.moduleId ? selectedCourse.modules.find((module) => module.id === question.moduleId)?.title.es : "", ...(question.tags || [])].filter(Boolean).join(" · ")}
-                      </p>
                     </div>
                   ))}
                 </div>
@@ -2589,6 +2922,64 @@ export default function CmsPage() {
                 <div className="mb-4 flex items-center gap-2">
                   <Award className="h-5 w-5 text-primary" />
                   <h2 className="font-semibold">{t("Evaluación", "Evaluation")}</h2>
+                </div>
+                {partialEvaluations.length > 0 && (
+                  <div className="mb-5 rounded-md border p-4">
+                    <div className="mb-3 flex items-center justify-between gap-3">
+                      <div>
+                        <h3 className="text-sm font-semibold">{t("Evaluaciones por sesión", "Session assessments")}</h3>
+                        <p className="mt-1 text-xs text-[#7b8fa1]">{t("Puedes quitar una autoevaluación o evaluación parcial sin afectar la evaluación final.", "You can remove a self-assessment or partial assessment without affecting the final assessment.")}</p>
+                      </div>
+                      <span className="text-xs text-[#7b8fa1]">{partialEvaluations.length}</span>
+                    </div>
+                    <div className="space-y-2">
+                      {partialEvaluations.map((evaluation) => (
+                        <div key={evaluation.id} className="flex flex-col gap-2 rounded-md bg-[#f7f9fb] p-3 text-sm sm:flex-row sm:items-center sm:justify-between">
+                          <div>
+                            <p className="font-medium">{t(evaluation.title.es, evaluation.title.en)}</p>
+                            <p className="mt-1 text-xs text-[#7b8fa1]">
+                              {evaluation.evaluationType === "AUTOEVALUATION" ? t("Autoevaluación", "Self-assessment") : t("Evaluación parcial", "Partial assessment")}
+                              {evaluation.session ? ` · ${t(evaluation.session.title.es, evaluation.session.title.en)}` : ""}
+                            </p>
+                          </div>
+                          <button type="button" onClick={() => void deletePartialEvaluation(evaluation.id)} disabled={saving} className="inline-flex items-center justify-center gap-1 rounded-md border px-3 py-1.5 text-xs text-red-600 hover:bg-red-50 disabled:opacity-50">
+                            <Trash2 className="h-3.5 w-3.5" />
+                            {t("Quitar", "Remove")}
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                <div className="mb-5 rounded-md border border-primary/20 bg-[#f7fbff] p-4">
+                  <div className="grid gap-3 md:grid-cols-[minmax(0,240px)_1fr] md:items-start">
+                    <label className="text-sm">
+                      <span className="mb-1 block font-medium text-[#17212b]">{t("Tipo de evaluación", "Assessment type")}</span>
+                      <select className="w-full rounded-md border px-3 py-2 text-sm" value={evaluationType} onChange={(e) => changeEvaluationType(e.target.value as EvaluationType)}>
+                        <option value="FINAL">{t("Evaluación final del curso", "Final course assessment")}</option>
+                        <option value="AUTOEVALUATION">{t("Autoevaluación de una sesión", "Session self-assessment")}</option>
+                        <option value="PARTIAL">{t("Evaluación parcial de una sesión", "Session partial assessment")}</option>
+                      </select>
+                    </label>
+                    <div className="text-sm text-[#52667a]">
+                      <p>{evaluationType === "FINAL"
+                        ? t("Comprueba el aprendizaje global del curso y puede ser requisito para el certificado.", "Checks overall course learning and can be required for the certificate.")
+                        : evaluationType === "AUTOEVALUATION"
+                          ? t("Actividad formativa para practicar y recibir retroalimentación. No afecta la aprobación del curso.", "Formative activity for practice and feedback. It does not affect course approval.")
+                          : t("Actividad calificable de una sesión o módulo. En esta versión no bloquea por sí sola el certificado.", "Graded activity for a session or module. In this version it does not by itself block the certificate.")}</p>
+                      {evaluationType !== "FINAL" && (
+                        <select className="mt-3 w-full rounded-md border px-3 py-2 text-sm" value={partialSessionId} onChange={(e) => setPartialSessionId(e.target.value)}>
+                          <option value="">{t("Seleccionar sesión asociada", "Select associated session")}</option>
+                          {(selectedCourse.sessions || []).map((session) => <option key={session.id} value={session.id}>{session.order}. {t(session.title.es, session.title.en)}</option>)}
+                          {selectedCourse.modules.flatMap((module) => module.sessions).map((session) => <option key={session.id} value={session.id}>{t("Módulo", "Module")} {session.order}: {t(session.title.es, session.title.en)}</option>)}
+                        </select>
+                      )}
+                    </div>
+                  </div>
+                  <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-primary/10 pt-3">
+                    <button type="button" onClick={() => setActiveSection("questionBank")} className="inline-flex items-center gap-2 rounded-md border border-primary px-3 py-1.5 text-xs font-medium text-primary hover:bg-primary hover:text-white"><BookOpen className="h-3.5 w-3.5" />{t("Seleccionar preguntas del banco", "Select questions from bank")}</button>
+                    <span className="text-xs text-[#7b8fa1]">{evaluationForm.questions.length} {t("preguntas seleccionadas", "questions selected")}</span>
+                  </div>
                 </div>
                 <div className="grid gap-3 md:grid-cols-2">
                   <input className="rounded-md border px-3 py-2 text-sm" placeholder="Título ES" value={evaluationForm.title.es} onChange={(e) => setEvaluationForm({ ...evaluationForm, title: { ...evaluationForm.title, es: e.target.value } })} />
@@ -2618,6 +3009,13 @@ export default function CmsPage() {
                 </div>
 
                 <div className="mt-5 space-y-4">
+                  {evaluationForm.questions.length === 0 && (
+                    <div className="rounded-md border border-dashed bg-[#f7fbff] p-6 text-center text-sm text-[#52667a]">
+                      <p className="font-medium text-[#17212b]">{t("Esta evaluación todavía no tiene preguntas.", "This assessment has no questions yet.")}</p>
+                      <p className="mt-1">{t("Crea primero las preguntas en el Banco y luego selecciónalas aquí.", "Create questions in the Bank first, then select them here.")}</p>
+                      <button type="button" onClick={() => setActiveSection("questionBank")} className="mt-3 inline-flex items-center gap-2 rounded-md border border-primary px-3 py-1.5 text-xs font-medium text-primary hover:bg-primary hover:text-white"><BookOpen className="h-3.5 w-3.5" />{t("Ir al banco", "Go to bank")}</button>
+                    </div>
+                  )}
                   {evaluationForm.questions.map((question, questionIndex) => (
                     <div key={question.id} className="rounded-md border p-4">
                       <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
@@ -2630,6 +3028,7 @@ export default function CmsPage() {
                             questions: prev.questions.filter((_, i) => i !== questionIndex),
                           }))}
                           disabled={evaluationForm.questions.length <= 1}
+                          title={evaluationForm.questions.length <= 1 ? t("Una evaluación debe conservar al menos una pregunta.", "An assessment must keep at least one question.") : undefined}
                           className="inline-flex items-center gap-1 rounded-md border px-3 py-1.5 text-xs text-red-600 hover:bg-red-50 disabled:opacity-40"
                         >
                           <Trash2 className="h-3.5 w-3.5" />
@@ -2718,9 +3117,13 @@ export default function CmsPage() {
                     <Plus className="h-4 w-4" />
                     {t("Agregar pregunta", "Add question")}
                   </button>
-                  <button onClick={saveEvaluation} disabled={saving} className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-white disabled:opacity-50">
+                  <button onClick={saveEvaluation} disabled={saving || evaluationForm.questions.length === 0} className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-white disabled:opacity-50">
                     <Save className="h-4 w-4" />
-                    {t("Guardar evaluación", "Save evaluation")}
+                    {evaluationType === "FINAL"
+                      ? t("Guardar evaluación final", "Save final assessment")
+                      : evaluationType === "AUTOEVALUATION"
+                        ? t("Guardar autoevaluación", "Save self-assessment")
+                        : t("Guardar evaluación parcial", "Save partial assessment")}
                   </button>
                 </div>
               </section>
@@ -2738,8 +3141,14 @@ export default function CmsPage() {
                     {t("Actualizar", "Refresh")}
                   </button>
                 </div>
-                {courseReviews.length === 0 ? (
-                  <div className="rounded-md border border-dashed p-8 text-center text-sm text-[#7b8fa1]">{t("Aún no hay reseñas.", "There are no reviews yet.")}</div>
+                {loadingReviews ? (
+                  <div className="flex items-center justify-center gap-2 rounded-md border border-dashed p-8 text-sm text-[#7b8fa1]"><Loader2 className="h-4 w-4 animate-spin" />{t("Cargando reseñas...", "Loading reviews...")}</div>
+                ) : courseReviews.length === 0 ? (
+                  <div className="rounded-md border border-dashed p-8 text-center text-sm text-[#7b8fa1]">
+                    <p className="font-medium text-[#52667a]">{t("Todavía no hay reseñas para este curso.", "There are no reviews for this course yet.")}</p>
+                    <p className="mt-2">{t("Las reseñas las envían los estudiantes matriculados desde la vista pública. Cuando exista una, aparecerá aquí para moderarla.", "Enrolled students submit reviews from the public course page. Once one exists, it will appear here for moderation.")}</p>
+                    <button type="button" onClick={() => void loadCourseReviews(selectedCourse.id)} className="mt-3 inline-flex items-center gap-2 rounded-md border px-3 py-1.5 text-xs hover:bg-accent"><RefreshCw className="h-3.5 w-3.5" />{t("Comprobar de nuevo", "Check again")}</button>
+                  </div>
                 ) : (
                   <div className="space-y-3">
                     {courseReviews.map((review) => (

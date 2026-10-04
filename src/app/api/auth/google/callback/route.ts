@@ -66,7 +66,7 @@ export async function GET(request: NextRequest) {
     response.headers.set("Cache-Control", "no-store");
     const secure = process.env.NODE_ENV === "production";
     // Lax permite que el navegador conserve la sesión al volver desde Google.
-    response.cookies.set("access_token", accessToken, { httpOnly: true, secure, sameSite: "lax", path: "/", maxAge: 15 * 60 });
+    response.cookies.set("access_token", accessToken, { httpOnly: true, secure, sameSite: "lax", path: "/", maxAge: 2 * 60 * 60 });
     response.cookies.set("refresh_token", refreshToken, { httpOnly: true, secure, sameSite: "lax", path: "/", maxAge: 7 * 24 * 60 * 60 });
     clearOAuthCookies(response);
     return response;

@@ -58,6 +58,7 @@ export async function GET(request: NextRequest) {
           orderBy: { order: "asc" },
         },
         evaluations: {
+          where: { evaluationType: "FINAL" },
           take: 1,
         },
         editions: {

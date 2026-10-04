@@ -21,7 +21,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
       include: {
         modules: { where: { status: "PUBLISHED" }, orderBy: { order: "asc" }, include: { sessions: { where: { status: "PUBLISHED" }, orderBy: { order: "asc" } } } },
         sessions: { where: { status: "PUBLISHED", moduleId: null }, orderBy: { order: "asc" } },
-        evaluations: { take: 1 },
+        evaluations: { where: { evaluationType: "FINAL" }, take: 1 },
         instructor: { select: { name: true } },
       },
     });

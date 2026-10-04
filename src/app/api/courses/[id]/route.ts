@@ -31,6 +31,12 @@ export async function GET(
           sessions: {
             where: { status: "PUBLISHED" },
             orderBy: { order: "asc" },
+            include: {
+              evaluations: {
+                where: { evaluationType: { in: ["PARTIAL", "AUTOEVALUATION"] } },
+                select: { id: true, title: true, description: true, passingScore: true, maxAttempts: true, showFeedback: true, shuffleQuestions: true, shuffleOptions: true, evaluationType: true },
+              },
+            },
           },
         },
       },
@@ -41,6 +47,12 @@ export async function GET(
       sessions: {
         where: { status: "PUBLISHED" },
         orderBy: [{ moduleId: "asc" }, { order: "asc" }],
+        include: {
+          evaluations: {
+            where: { evaluationType: { in: ["PARTIAL", "AUTOEVALUATION"] } },
+            select: { id: true, title: true, description: true, passingScore: true, maxAttempts: true, showFeedback: true, shuffleQuestions: true, shuffleOptions: true, evaluationType: true },
+          },
+        },
       },
       _count: {
         select: { enrollments: true },

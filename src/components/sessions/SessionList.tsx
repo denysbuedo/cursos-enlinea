@@ -16,6 +16,7 @@ import {
   PencilLine,
 } from "lucide-react";
 import { resolveVideoRender } from "@/lib/video";
+import { PartialEvaluation } from "@/components/evaluations/PartialEvaluation";
 
 interface SessionResource {
   id?: string;
@@ -39,6 +40,7 @@ interface SessionItem {
   scheduledAt?: string;
   order: number;
   status: string;
+  evaluations?: Array<{ id: string; title: { es: string; en: string }; evaluationType?: "PARTIAL" | "AUTOEVALUATION" }>;
 }
 
 interface SessionListProps {
@@ -211,6 +213,10 @@ export function SessionList({
                     <p className="text-sm leading-6 text-[#52667a]">{practicePrompt}</p>
                   </section>
                 )}
+
+                {!isLocked && session.evaluations?.map((evaluation) => (
+                  <PartialEvaluation key={evaluation.id} evaluationId={evaluation.id} title={evaluation.title} type={evaluation.evaluationType} lang={lang} />
+                ))}
 
                 {!isLocked && resources.length > 0 && (
                   <section className="mt-5">
