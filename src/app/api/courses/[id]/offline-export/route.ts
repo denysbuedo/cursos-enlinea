@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireAuth, signOfflineSyncToken } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { APP_URL } from "@/lib/app-config";
 
 function escapeHtml(value: string) {
   return value.replace(/[&<>"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" })[character] || character);
@@ -64,7 +65,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
       evaluation: course.evaluations[0] || null,
       progress: enrollment?.progress || 0,
       completedSessionIds: enrollment?.completions.map((completion) => completion.sessionId) || [],
-      syncEndpoint: `${new URL(request.url).origin}/api/offline/sync`,
+      syncEndpoint: `${APP_URL.replace(/\/$/, "")}/api/offline/sync`,
       syncToken,
     };
     const serialized = JSON.stringify(packageData).replace(/<\/script/gi, "<\\/script");
