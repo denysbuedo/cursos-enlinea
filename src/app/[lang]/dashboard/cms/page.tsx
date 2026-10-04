@@ -462,6 +462,7 @@ export default function CmsPage() {
   });
   const [partialSessionId, setPartialSessionId] = useState("");
   const [evaluationType, setEvaluationType] = useState<EvaluationType>("FINAL");
+  const [editingEvaluationId, setEditingEvaluationId] = useState<string | null>(null);
 
   const t = (es: string, en: string) => (lang === "en" ? en : es);
   async function cmsFetch(input: RequestInfo | URL, init?: RequestInit) {
@@ -576,6 +577,62 @@ export default function CmsPage() {
       setPartialEvaluations([]);
       setError(t("No se pudieron cargar las evaluaciones del módulo.", "Could not load module assessments."));
     }
+  }
+
+  function evaluationToForm(evaluation?: CmsEvaluation | null): EvaluationFormState {
+    return {
+      title: evaluation?.title || { es: "Evaluación final", en: "Final evaluation" },
+      description: evaluation?.description || { ...emptyText },
+      passingScore: String(evaluation?.passingScore || 80),
+      maxAttempts: String(evaluation?.maxAttempts || 3),
+      showFeedback: evaluation?.showFeedback !== false,
+      shuffleQuestions: evaluation?.shuffleQuestions !== false,
+      shuffleOptions: evaluation?.shuffleOptions !== false,
+      questions: evaluation?.questions?.map((question) => ({
+        ...question,
+        feedback: question.feedback || { ...emptyText },
+        tags: question.tags || [],
+        difficulty: question.difficulty || "BASIC",
+        topic: question.topic || "",
+        moduleId: question.moduleId || "",
+      })) || [],
+    };
+  }
+
+  function editPartialEvaluation(evaluation: CmsEvaluation) {
+    setEditingEvaluationId(evaluation.id);
+    setEvaluationType(evaluation.evaluationType === "AUTOEVALUATION" ? "AUTOEVALUATION" : "PARTIAL");
+    setPartialSessionId(evaluation.session?.id || "");
+    setEvaluationForm(evaluationToForm(evaluation));
+    setActiveSection("evaluation");
+    setError("");
+  }
+
+  function editFinalEvaluation() {
+    const evaluation = selectedCourse?.evaluations?.[0];
+    setEditingEvaluationId(null);
+    setEvaluationType("FINAL");
+    setPartialSessionId("");
+    setEvaluationForm(evaluationToForm(evaluation));
+    setError("");
+  }
+
+  function startNewSessionEvaluation() {
+    setEditingEvaluationId(null);
+    setEvaluationType("PARTIAL");
+    setPartialSessionId("");
+    setEvaluationForm({
+      title: { es: "Evaluación parcial", en: "Partial assessment" },
+      description: { ...emptyText },
+      passingScore: "80",
+      maxAttempts: "3",
+      showFeedback: true,
+      shuffleQuestions: true,
+      shuffleOptions: true,
+      questions: [],
+    });
+    setError("");
+    setActiveSection("evaluation");
   }
 
   async function deletePartialEvaluation(evaluationId: string) {
@@ -710,6 +767,7 @@ export default function CmsPage() {
     setBankQuestionForm(null);
     setBankNotice("");
     setEvaluationType("FINAL");
+    setEditingEvaluationId(null);
     setPartialSessionId("");
     setEvaluationForm({
       title: { es: "Evaluación final", en: "Final evaluation" },
@@ -974,6 +1032,7 @@ export default function CmsPage() {
     setBankQuestionForm(null);
     setBankNotice("");
     setEvaluationType("FINAL");
+    setEditingEvaluationId(null);
     setPartialSessionId("");
     setPartialEvaluations([]);
     void loadCourseInstructors(course.id);
@@ -1006,25 +1065,7 @@ export default function CmsPage() {
       visibility: course.visibility,
       status: course.status,
     });
-    setEvaluationForm({
-      title: evaluation?.title || { es: "Evaluación final", en: "Final evaluation" },
-      description: evaluation?.description || { ...emptyText },
-      passingScore: String(evaluation?.passingScore || 80),
-      maxAttempts: String(evaluation?.maxAttempts || 3),
-      showFeedback: evaluation?.showFeedback !== false,
-      shuffleQuestions: evaluation?.shuffleQuestions !== false,
-      shuffleOptions: evaluation?.shuffleOptions !== false,
-      questions: evaluation?.questions?.length
-        ? evaluation.questions.map((question) => ({
-            ...question,
-            feedback: question.feedback || { ...emptyText },
-            tags: question.tags || [],
-            difficulty: question.difficulty || "BASIC",
-            topic: question.topic || "",
-            moduleId: question.moduleId || "",
-          }))
-        : [],
-    });
+    setEvaluationForm(evaluationToForm(evaluation));
   }
 
   async function saveCourse() {
@@ -1513,6 +1554,7 @@ export default function CmsPage() {
   }
 
   function changeEvaluationType(nextType: EvaluationType) {
+    if (editingEvaluationId && nextType === "FINAL") return;
     setEvaluationType(nextType);
     setEvaluationForm((current) => {
       const defaultTitles = ["Evaluación final", "Evaluación parcial", "Autoevaluación"];
@@ -1528,6 +1570,10 @@ export default function CmsPage() {
 
   async function saveEvaluation() {
     if (!selectedCourse) return;
+    if (editingEvaluationId && evaluationType === "FINAL") {
+      setError(t("Una evaluación de sesión no puede guardarse como evaluación final. Vuelve a cargar la evaluación final o crea una nueva evaluación de sesión.", "A session assessment cannot be saved as the final assessment. Reload the final assessment or create a new session assessment."));
+      return;
+    }
     if (evaluationForm.questions.length === 0) {
       setError(t("Selecciona al menos una pregunta del banco.", "Select at least one question from the bank."));
       return;
@@ -1541,9 +1587,10 @@ export default function CmsPage() {
     try {
       const endpoint = evaluationType === "FINAL"
         ? `/api/courses/${selectedCourse.id}/evaluation`
-        : `/api/courses/${selectedCourse.id}/partial-evaluations`;
+        : `/api/courses/${selectedCourse.id}/partial-evaluations${editingEvaluationId ? `?evaluationId=${encodeURIComponent(editingEvaluationId)}` : ""}`;
+      const method = evaluationType === "FINAL" || !editingEvaluationId ? "POST" : "PATCH";
       const res = await cmsFetch(endpoint, {
-        method: "POST",
+        method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...(evaluationType === "FINAL" ? {} : { sessionId: partialSessionId, evaluationType }),
@@ -1561,6 +1608,8 @@ export default function CmsPage() {
         const data = await res.json().catch(() => ({}));
         throw new Error(data.error || "Error");
       }
+      const saved = await res.json().catch(() => ({}));
+      if (evaluationType !== "FINAL" && saved.data?.id) setEditingEvaluationId(saved.data.id);
       await loadCourses(selectedCourse.id);
       if (evaluationType !== "FINAL") await loadPartialEvaluations(selectedCourse.id);
     } catch (e) {
@@ -3043,9 +3092,25 @@ export default function CmsPage() {
 
               {activeSection === "evaluation" && (
               <section className="rounded-lg border bg-white p-5">
-                <div className="mb-4 flex items-center gap-2">
-                  <Award className="h-5 w-5 text-primary" />
-                  <h2 className="font-semibold">{t("Evaluación", "Evaluation")}</h2>
+                <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+                  <div className="flex items-start gap-2">
+                    <Award className="h-5 w-5 text-primary" />
+                    <div>
+                      <h2 className="font-semibold">{t("Evaluación", "Evaluation")}</h2>
+                      <p className="mt-1 text-xs text-[#7b8fa1]">
+                        {editingEvaluationId
+                          ? t("Editando una evaluación asociada a una sesión.", "Editing an assessment associated with a session.")
+                          : evaluationType === "FINAL"
+                            ? t("Editando la evaluación final del curso.", "Editing the final course assessment.")
+                            : t("Creando una nueva evaluación asociada a una sesión.", "Creating a new session assessment.")}
+                      </p>
+                    </div>
+                  </div>
+                  {evaluationType !== "FINAL" && (
+                    <button type="button" onClick={editFinalEvaluation} className="inline-flex items-center gap-1 rounded-md border px-2.5 py-1.5 text-xs font-medium hover:bg-accent">
+                      {t("Editar evaluación final", "Edit final assessment")}
+                    </button>
+                  )}
                 </div>
                 {partialEvaluations.length > 0 && (
                   <div className="mb-5 rounded-md border p-4">
@@ -3054,7 +3119,13 @@ export default function CmsPage() {
                         <h3 className="text-sm font-semibold">{t("Evaluaciones por sesión", "Session assessments")}</h3>
                         <p className="mt-1 text-xs text-[#7b8fa1]">{t("Puedes quitar una autoevaluación o evaluación parcial sin afectar la evaluación final.", "You can remove a self-assessment or partial assessment without affecting the final assessment.")}</p>
                       </div>
-                      <span className="text-xs text-[#7b8fa1]">{partialEvaluations.length}</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-[#7b8fa1]">{partialEvaluations.length}</span>
+                        <button type="button" onClick={startNewSessionEvaluation} className="inline-flex items-center gap-1 rounded-md border px-2.5 py-1.5 text-xs font-medium hover:bg-accent">
+                          <Plus className="h-3.5 w-3.5" />
+                          {t("Nueva", "New")}
+                        </button>
+                      </div>
                     </div>
                     <div className="space-y-2">
                       {partialEvaluations.map((evaluation) => (
@@ -3066,10 +3137,15 @@ export default function CmsPage() {
                               {evaluation.session ? ` · ${t(evaluation.session.title.es, evaluation.session.title.en)}` : ""}
                             </p>
                           </div>
-                          <button type="button" onClick={() => void deletePartialEvaluation(evaluation.id)} disabled={saving} className="inline-flex items-center justify-center gap-1 rounded-md border px-3 py-1.5 text-xs text-red-600 hover:bg-red-50 disabled:opacity-50">
-                            <Trash2 className="h-3.5 w-3.5" />
-                            {t("Quitar", "Remove")}
-                          </button>
+                          <div className="flex items-center gap-2">
+                            <button type="button" onClick={() => editPartialEvaluation(evaluation)} disabled={saving} className="inline-flex items-center justify-center gap-1 rounded-md border px-3 py-1.5 text-xs hover:bg-accent disabled:opacity-50">
+                              {t("Editar", "Edit")}
+                            </button>
+                            <button type="button" onClick={() => void deletePartialEvaluation(evaluation.id)} disabled={saving} className="inline-flex items-center justify-center gap-1 rounded-md border px-3 py-1.5 text-xs text-red-600 hover:bg-red-50 disabled:opacity-50">
+                              <Trash2 className="h-3.5 w-3.5" />
+                              {t("Quitar", "Remove")}
+                            </button>
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -3080,7 +3156,7 @@ export default function CmsPage() {
                     <label className="text-sm">
                       <span className="mb-1 block font-medium text-[#17212b]">{t("Tipo de evaluación", "Assessment type")}</span>
                       <select className="w-full rounded-md border px-3 py-2 text-sm" value={evaluationType} onChange={(e) => changeEvaluationType(e.target.value as EvaluationType)}>
-                        <option value="FINAL">{t("Evaluación final del curso", "Final course assessment")}</option>
+                        <option value="FINAL" disabled={Boolean(editingEvaluationId)}>{t("Evaluación final del curso", "Final course assessment")}</option>
                         <option value="AUTOEVALUATION">{t("Autoevaluación de una sesión", "Session self-assessment")}</option>
                         <option value="PARTIAL">{t("Evaluación parcial de una sesión", "Session partial assessment")}</option>
                       </select>
@@ -3098,6 +3174,7 @@ export default function CmsPage() {
                           {selectedCourse.modules.flatMap((module) => module.sessions).map((session) => <option key={session.id} value={session.id}>{t("Módulo", "Module")} {session.order}: {t(session.title.es, session.title.en)}</option>)}
                         </select>
                       )}
+                      {editingEvaluationId && <p className="mt-2 text-xs text-[#52667a]">{t("Guardar cambios actualizará esta evaluación de sesión. La evaluación final está protegida y no se modificará.", "Saving changes will update this session assessment. The final assessment is protected and will not be changed.")}</p>}
                     </div>
                   </div>
                   <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-primary/10 pt-3">
@@ -3243,11 +3320,13 @@ export default function CmsPage() {
                   </button>
                   <button onClick={saveEvaluation} disabled={saving || evaluationForm.questions.length === 0} className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-white disabled:opacity-50">
                     <Save className="h-4 w-4" />
-                    {evaluationType === "FINAL"
-                      ? t("Guardar evaluación final", "Save final assessment")
-                      : evaluationType === "AUTOEVALUATION"
-                        ? t("Guardar autoevaluación", "Save self-assessment")
-                        : t("Guardar evaluación parcial", "Save partial assessment")}
+                    {editingEvaluationId
+                      ? t("Actualizar evaluación", "Update assessment")
+                      : evaluationType === "FINAL"
+                        ? t("Guardar evaluación final", "Save final assessment")
+                        : evaluationType === "AUTOEVALUATION"
+                          ? t("Guardar autoevaluación", "Save self-assessment")
+                          : t("Guardar evaluación parcial", "Save partial assessment")}
                   </button>
                 </div>
               </section>

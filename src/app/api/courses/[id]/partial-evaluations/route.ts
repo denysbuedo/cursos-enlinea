@@ -108,6 +108,65 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   }
 }
 
+export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  try {
+    const session = await requireAuth();
+    if (session.role !== "ADMIN" && session.role !== "INSTRUCTOR") return NextResponse.json({ error: "Acceso denegado" }, { status: 403 });
+    const course = await editableCourse((await params).id, session.userId, session.role);
+    if (!course) return NextResponse.json({ error: "Curso no encontrado" }, { status: 404 });
+
+    const evaluationId = new URL(request.url).searchParams.get("evaluationId");
+    if (!evaluationId) return NextResponse.json({ error: "Falta el identificador de la evaluación" }, { status: 400 });
+
+    const existing = await prisma.evaluation.findFirst({
+      where: {
+        id: evaluationId,
+        courseId: course.id,
+        evaluationType: { in: ["PARTIAL", "AUTOEVALUATION"] },
+      },
+      select: { id: true },
+    });
+    if (!existing) return NextResponse.json({ error: "Evaluación no encontrada" }, { status: 404 });
+
+    const body = await request.json();
+    const { sessionId, moduleId, title, description, passingScore, maxAttempts, showFeedback, shuffleQuestions, shuffleOptions } = body;
+    const evaluationType = body.evaluationType === "AUTOEVALUATION" ? "AUTOEVALUATION" : "PARTIAL";
+    if (!sessionId || (!title?.es && !title?.en)) return NextResponse.json({ error: "La evaluación necesita sesión y título" }, { status: 400 });
+
+    const targetSession = await prisma.session.findFirst({ where: { id: sessionId, courseId: course.id }, select: { id: true, moduleId: true } });
+    if (!targetSession) return NextResponse.json({ error: "La sesión no pertenece al curso" }, { status: 400 });
+
+    let normalizedQuestions;
+    try {
+      normalizedQuestions = normalizeQuestions(body.questions);
+    } catch (error) {
+      return NextResponse.json({ error: error instanceof Error ? error.message : "Preguntas inválidas" }, { status: 400 });
+    }
+
+    const evaluation = await prisma.evaluation.update({
+      where: { id: existing.id },
+      data: {
+        sessionId: targetSession.id,
+        moduleId: moduleId || targetSession.moduleId || null,
+        evaluationType,
+        title,
+        description: description || {},
+        passingScore: Number(passingScore || 80),
+        maxAttempts: Math.max(1, Number(maxAttempts || 3)),
+        showFeedback: showFeedback !== false,
+        shuffleQuestions: shuffleQuestions !== false,
+        shuffleOptions: shuffleOptions !== false,
+        questions: normalizedQuestions as Prisma.InputJsonValue,
+      },
+    });
+    return NextResponse.json({ data: evaluation });
+  } catch (error) {
+    if (error instanceof Error && error.message === "UNAUTHORIZED") return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+    if (error instanceof Error && error.message === "FORBIDDEN") return NextResponse.json({ error: "Acceso denegado" }, { status: 403 });
+    return NextResponse.json({ error: error instanceof Error ? error.message : "Error del servidor" }, { status: 500 });
+  }
+}
+
 export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await requireAuth();
