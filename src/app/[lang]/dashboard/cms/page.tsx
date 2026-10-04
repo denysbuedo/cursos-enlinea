@@ -41,6 +41,8 @@ interface CmsModule {
 
 interface CmsCourse {
   id: string;
+  instructorId: string;
+  instructor?: { id: string; name: string; email: string; role: string } | null;
   slug: string;
   title: LocalizedText;
   description: LocalizedText;
@@ -115,6 +117,7 @@ interface CmsEvaluation {
 
 interface CourseFormState {
   id: string;
+  leadInstructorId: string;
   slug: string;
   title: LocalizedText;
   description: LocalizedText;
@@ -226,8 +229,10 @@ interface CmsUser {
 }
 
 interface InstructorProfileForm {
+  id: string;
   name: string;
   email: string;
+  role: string;
   bio: string;
   institution: string;
   avatarUrl: string;
@@ -336,8 +341,10 @@ export default function CmsPage() {
   const [profileSaving, setProfileSaving] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [instructorProfile, setInstructorProfile] = useState<InstructorProfileForm>({
+    id: "",
     name: "",
     email: "",
+    role: "",
     bio: "",
     institution: "",
     avatarUrl: "",
@@ -375,6 +382,7 @@ export default function CmsPage() {
 
   const [courseForm, setCourseForm] = useState<CourseFormState>({
     id: "",
+    leadInstructorId: "",
     slug: "",
     title: { ...emptyText },
     description: { ...emptyText },
@@ -465,8 +473,10 @@ export default function CmsPage() {
       const profile = json.data;
       if (profile) {
         setInstructorProfile({
+          id: profile.id || "",
           name: profile.name || "",
           email: profile.email || "",
+          role: profile.role || "",
           bio: profile.bio || "",
           institution: profile.institution || "",
           avatarUrl: profile.avatarUrl || "",
@@ -680,6 +690,7 @@ export default function CmsPage() {
 
   function resetCourseForm() {
     setSelectedCourseId("");
+    setCourseForm((current) => ({ ...current, id: "", leadInstructorId: "" }));
     setSelectedEditionId("");
     setEditionEnrollments([]);
     setAnalytics(null);
@@ -704,6 +715,7 @@ export default function CmsPage() {
     setActiveSection("course");
     setCourseForm({
       id: "",
+      leadInstructorId: "",
       slug: "",
       title: { ...emptyText },
       description: { ...emptyText },
@@ -957,6 +969,7 @@ export default function CmsPage() {
     setActiveSection("course");
     setCourseForm({
       id: course.id,
+      leadInstructorId: course.instructor?.role === "INSTRUCTOR" ? course.instructorId : "",
       slug: course.slug,
       title: course.title,
       description: course.description,
@@ -1002,6 +1015,10 @@ export default function CmsPage() {
   }
 
   async function saveCourse() {
+    if (!courseForm.id && instructorProfile.role === "ADMIN" && !courseForm.leadInstructorId) {
+      setError(t("Selecciona el profesor líder antes de crear el curso.", "Select the lead instructor before creating the course."));
+      return;
+    }
     setSaving(true);
     setError("");
     try {
@@ -1010,6 +1027,7 @@ export default function CmsPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           id: courseForm.id || undefined,
+          leadInstructorId: courseForm.leadInstructorId || undefined,
           slug: courseForm.slug,
           title: courseForm.title,
           description: courseForm.description,
@@ -1132,6 +1150,7 @@ export default function CmsPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           id: courseForm.id,
+          leadInstructorId: courseForm.leadInstructorId || undefined,
           slug: courseForm.slug,
           title: courseForm.title,
           description: courseForm.description,
@@ -1936,6 +1955,29 @@ export default function CmsPage() {
               <input className="rounded-md border px-3 py-2 text-sm" placeholder={t("Rama de la ciencia", "Science branch")} value={courseForm.scienceBranch} onChange={(e) => setCourseForm({ ...courseForm, scienceBranch: e.target.value })} />
               <input className="rounded-md border px-3 py-2 text-sm" placeholder={t("Temáticas, separadas por coma", "Topics, comma-separated")} value={courseForm.topics} onChange={(e) => setCourseForm({ ...courseForm, topics: e.target.value })} />
               <input className="rounded-md border px-3 py-2 text-sm md:col-span-2" placeholder={t("Palabras clave, separadas por coma", "Keywords, comma-separated")} value={courseForm.keywords} onChange={(e) => setCourseForm({ ...courseForm, keywords: e.target.value })} />
+              {instructorProfile.role === "ADMIN" && (
+                <div className="md:col-span-2 rounded-md border border-primary/30 bg-[#f4f7fb] p-4">
+                  <h3 className="text-sm font-semibold">{t("Profesor líder del curso", "Course lead instructor")}</h3>
+                  <p className="mt-1 text-xs text-[#52667a]">
+                    {t("El profesor seleccionado será el responsable principal y verá este curso en su panel de instructor.", "The selected instructor will be the main responsible person and will see this course in their instructor dashboard.")}
+                  </p>
+                  <select
+                    className="mt-3 w-full rounded-md border bg-white px-3 py-2 text-sm"
+                    value={courseForm.leadInstructorId}
+                    onChange={(e) => setCourseForm({ ...courseForm, leadInstructorId: e.target.value })}
+                  >
+                    <option value="">{t("Seleccionar profesor líder", "Select lead instructor")}</option>
+                    {instructorCandidates.map((candidate) => (
+                      <option key={candidate.id} value={candidate.id}>{candidate.name} · {candidate.email}</option>
+                    ))}
+                  </select>
+                  {instructorCandidates.length === 0 && (
+                    <p className="mt-2 text-xs text-amber-700">
+                      {t("No hay profesores con rol de instructor registrados.", "No users with instructor role are registered.")}
+                    </p>
+                  )}
+                </div>
+              )}
               <div className="md:col-span-2 mt-2 border-t pt-4">
                 <h3 className="text-sm font-semibold">{t("Conozca a su instructor", "Meet your instructor")}</h3>
                 <p className="mt-1 text-xs text-[#52667a]">

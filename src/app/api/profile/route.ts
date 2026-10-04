@@ -7,7 +7,7 @@ export async function GET() {
     const session = await requireAuth();
     const profile = await prisma.user.findUnique({
       where: { id: session.userId },
-      select: { id: true, name: true, email: true, bio: true, institution: true, avatarUrl: true },
+      select: { id: true, name: true, email: true, bio: true, institution: true, avatarUrl: true, role: true },
     });
     return profile
       ? NextResponse.json({ data: profile })
@@ -28,7 +28,7 @@ export async function PUT(request: NextRequest) {
     const profile = await prisma.user.update({
       where: { id: session.userId },
       data: { bio: bio || null, institution: institution || null, avatarUrl: avatarUrl || null },
-      select: { id: true, name: true, email: true, bio: true, institution: true, avatarUrl: true },
+      select: { id: true, name: true, email: true, bio: true, institution: true, avatarUrl: true, role: true },
     });
     return NextResponse.json({ data: profile });
   } catch {

@@ -177,11 +177,28 @@ export async function POST(request: NextRequest) {
       currency,
       visibility,
       status,
+      leadInstructorId,
     } = body;
+    const requestedLeadInstructorId = typeof leadInstructorId === "string" ? leadInstructorId.trim() : "";
     const nextPrice = pricingModel === "FREE" ? null : Number(price || 0);
 
     if (!slug || !title || !description) {
       return NextResponse.json({ error: "Faltan campos: slug, title, description" }, { status: 400 });
+    }
+    if (requestedLeadInstructorId && session.role !== "ADMIN") {
+      return NextResponse.json({ error: "Solo un administrador puede definir el profesor líder" }, { status: 403 });
+    }
+    if (!id && session.role === "ADMIN" && !requestedLeadInstructorId) {
+      return NextResponse.json({ error: "Selecciona el profesor líder del curso" }, { status: 400 });
+    }
+    if (requestedLeadInstructorId) {
+      const leadInstructor = await prisma.user.findUnique({
+        where: { id: requestedLeadInstructorId },
+        select: { id: true, role: true },
+      });
+      if (!leadInstructor || leadInstructor.role !== "INSTRUCTOR") {
+        return NextResponse.json({ error: "El profesor líder debe tener rol de instructor" }, { status: 400 });
+      }
     }
 
     let result;
@@ -209,31 +226,47 @@ export async function POST(request: NextRequest) {
         }
       }
 
-      result = await prisma.course.update({
-        where: { id },
-        data: {
-          slug, title, description,
-          learningObjectives: learningObjectives || null,
-          targetAudience: targetAudience || null,
-          requirements: requirements || null,
-          competencies: competencies || null,
-          coverImageUrl: coverImageUrl?.trim() || null,
-          scienceBranch: scienceBranch?.trim() || null,
-          topics: Array.isArray(topics) ? topics : [],
-          keywords: Array.isArray(keywords) ? keywords : [],
-          estimatedHours: estimatedHours ? Number(estimatedHours) : null,
-          weeklyHours: weeklyHours ? Number(weeklyHours) : null,
-          level: level || null,
-          language: language || "es",
-          certificateAvailable: certificateAvailable !== undefined ? Boolean(certificateAvailable) : true,
-          selfPaced: selfPaced !== undefined ? Boolean(selfPaced) : true,
-          pricingModel: pricingModel || "FREE",
-          price: nextPrice,
-          currency: currency || "USD",
-          visibility: visibility || "PUBLIC",
-          status: nextStatus,
-        },
-      });
+      const courseData = {
+        slug, title, description,
+        learningObjectives: learningObjectives || null,
+        targetAudience: targetAudience || null,
+        requirements: requirements || null,
+        competencies: competencies || null,
+        coverImageUrl: coverImageUrl?.trim() || null,
+        scienceBranch: scienceBranch?.trim() || null,
+        topics: Array.isArray(topics) ? topics : [],
+        keywords: Array.isArray(keywords) ? keywords : [],
+        estimatedHours: estimatedHours ? Number(estimatedHours) : null,
+        weeklyHours: weeklyHours ? Number(weeklyHours) : null,
+        level: level || null,
+        language: language || "es",
+        certificateAvailable: certificateAvailable !== undefined ? Boolean(certificateAvailable) : true,
+        selfPaced: selfPaced !== undefined ? Boolean(selfPaced) : true,
+        pricingModel: pricingModel || "FREE",
+        price: nextPrice,
+        currency: currency || "USD",
+        visibility: visibility || "PUBLIC",
+        status: nextStatus,
+        ...(session.role === "ADMIN" && requestedLeadInstructorId ? { instructorId: requestedLeadInstructorId } : {}),
+      };
+
+      if (session.role === "ADMIN" && requestedLeadInstructorId) {
+        result = await prisma.$transaction(async (tx) => {
+          const updated = await tx.course.update({ where: { id }, data: courseData });
+          await tx.courseInstructor.updateMany({
+            where: { courseId: id, role: "LEAD", userId: { not: requestedLeadInstructorId } },
+            data: { role: "INSTRUCTOR" },
+          });
+          await tx.courseInstructor.upsert({
+            where: { courseId_userId: { courseId: id, userId: requestedLeadInstructorId } },
+            create: { courseId: id, userId: requestedLeadInstructorId, role: "LEAD" },
+            update: { role: "LEAD" },
+          });
+          return updated;
+        });
+      } else {
+        result = await prisma.course.update({ where: { id }, data: courseData });
+      }
 
       if (existing.status !== result.status) {
         await prisma.auditLog.create({
@@ -259,6 +292,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: "Curso no publicable", missing }, { status: 400 });
       }
 
+      const createLeadInstructorId = session.role === "ADMIN" ? requestedLeadInstructorId : session.userId;
       result = await prisma.course.create({
         data: {
           slug, title, description,
@@ -281,10 +315,10 @@ export async function POST(request: NextRequest) {
           currency: currency || "USD",
           visibility: visibility || "PUBLIC",
           status: nextStatus,
-          instructorId: session.userId,
+          instructorId: createLeadInstructorId,
           instructors: {
             create: {
-              userId: session.userId,
+              userId: createLeadInstructorId,
               role: "LEAD",
             },
           },
