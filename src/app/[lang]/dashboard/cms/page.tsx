@@ -728,6 +728,16 @@ export default function CmsPage() {
   const selectedCourse = courses.find((course) => course.id === selectedCourseId);
   const selectedLeadInstructor = instructorCandidates.find((candidate) => candidate.id === courseForm.leadInstructorId);
   const selectedEvaluation = selectedCourse?.evaluations?.[0];
+  const evaluationSessionOptions = selectedCourse
+    ? [
+        ...selectedCourse.modules.flatMap((module) => module.sessions.map((session) => ({ session, module }))),
+        ...(selectedCourse.sessions || []).map((session) => ({ session, module: null })),
+      ].sort((left, right) => {
+        const leftModuleOrder = left.module?.order ?? Number.MAX_SAFE_INTEGER;
+        const rightModuleOrder = right.module?.order ?? Number.MAX_SAFE_INTEGER;
+        return leftModuleOrder - rightModuleOrder || left.session.order - right.session.order;
+      })
+    : [];
   const selectedSessionCount =
     (selectedCourse?.sessions?.length || 0) +
     (selectedCourse?.modules || []).reduce((total, module) => total + module.sessions.length, 0);
@@ -3170,8 +3180,14 @@ export default function CmsPage() {
                       {evaluationType !== "FINAL" && (
                         <select className="mt-3 w-full rounded-md border px-3 py-2 text-sm" value={partialSessionId} onChange={(e) => setPartialSessionId(e.target.value)}>
                           <option value="">{t("Seleccionar sesión asociada", "Select associated session")}</option>
-                          {(selectedCourse.sessions || []).map((session) => <option key={session.id} value={session.id}>{session.order}. {t(session.title.es, session.title.en)}</option>)}
-                          {selectedCourse.modules.flatMap((module) => module.sessions).map((session) => <option key={session.id} value={session.id}>{t("Módulo", "Module")} {session.order}: {t(session.title.es, session.title.en)}</option>)}
+                          {evaluationSessionOptions.map(({ session, module }) => (
+                            <option key={session.id} value={session.id}>
+                              {module
+                                ? `${t("Módulo", "Module")} ${module.order} · ${t("Sesión", "Session")} ${session.order}: `
+                                : `${t("Sin módulo", "No module")} · ${t("Sesión", "Session")} ${session.order}: `}
+                              {t(session.title.es, session.title.en)}
+                            </option>
+                          ))}
                         </select>
                       )}
                       {editingEvaluationId && <p className="mt-2 text-xs text-[#52667a]">{t("Guardar cambios actualizará esta evaluación de sesión. La evaluación final está protegida y no se modificará.", "Saving changes will update this session assessment. The final assessment is protected and will not be changed.")}</p>}
