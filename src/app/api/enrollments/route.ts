@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth";
+import { appUrl, sendEmail } from "@/lib/email";
+import { hasEditionStarted } from "@/lib/edition-dates";
+
+function escapeHtml(value: string) {
+  return value.replace(/[&<>"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" })[character] || character);
+}
 
 // POST /api/enrollments
 // Body: { courseSlug }
@@ -46,6 +52,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    if (selectedEdition?.startsAt && !hasEditionStarted(selectedEdition.startsAt)) {
+      const startDate = selectedEdition.startsAt.toISOString().slice(0, 10);
+      return NextResponse.json(
+        { error: `La edición comienza el ${startDate}. La matrícula estará disponible a partir de esa fecha.`, code: "EDITION_NOT_STARTED" },
+        { status: 409 }
+      );
+    }
+
     if (selectedEdition?.capacity) {
       const enrollmentCount = await prisma.enrollment.count({
         where: {
@@ -85,7 +99,33 @@ export async function POST(request: NextRequest) {
         status: course.pricingModel === "FREE" ? "ACTIVE" : "PENDING_PAYMENT",
         admissionType: course.pricingModel === "FREE" ? "CALL_SYSTEM" : "COMMERCIAL",
       },
-      include: { course: true },
+      include: {
+        course: true,
+        edition: true,
+        user: { select: { name: true, email: true } },
+      },
+    });
+
+    const courseTitle = (enrollment.course.title as { es?: string; en?: string }).es || (enrollment.course.title as { es?: string; en?: string }).en || enrollment.course.slug;
+    const editionName = enrollment.edition
+      ? ((enrollment.edition.name as { es?: string; en?: string }).es || (enrollment.edition.name as { es?: string; en?: string }).en || "")
+      : "";
+    const isActive = enrollment.status === "ACTIVE";
+    const courseUrl = `${appUrl()}/es/courses/${encodeURIComponent(enrollment.course.slug)}`;
+    void sendEmail({
+      to: enrollment.user.email,
+      subject: isActive ? `Matrícula confirmada: ${courseTitle}` : `Solicitud de matrícula: ${courseTitle}`,
+      text: [
+        `Hola ${enrollment.user.name},`,
+        isActive ? `Tu matrícula en el curso «${courseTitle}» fue confirmada.` : `Tu solicitud de matrícula en el curso «${courseTitle}» fue registrada y está pendiente de pago o aprobación.`,
+        editionName ? `Edición: ${editionName}.` : "",
+        `Accede al curso: ${courseUrl}`,
+      ].filter(Boolean).join("\n"),
+      html: `<p>Hola ${escapeHtml(enrollment.user.name)},</p><p>${isActive ? `Tu matrícula en el curso <strong>${escapeHtml(courseTitle)}</strong> fue confirmada.` : `Tu solicitud de matrícula en el curso <strong>${escapeHtml(courseTitle)}</strong> fue registrada y está pendiente de pago o aprobación.`}</p>${editionName ? `<p>Edición: ${escapeHtml(editionName)}</p>` : ""}<p><a href="${courseUrl}">Acceder al curso</a></p>`,
+    }).then((sent) => {
+      if (!sent) console.warn(`[enrollment] No se pudo enviar la notificación a ${enrollment.user.email}`);
+    }).catch((error) => {
+      console.warn("[enrollment] Error enviando notificación", error instanceof Error ? error.message : error);
     });
 
     return NextResponse.json({ data: enrollment }, { status: 201 });

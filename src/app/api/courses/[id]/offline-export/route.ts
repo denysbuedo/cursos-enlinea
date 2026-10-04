@@ -19,7 +19,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     const course = await prisma.course.findFirst({
       where: { OR: [{ id }, { slug: id }] },
       include: {
-        modules: { where: { status: "PUBLISHED" }, orderBy: { order: "asc" }, include: { sessions: { where: { status: "PUBLISHED" }, orderBy: { order: "asc" } } } },
+        modules: { where: { sessions: { some: { status: "PUBLISHED" } } }, orderBy: { order: "asc" }, include: { sessions: { where: { status: "PUBLISHED" }, orderBy: { order: "asc" } } } },
         sessions: { where: { status: "PUBLISHED", moduleId: null }, orderBy: { order: "asc" } },
         evaluations: { where: { evaluationType: "FINAL" }, take: 1 },
         instructor: { select: { name: true } },

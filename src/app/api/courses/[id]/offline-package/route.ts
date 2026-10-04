@@ -85,7 +85,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     const course = await prisma.course.findFirst({
       where: { OR: [{ id }, { slug: id }] },
       include: {
-        modules: { where: { status: "PUBLISHED" }, include: { sessions: { where: { status: "PUBLISHED" }, select: { resources: true, audioUrl: true } } } },
+        modules: { where: { sessions: { some: { status: "PUBLISHED" } } }, include: { sessions: { where: { status: "PUBLISHED" }, select: { resources: true, audioUrl: true } } } },
         sessions: { where: { status: "PUBLISHED", moduleId: null }, select: { resources: true, audioUrl: true } },
       },
     });

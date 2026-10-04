@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 import { getDictionary, getLangFromParams } from "@/lib/i18n";
 import { SessionList } from "@/components/sessions/SessionList";
+import { formatEditionDate } from "@/lib/edition-dates";
 import { EvaluationForm } from "@/components/evaluations/EvaluationForm";
 import {
   BookOpen,
@@ -340,10 +341,10 @@ export default function CourseDetailPage() {
   const competencies = localizedList(course.competencies, lang);
   const selectedEdition = course.editions?.find((edition) => edition.id === selectedEditionId) || course.editions?.find((edition) => edition.isDefault) || course.editions?.[0];
   const courseStartLabel = selectedEdition?.startsAt
-    ? new Date(selectedEdition.startsAt).toLocaleDateString(lang === "en" ? "en-US" : "es-ES", { dateStyle: "long" })
+    ? formatEditionDate(selectedEdition.startsAt, lang === "en" ? "en-US" : "es-ES")
     : t("Inicio abierto", "Open start");
   const courseEndLabel = selectedEdition?.endsAt
-    ? new Date(selectedEdition.endsAt).toLocaleDateString(lang === "en" ? "en-US" : "es-ES", { dateStyle: "long" })
+    ? formatEditionDate(selectedEdition.endsAt, lang === "en" ? "en-US" : "es-ES")
     : null;
   const publicInstructors = course.instructors?.length
     ? course.instructors.map((assignment) => ({ ...assignment.user, role: assignment.role }))
@@ -755,8 +756,8 @@ export default function CourseDetailPage() {
                         {edition.isDefault && <span className="ml-2 text-xs text-primary">{t("por defecto", "default")}</span>}
                       </span>
                       <span className="text-xs text-[#7b8fa1]">
-                        {edition.startsAt ? new Date(edition.startsAt).toLocaleDateString(lang === "en" ? "en-US" : "es-ES") : t("Inicio abierto", "Open start")}
-                        {edition.endsAt ? ` - ${new Date(edition.endsAt).toLocaleDateString(lang === "en" ? "en-US" : "es-ES")}` : ""}
+                        {edition.startsAt ? formatEditionDate(edition.startsAt, lang === "en" ? "en-US" : "es-ES", "short") : t("Inicio abierto", "Open start")}
+                        {edition.endsAt ? ` - ${formatEditionDate(edition.endsAt, lang === "en" ? "en-US" : "es-ES", "short")}` : ""}
                         {edition.capacity ? ` · ${edition.capacity} ${t("cupos", "seats")}` : ""}
                       </span>
                     </span>

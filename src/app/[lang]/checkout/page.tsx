@@ -80,6 +80,11 @@ export default function CheckoutPage() {
 
           // Si ya está matriculado (409), redirigir
           if (enrollRes.status === 409) {
+            const enrollData = await enrollRes.json().catch(() => ({}));
+            if (enrollData.code === "EDITION_NOT_STARTED") {
+              setError(enrollData.error || translate("La edición aún no ha comenzado.", "The edition has not started yet."));
+              return;
+            }
             router.push(`/${lang}/courses/${courseSlug}`);
             return;
           }
@@ -119,6 +124,10 @@ export default function CheckoutPage() {
           setEnrollmentId(enrollData.data.id);
         } else if (enrollRes.status === 409) {
           const enrollData = await enrollRes.json();
+          if (enrollData.code === "EDITION_NOT_STARTED") {
+            setError(enrollData.error || translate("La edición aún no ha comenzado.", "The edition has not started yet."));
+            return;
+          }
           setEnrollmentId(enrollData.enrollment?.id || null);
         } else if (enrollRes.status === 401) {
           router.push(
