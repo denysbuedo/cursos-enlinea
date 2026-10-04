@@ -288,6 +288,8 @@ model Session {
   preview         Boolean             @default(false)
   videoUrl        String?
   videoPlatform   String?
+  audioUrl        String?
+  audioPlatform   String?
   durationMinutes Int?
   resources       Json?
   practicePrompt  Json?

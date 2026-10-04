@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { Archive, Award, BarChart3, BookOpen, Download, ExternalLink, Eye, Layers, Loader2, Plus, RefreshCw, Save, Trash2, Upload, Users, Video } from "lucide-react";
+import { Archive, Award, BarChart3, BookOpen, Download, ExternalLink, Eye, Headphones, Layers, Loader2, Plus, RefreshCw, Save, Trash2, Upload, Users, Video } from "lucide-react";
 import { getLangFromParams } from "@/lib/i18n";
 import { resolveVideoRender } from "@/lib/video";
 
@@ -23,6 +23,8 @@ interface CmsSession {
   preview: boolean;
   videoUrl?: string;
   videoPlatform?: string;
+  audioUrl?: string;
+  audioPlatform?: string;
   durationMinutes?: number | null;
   resources?: SessionResource[] | null;
   practicePrompt?: LocalizedText | null;
@@ -159,6 +161,8 @@ interface SessionFormState {
   preview: boolean;
   videoUrl: string;
   videoPlatform: string;
+  audioUrl: string;
+  audioPlatform: string;
   durationMinutes: string;
   resources: SessionResource[];
   practicePrompt: LocalizedText;
@@ -226,6 +230,9 @@ interface CmsUser {
   email: string;
   country?: string | null;
   preferredLang?: string | null;
+  bio?: string | null;
+  institution?: string | null;
+  avatarUrl?: string | null;
 }
 
 interface InstructorProfileForm {
@@ -328,6 +335,7 @@ export default function CmsPage() {
   const [saving, setSaving] = useState(false);
   const [uploadingCover, setUploadingCover] = useState(false);
   const [uploadingVideo, setUploadingVideo] = useState(false);
+  const [uploadingAudio, setUploadingAudio] = useState(false);
   const [uploadingResource, setUploadingResource] = useState(false);
   const [loadingEnrollments, setLoadingEnrollments] = useState(false);
   const [loadingAnalytics, setLoadingAnalytics] = useState(false);
@@ -434,6 +442,8 @@ export default function CmsPage() {
     preview: false,
     videoUrl: "",
     videoPlatform: "YOUTUBE",
+    audioUrl: "",
+    audioPlatform: "EXTERNAL",
     durationMinutes: "",
     resources: [],
     practicePrompt: { ...emptyText },
@@ -659,20 +669,21 @@ export default function CmsPage() {
   }
 
   const selectedCourse = courses.find((course) => course.id === selectedCourseId);
+  const selectedLeadInstructor = instructorCandidates.find((candidate) => candidate.id === courseForm.leadInstructorId);
   const selectedEvaluation = selectedCourse?.evaluations?.[0];
   const selectedSessionCount =
     (selectedCourse?.sessions?.length || 0) +
     (selectedCourse?.modules || []).reduce((total, module) => total + module.sessions.length, 0);
   const hasPublishedEdition = Boolean(selectedCourse?.editions?.some((edition) => edition.status === "PUBLISHED"));
-  const hasVideoSession = Boolean(
-    selectedCourse?.sessions?.some((session) => session.status === "PUBLISHED" && session.videoUrl) ||
-    selectedCourse?.modules?.some((module) => module.sessions.some((session) => session.status === "PUBLISHED" && session.videoUrl))
+  const hasMediaSession = Boolean(
+    selectedCourse?.sessions?.some((session) => session.status === "PUBLISHED" && (session.videoUrl || session.audioUrl)) ||
+    selectedCourse?.modules?.some((module) => module.sessions.some((session) => session.status === "PUBLISHED" && (session.videoUrl || session.audioUrl)))
   );
   const paidCourseHasPrice = courseForm.pricingModel !== "PAID" || Number(courseForm.price || 0) > 0;
   const publishChecks = [
     { ok: Boolean(courseForm.slug.trim() && courseForm.title.es.trim() && courseForm.description.es.trim()), label: t("Ficha básica completa", "Basic course info complete") },
     { ok: hasPublishedEdition, label: t("Al menos una edición publicada", "At least one published edition") },
-    { ok: selectedSessionCount > 0 && hasVideoSession, label: t("Al menos una sesión publicada con video", "At least one published session with video") },
+    { ok: selectedSessionCount > 0 && hasMediaSession, label: t("Al menos una sesión publicada con video o audio", "At least one published session with video or audio") },
     { ok: paidCourseHasPrice, label: t("Precio válido si el curso es pago", "Valid price when the course is paid") },
   ];
   const canPublish = publishChecks.every((check) => check.ok);
@@ -863,6 +874,8 @@ export default function CmsPage() {
       preview: false,
       videoUrl: "",
       videoPlatform: "YOUTUBE",
+      audioUrl: "",
+      audioPlatform: "EXTERNAL",
       durationMinutes: "",
       resources: [],
       practicePrompt: { ...emptyText },
@@ -1322,6 +1335,34 @@ export default function CmsPage() {
       setError(e instanceof Error ? e.message : t("No se pudo subir el video.", "Could not upload video."));
     } finally {
       setUploadingVideo(false);
+    }
+  }
+
+  async function uploadAudio(file: File | null) {
+    if (!selectedCourse || !file) return;
+    setUploadingAudio(true);
+    setError("");
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await cmsFetch(`/api/courses/${selectedCourse.id}/audios/upload`, {
+        method: "POST",
+        body: formData,
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || t("No se pudo subir el audio.", "Could not upload audio."));
+      }
+      const json = await res.json();
+      setSessionForm((prev) => ({
+        ...prev,
+        audioUrl: json.data.url,
+        audioPlatform: json.data.platform,
+      }));
+    } catch (e) {
+      setError(e instanceof Error ? e.message : t("No se pudo subir el audio.", "Could not upload audio."));
+    } finally {
+      setUploadingAudio(false);
     }
   }
 
@@ -1978,30 +2019,53 @@ export default function CmsPage() {
                   )}
                 </div>
               )}
-              <div className="md:col-span-2 mt-2 border-t pt-4">
-                <h3 className="text-sm font-semibold">{t("Conozca a su instructor", "Meet your instructor")}</h3>
-                <p className="mt-1 text-xs text-[#52667a]">
-                  {t("Este perfil se mostrará en los cursos publicados que usted imparte.", "This profile appears on published courses you teach.")}
-                </p>
-              </div>
-              <input className="rounded-md border bg-[#f4f7fb] px-3 py-2 text-sm text-[#52667a]" value={instructorProfile.name} readOnly aria-label={t("Nombre del instructor", "Instructor name")} />
-              <input className="rounded-md border bg-[#f4f7fb] px-3 py-2 text-sm text-[#52667a]" value={instructorProfile.email} readOnly aria-label={t("Correo del instructor", "Instructor email")} />
-              <input className="rounded-md border px-3 py-2 text-sm" placeholder={t("Institución", "Institution")} value={instructorProfile.institution} onChange={(e) => setInstructorProfile({ ...instructorProfile, institution: e.target.value })} />
-              <div className="flex flex-wrap items-center gap-2">
-                <label className={`inline-flex cursor-pointer items-center gap-2 rounded-md border bg-white px-3 py-2 text-sm font-medium ${uploadingAvatar ? "pointer-events-none opacity-50" : "hover:bg-accent"}`}>
-                  {uploadingAvatar ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
-                  {t("Subir foto", "Upload photo")}
-                  <input type="file" accept="image/png,image/jpeg,image/webp" className="sr-only" disabled={uploadingAvatar} onChange={(e) => { void uploadInstructorAvatar(e.target.files?.[0] || null); e.currentTarget.value = ""; }} />
-                </label>
-                <input className="min-w-0 flex-1 rounded-md border px-3 py-2 text-sm" placeholder={t("o URL de la foto", "or photo URL")} value={instructorProfile.avatarUrl} onChange={(e) => setInstructorProfile({ ...instructorProfile, avatarUrl: e.target.value })} />
-              </div>
-              <textarea className="rounded-md border px-3 py-2 text-sm md:col-span-2" rows={3} placeholder={t("Resumen profesional del instructor", "Instructor professional bio")} value={instructorProfile.bio} onChange={(e) => setInstructorProfile({ ...instructorProfile, bio: e.target.value })} />
-              <div className="md:col-span-2">
-                <button onClick={saveInstructorProfile} disabled={profileSaving} className="inline-flex items-center gap-2 rounded-md border border-primary px-3 py-2 text-sm font-medium text-primary hover:bg-primary/5 disabled:opacity-50">
-                  {profileSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-                  {t("Guardar perfil del instructor", "Save instructor profile")}
-                </button>
-              </div>
+              {instructorProfile.role === "ADMIN" ? (
+                <div className="md:col-span-2 mt-2 border-t pt-4">
+                  <h3 className="text-sm font-semibold">{t("Perfil del profesor líder", "Lead instructor profile")}</h3>
+                  <p className="mt-1 text-xs text-[#52667a]">
+                    {t("El profesor líder completa y actualiza su perfil desde su propia cuenta.", "The lead instructor completes and updates this profile from their own account.")}
+                  </p>
+                  {selectedLeadInstructor ? (
+                    <div className="mt-3 grid gap-3 rounded-md border bg-[#f4f7fb] p-3 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+                      <input className="rounded-md border bg-white px-3 py-2 text-sm text-[#52667a]" value={selectedLeadInstructor.name} readOnly aria-label={t("Nombre del profesor líder", "Lead instructor name")} />
+                      <input className="rounded-md border bg-white px-3 py-2 text-sm text-[#52667a]" value={selectedLeadInstructor.email} readOnly aria-label={t("Correo del profesor líder", "Lead instructor email")} />
+                      {selectedLeadInstructor.institution && <p className="text-sm text-[#52667a]">{selectedLeadInstructor.institution}</p>}
+                      {selectedLeadInstructor.bio && <p className="text-sm leading-6 text-[#52667a] md:col-span-2">{selectedLeadInstructor.bio}</p>}
+                    </div>
+                  ) : (
+                    <p className="mt-3 rounded-md border border-dashed p-3 text-sm text-[#7b8fa1]">
+                      {t("Selecciona un profesor líder para consultar su perfil.", "Select a lead instructor to view their profile.")}
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <>
+                  <div className="md:col-span-2 mt-2 border-t pt-4">
+                    <h3 className="text-sm font-semibold">{t("Conozca a su instructor", "Meet your instructor")}</h3>
+                    <p className="mt-1 text-xs text-[#52667a]">
+                      {t("Este perfil se mostrará en los cursos publicados que usted imparte.", "This profile appears on published courses you teach.")}
+                    </p>
+                  </div>
+                  <input className="rounded-md border bg-[#f4f7fb] px-3 py-2 text-sm text-[#52667a]" value={instructorProfile.name} readOnly aria-label={t("Nombre del instructor", "Instructor name")} />
+                  <input className="rounded-md border bg-[#f4f7fb] px-3 py-2 text-sm text-[#52667a]" value={instructorProfile.email} readOnly aria-label={t("Correo del instructor", "Instructor email")} />
+                  <input className="rounded-md border px-3 py-2 text-sm" placeholder={t("Institución", "Institution")} value={instructorProfile.institution} onChange={(e) => setInstructorProfile({ ...instructorProfile, institution: e.target.value })} />
+                  <div className="flex flex-wrap items-center gap-2">
+                    <label className={`inline-flex cursor-pointer items-center gap-2 rounded-md border bg-white px-3 py-2 text-sm font-medium ${uploadingAvatar ? "pointer-events-none opacity-50" : "hover:bg-accent"}`}>
+                      {uploadingAvatar ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+                      {t("Subir foto", "Upload photo")}
+                      <input type="file" accept="image/png,image/jpeg,image/webp" className="sr-only" disabled={uploadingAvatar} onChange={(e) => { void uploadInstructorAvatar(e.target.files?.[0] || null); e.currentTarget.value = ""; }} />
+                    </label>
+                    <input className="min-w-0 flex-1 rounded-md border px-3 py-2 text-sm" placeholder={t("o URL de la foto", "or photo URL")} value={instructorProfile.avatarUrl} onChange={(e) => setInstructorProfile({ ...instructorProfile, avatarUrl: e.target.value })} />
+                  </div>
+                  <textarea className="rounded-md border px-3 py-2 text-sm md:col-span-2" rows={3} placeholder={t("Resumen profesional del instructor", "Instructor professional bio")} value={instructorProfile.bio} onChange={(e) => setInstructorProfile({ ...instructorProfile, bio: e.target.value })} />
+                  <div className="md:col-span-2">
+                    <button onClick={saveInstructorProfile} disabled={profileSaving} className="inline-flex items-center gap-2 rounded-md border border-primary px-3 py-2 text-sm font-medium text-primary hover:bg-primary/5 disabled:opacity-50">
+                      {profileSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                      {t("Guardar perfil del instructor", "Save instructor profile")}
+                    </button>
+                  </div>
+                </>
+              )}
               {courseForm.id && (
                 <div className="md:col-span-2 rounded-md border bg-[#f4f7fb] p-3">
                   <h4 className="text-sm font-semibold">{t("Profesores del curso", "Course instructors")}</h4>
@@ -2539,10 +2603,24 @@ export default function CmsPage() {
                     {uploadingVideo ? t("Subiendo...", "Uploading...") : t("Subir video", "Upload video")}
                     <input type="file" accept="video/mp4,video/webm,video/quicktime,video/x-m4v" className="hidden" onChange={(e) => uploadVideo(e.target.files?.[0] || null)} />
                   </label>
+                  <div className="grid grid-cols-[1fr_90px] gap-3">
+                    <select className="rounded-md border px-3 py-2 text-sm" value={sessionForm.audioPlatform} onChange={(e) => setSessionForm({ ...sessionForm, audioPlatform: e.target.value })}>
+                      <option value="EXTERNAL">{t("Audio externo", "External audio")}</option>
+                      <option value="REPOSITORY">{t("Repositorio", "Repository")}</option>
+                      <option value="LOCAL_UPLOAD">{t("Subido", "Uploaded")}</option>
+                    </select>
+                    <span className="flex items-center justify-center gap-1 text-xs text-[#7b8fa1]"><Headphones className="h-4 w-4" /> MP3</span>
+                  </div>
+                  <input className="rounded-md border px-3 py-2 text-sm" placeholder={t("URL externa o URL generada al subir el audio", "External URL or generated audio URL")} value={sessionForm.audioUrl} onChange={(e) => setSessionForm({ ...sessionForm, audioUrl: e.target.value })} />
+                  <label className="flex cursor-pointer items-center justify-center gap-2 rounded-md border px-3 py-2 text-sm hover:bg-accent">
+                    {uploadingAudio ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+                    {uploadingAudio ? t("Subiendo...", "Uploading...") : t("Subir audio", "Upload audio")}
+                    <input type="file" accept="audio/mpeg,audio/mp4,audio/x-m4a,audio/ogg,audio/wav,audio/x-wav" className="hidden" onChange={(e) => uploadAudio(e.target.files?.[0] || null)} />
+                  </label>
                   <textarea className="rounded-md border px-3 py-2 text-sm md:col-span-2" placeholder={t("Descripción de la sesión ES", "Session description ES")} value={sessionForm.description.es} onChange={(e) => setSessionForm({ ...sessionForm, description: { ...sessionForm.description, es: e.target.value } })} />
                   <textarea className="rounded-md border px-3 py-2 text-sm md:col-span-2" placeholder={t("Session description EN", "Session description EN")} value={sessionForm.description.en} onChange={(e) => setSessionForm({ ...sessionForm, description: { ...sessionForm.description, en: e.target.value } })} />
                   <p className="text-xs text-[#7b8fa1] md:col-span-2">
-                    {t("El video es opcional. Puedes crear una sesión de lectura, material o actividad sin video. Cuando uses video, recomendamos YouTube/Vimeo por URL.", "Video is optional. You can create a reading, resource or activity session without video. When using video, YouTube/Vimeo by URL is recommended.")}
+                    {t("El video y el audio son opcionales. Una sesión puede usar uno de los dos como contenido principal, o ser de lectura, material o actividad.", "Video and audio are optional. A session can use either as its primary content, or be a reading, resource or activity session.")}
                   </p>
                   <textarea className="rounded-md border px-3 py-2 text-sm md:col-span-2" placeholder={t("Actividad de práctica ES", "Practice activity ES")} value={sessionForm.practicePrompt.es} onChange={(e) => setSessionForm({ ...sessionForm, practicePrompt: { ...sessionForm.practicePrompt, es: e.target.value } })} />
                   <textarea className="rounded-md border px-3 py-2 text-sm md:col-span-2" placeholder={t("Actividad de práctica EN", "Practice activity EN")} value={sessionForm.practicePrompt.en} onChange={(e) => setSessionForm({ ...sessionForm, practicePrompt: { ...sessionForm.practicePrompt, en: e.target.value } })} />
@@ -2655,7 +2733,7 @@ export default function CmsPage() {
                           <div key={session.id} className="flex flex-col gap-2 rounded-md border p-3 text-sm sm:flex-row sm:items-center sm:justify-between">
                             <div>
                               <span className="font-medium">{session.order}. {t(session.title.es, session.title.en)}</span>
-                              <span className="ml-2 text-xs text-[#7b8fa1]">{session.status === "ARCHIVED" ? t("ARCHIVADA", "ARCHIVED") : session.videoPlatform || t("Sin video", "No video")}</span>
+                              <span className="ml-2 text-xs text-[#7b8fa1]">{session.status === "ARCHIVED" ? t("ARCHIVADA", "ARCHIVED") : session.videoPlatform || (session.audioPlatform ? t("Audio", "Audio") : t("Sin video/audio", "No video/audio"))}</span>
                             </div>
                             <div className="flex gap-2">
                               <button
@@ -2668,6 +2746,8 @@ export default function CmsPage() {
                                   preview: session.preview,
                                   videoUrl: session.videoUrl || "",
                                   videoPlatform: session.videoPlatform || "",
+                                  audioUrl: session.audioUrl || "",
+                                  audioPlatform: session.audioPlatform || "",
                                   durationMinutes: session.durationMinutes ? String(session.durationMinutes) : "",
                                   resources: Array.isArray(session.resources) ? session.resources : [],
                                   practicePrompt: session.practicePrompt || { ...emptyText },
@@ -2711,7 +2791,7 @@ export default function CmsPage() {
                           <div key={session.id} className="flex flex-col gap-2 rounded-md border p-3 text-sm sm:flex-row sm:items-center sm:justify-between">
                             <div>
                               <span className="font-medium">{session.order}. {t(session.title.es, session.title.en)}</span>
-                              <span className="ml-2 text-xs text-[#7b8fa1]">{session.status === "ARCHIVED" ? t("ARCHIVADA", "ARCHIVED") : session.videoPlatform || t("Sin video", "No video")}</span>
+                              <span className="ml-2 text-xs text-[#7b8fa1]">{session.status === "ARCHIVED" ? t("ARCHIVADA", "ARCHIVED") : session.videoPlatform || (session.audioPlatform ? t("Audio", "Audio") : t("Sin video/audio", "No video/audio"))}</span>
                             </div>
                             <div className="flex gap-2">
                               <button
@@ -2724,6 +2804,8 @@ export default function CmsPage() {
                                   preview: session.preview,
                                   videoUrl: session.videoUrl || "",
                                   videoPlatform: session.videoPlatform || "",
+                                  audioUrl: session.audioUrl || "",
+                                  audioPlatform: session.audioPlatform || "",
                                   durationMinutes: session.durationMinutes ? String(session.durationMinutes) : "",
                                   resources: Array.isArray(session.resources) ? session.resources : [],
                                   practicePrompt: session.practicePrompt || { ...emptyText },

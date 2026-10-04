@@ -99,6 +99,8 @@ interface SessionItem {
   preview: boolean;
   videoUrl?: string;
   videoPlatform?: string;
+  audioUrl?: string;
+  audioPlatform?: string;
   durationMinutes?: number | null;
   resources?: SessionResource[] | null;
   practicePrompt?: { es?: string; en?: string } | null;
@@ -550,8 +552,8 @@ export default function CourseDetailPage() {
               <h2 className="text-2xl font-semibold text-[#17212b]">{dict.courses.sessions} ({totalSessions})</h2>
               <p className="mt-2 max-w-3xl text-sm leading-6 text-[#52667a]">
                 {t(
-                  "Cada módulo organiza sus sesiones con video, actividad de práctica y bibliografía o materiales complementarios cuando estén disponibles.",
-                  "Each module organizes its sessions with video, practice activity, and bibliography or complementary materials when available."
+                  "Cada módulo organiza sus sesiones con video o audio, actividad de práctica y bibliografía o materiales complementarios cuando estén disponibles.",
+                  "Each module organizes its sessions with video or audio, practice activity, and bibliography or complementary materials when available."
                 )}
               </p>
             </div>

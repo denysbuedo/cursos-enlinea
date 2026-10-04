@@ -10,6 +10,7 @@ import {
   Clock,
   ExternalLink,
   FileText,
+  Headphones,
   Library,
   Loader2,
   MonitorPlay,
@@ -34,6 +35,8 @@ interface SessionItem {
   preview: boolean;
   videoUrl?: string;
   videoPlatform?: string;
+  audioUrl?: string;
+  audioPlatform?: string;
   durationMinutes?: number | null;
   resources?: SessionResource[] | null;
   practicePrompt?: { es?: string; en?: string } | null;
@@ -91,6 +94,15 @@ function SessionVideo({ session, lang }: { session: SessionItem; lang: string })
           </a>
         </div>
       )}
+    </div>
+  );
+}
+
+function SessionAudio({ session }: { session: SessionItem }) {
+  if (!session.audioUrl) return null;
+  return (
+    <div className="mt-3 rounded-md border border-[#d8e1ea] bg-[#f7f9fb] p-3">
+      <audio src={session.audioUrl} controls preload="metadata" className="w-full" />
     </div>
   );
 }
@@ -204,6 +216,17 @@ export function SessionList({
                   </section>
                 )}
 
+                {!isLocked && session.audioUrl && (
+                  <section className="mt-5">
+                    <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-[#17212b]">
+                      <Headphones className="h-4 w-4 text-primary" />
+                      {t("Audio de la sesión", "Session audio")}
+                      {session.audioPlatform && <span className="text-xs font-normal text-[#7b8fa1]">({session.audioPlatform})</span>}
+                    </div>
+                    <SessionAudio session={session} />
+                  </section>
+                )}
+
                 {!isLocked && practicePrompt && (
                   <section className="mt-5 border-l-4 border-[#7aa6d8] bg-[#f7f9fb] px-4 py-3">
                     <div className="mb-1 flex items-center gap-2 text-sm font-semibold text-[#17212b]">
@@ -225,19 +248,19 @@ export function SessionList({
                       {t("Bibliografía y materiales complementarios", "Bibliography and complementary materials")}
                     </div>
                     <div className="grid gap-2 sm:grid-cols-2">
-                      {resources.map((resource, resourceIndex) => (
-                        <a
-                          key={`${session.id}-resource-${resource.id || resource.url || resource.title || "item"}-${resourceIndex}`}
-                          href={resource.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="group flex min-w-0 items-center gap-2 border border-[#d8e1ea] bg-white px-3 py-2 text-sm text-[#17212b] hover:border-primary"
-                        >
-                          <FileText className="h-4 w-4 flex-shrink-0 text-primary" />
-                          <span className="truncate">{resource.title}</span>
-                          <ExternalLink className="ml-auto h-3.5 w-3.5 flex-shrink-0 text-[#7b8fa1] group-hover:text-primary" />
-                        </a>
-                      ))}
+                      {resources.map((resource, resourceIndex) => {
+                        const isAudio = resource.type === "AUDIO" || resource.type.startsWith("audio/");
+                        return (
+                          <div key={`${session.id}-resource-${resource.id || resource.url || resource.title || "item"}-${resourceIndex}`} className="min-w-0 border border-[#d8e1ea] bg-white px-3 py-2 text-sm text-[#17212b]">
+                            {isAudio && <audio src={resource.url} controls preload="metadata" className="mb-2 w-full" />}
+                            <a href={resource.url} target="_blank" rel="noopener noreferrer" className="group flex min-w-0 items-center gap-2 hover:text-primary">
+                              {isAudio ? <Headphones className="h-4 w-4 flex-shrink-0 text-primary" /> : <FileText className="h-4 w-4 flex-shrink-0 text-primary" />}
+                              <span className="truncate">{resource.title}</span>
+                              <ExternalLink className="ml-auto h-3.5 w-3.5 flex-shrink-0 text-[#7b8fa1] group-hover:text-primary" />
+                            </a>
+                          </div>
+                        );
+                      })}
                     </div>
                   </section>
                 )}

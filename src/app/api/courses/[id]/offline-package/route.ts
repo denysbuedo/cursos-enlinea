@@ -24,10 +24,16 @@ function extensionFor(contentType: string, url: string, title: string) {
     "application/vnd.openxmlformats-officedocument.wordprocessingml.document": ".docx",
     "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": ".xlsx",
     "text/plain": ".txt",
+    "audio/mpeg": ".mp3",
+    "audio/mp4": ".m4a",
+    "audio/x-m4a": ".m4a",
+    "audio/ogg": ".ogg",
+    "audio/wav": ".wav",
+    "audio/x-wav": ".wav",
   };
   if (known[contentType.split(";")[0].toLowerCase()]) return known[contentType.split(";")[0].toLowerCase()];
   const source = `${title}${url}`.toLowerCase();
-  const match = source.match(/\.(pdf|pptx?|docx?|xlsx?|txt)(?:[?#]|$)/);
+  const match = source.match(/\.(pdf|pptx?|docx?|xlsx?|txt|mp3|m4a|ogg|wav)(?:[?#]|$)/);
   return match ? `.${match[1]}` : ".bin";
 }
 
@@ -42,11 +48,15 @@ function localContentType(url: string) {
     ".xls": "application/vnd.ms-excel",
     ".xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     ".txt": "text/plain",
+    ".mp3": "audio/mpeg",
+    ".m4a": "audio/mp4",
+    ".ogg": "audio/ogg",
+    ".wav": "audio/wav",
   };
   return types[extension] || "application/octet-stream";
 }
 
-function collectResources(course: { modules: Array<{ sessions: Array<{ resources: unknown }> }>; sessions: Array<{ resources: unknown }> }) {
+function collectResources(course: { modules: Array<{ sessions: Array<{ resources: unknown; audioUrl: string | null }> }>; sessions: Array<{ resources: unknown; audioUrl: string | null }> }) {
   const resources: Array<{ url: string; title: string }> = [];
   const add = (value: unknown) => {
     if (!Array.isArray(value)) return;
@@ -56,8 +66,15 @@ function collectResources(course: { modules: Array<{ sessions: Array<{ resources
       if (typeof resource.url === "string" && resource.url.trim()) resources.push({ url: resource.url, title: typeof resource.title === "string" ? resource.title : "recurso" });
     }
   };
+  const addAudio = (value: string | null) => {
+    if (value) resources.push({ url: value, title: "Audio de la sesión" });
+  };
   course.modules.forEach((module) => module.sessions.forEach((session) => add(session.resources)));
-  course.sessions.forEach((session) => add(session.resources));
+  course.modules.forEach((module) => module.sessions.forEach((session) => addAudio(session.audioUrl)));
+  course.sessions.forEach((session) => {
+    add(session.resources);
+    addAudio(session.audioUrl);
+  });
   return resources.filter((resource, index, list) => list.findIndex((item) => item.url === resource.url) === index);
 }
 
@@ -68,8 +85,8 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     const course = await prisma.course.findFirst({
       where: { OR: [{ id }, { slug: id }] },
       include: {
-        modules: { where: { status: "PUBLISHED" }, include: { sessions: { where: { status: "PUBLISHED" }, select: { resources: true } } } },
-        sessions: { where: { status: "PUBLISHED", moduleId: null }, select: { resources: true } },
+        modules: { where: { status: "PUBLISHED" }, include: { sessions: { where: { status: "PUBLISHED" }, select: { resources: true, audioUrl: true } } } },
+        sessions: { where: { status: "PUBLISHED", moduleId: null }, select: { resources: true, audioUrl: true } },
       },
     });
     if (!course) return NextResponse.json({ error: "Curso no encontrado" }, { status: 404 });

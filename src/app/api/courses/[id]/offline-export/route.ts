@@ -44,8 +44,23 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
       description: course.description,
       instructor: course.instructor.name,
       coverImageUrl: course.coverImageUrl,
-      modules: course.modules,
-      sessions: course.sessions,
+      modules: course.modules.map((module) => ({
+        ...module,
+        sessions: module.sessions.map((courseSession) => ({
+          ...courseSession,
+          resources: [
+            ...(Array.isArray(courseSession.resources) ? courseSession.resources : []),
+            ...(courseSession.audioUrl ? [{ title: "Audio de la sesión", url: courseSession.audioUrl, type: "AUDIO" }] : []),
+          ],
+        })),
+      })),
+      sessions: course.sessions.map((courseSession) => ({
+        ...courseSession,
+        resources: [
+          ...(Array.isArray(courseSession.resources) ? courseSession.resources : []),
+          ...(courseSession.audioUrl ? [{ title: "Audio de la sesión", url: courseSession.audioUrl, type: "AUDIO" }] : []),
+        ],
+      })),
       evaluation: course.evaluations[0] || null,
       progress: enrollment?.progress || 0,
       completedSessionIds: enrollment?.completions.map((completion) => completion.sessionId) || [],

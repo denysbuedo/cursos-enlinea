@@ -37,15 +37,15 @@ async function validatePublishableCourse(
   }
 
   if (!courseId) {
-    missing.push("Al menos una sesión publicada con video");
+    missing.push("Al menos una sesión publicada con video o audio");
   } else {
-    const [publishedEditions, videoSessions] = await Promise.all([
+    const [publishedEditions, mediaSessions] = await Promise.all([
       prisma.courseEdition.count({ where: { courseId, status: "PUBLISHED" } }),
-      prisma.session.count({ where: { courseId, status: "PUBLISHED", videoUrl: { not: null } } }),
+      prisma.session.count({ where: { courseId, status: "PUBLISHED", OR: [{ videoUrl: { not: null } }, { audioUrl: { not: null } }] } }),
     ]);
 
     if (publishedEditions < 1) missing.push("Al menos una edición publicada");
-    if (videoSessions < 1) missing.push("Al menos una sesión publicada con video");
+    if (mediaSessions < 1) missing.push("Al menos una sesión publicada con video o audio");
   }
 
   return missing;
