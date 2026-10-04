@@ -164,6 +164,9 @@ export default function CourseDetailPage() {
   const [reviewTestimonial, setReviewTestimonial] = useState("");
   const [savingReview, setSavingReview] = useState(false);
   const [reviewMessage, setReviewMessage] = useState("");
+  const [offlineDownloading, setOfflineDownloading] = useState(false);
+  const [offlineMessage, setOfflineMessage] = useState("");
+  const [offlineError, setOfflineError] = useState("");
 
   // Evaluation state
   const [evaluation, setEvaluation] = useState<EvaluationData | null>(null);
@@ -358,6 +361,10 @@ export default function CourseDetailPage() {
   };
 
   const downloadOfflineCourse = async () => {
+    if (offlineDownloading) return;
+    setOfflineDownloading(true);
+    setOfflineMessage("");
+    setOfflineError("");
     try {
       const res = await fetch(`/api/courses/${course?.id || slug}/offline-package`);
       if (!res.ok) {
@@ -365,6 +372,9 @@ export default function CourseDetailPage() {
         throw new Error(data.error || t("No se pudo exportar el curso.", "Could not export the course."));
       }
       const blob = await res.blob();
+      if (blob.size === 0) {
+        throw new Error(t("El paquete descargado está vacío.", "The downloaded package is empty."));
+      }
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
@@ -372,9 +382,13 @@ export default function CourseDetailPage() {
       document.body.appendChild(link);
       link.click();
       link.remove();
-      URL.revokeObjectURL(url);
+      window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+      setOfflineMessage(t("La descarga ha comenzado.", "The download has started."));
     } catch (downloadError) {
       console.error("Offline export error:", downloadError);
+      setOfflineError(downloadError instanceof Error ? downloadError.message : t("No se pudo descargar el curso.", "Could not download the course."));
+    } finally {
+      setOfflineDownloading(false);
     }
   };
 
@@ -537,10 +551,14 @@ export default function CourseDetailPage() {
               <div className="h-3 rounded-full bg-[#e8ecf1] overflow-hidden">
                 <div className="h-full rounded-full bg-primary transition-all duration-700 ease-out" style={{ width: `${Math.min(100, progress)}%` }} />
               </div>
-              <button type="button" onClick={() => void downloadOfflineCourse()} className="mt-4 inline-flex items-center gap-2 rounded-md border border-primary px-3 py-2 text-sm font-medium text-primary hover:bg-primary/5">
-                <Download className="h-4 w-4" />
-                {t("Descargar curso para uso offline", "Download course for offline use")}
+              <button type="button" onClick={() => void downloadOfflineCourse()} disabled={offlineDownloading} aria-busy={offlineDownloading} className="mt-4 inline-flex items-center gap-2 rounded-md border border-primary px-3 py-2 text-sm font-medium text-primary hover:bg-primary/5 disabled:cursor-wait disabled:opacity-60">
+                {offlineDownloading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+                {offlineDownloading
+                  ? t("Generando descarga…", "Preparing download…")
+                  : t("Descargar curso para uso offline", "Download course for offline use")}
               </button>
+              {offlineMessage && <p className="mt-2 text-sm text-[#287a4b]">{offlineMessage}</p>}
+              {offlineError && <p className="mt-2 text-sm text-[#b42318]">{offlineError}</p>}
             </section>
           )}
 

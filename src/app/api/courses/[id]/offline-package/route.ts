@@ -121,7 +121,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
           const headers: HeadersInit = {};
           const cookie = request.headers.get("cookie");
           if (cookie) headers.cookie = cookie;
-          const response = await fetch(resourceUrl, { headers, redirect: "follow" });
+          const response = await fetch(resourceUrl, { headers, redirect: "follow", signal: AbortSignal.timeout(15000) });
           if (!response.ok) throw new Error(`HTTP ${response.status}`);
           contentType = (response.headers.get("content-type") || "").toLowerCase();
           if (contentType.includes("text/html") || contentType.includes("application/xhtml")) throw new Error("Es una página web, no un archivo descargable");
@@ -150,6 +150,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     return new NextResponse(new Uint8Array(output), { headers: { "Content-Type": "application/zip", "Content-Disposition": `attachment; filename="${course.slug}-offline.zip"`, "Cache-Control": "no-store" } });
   } catch (error) {
     if (error instanceof Error && error.message === "UNAUTHORIZED") return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+    console.error("[offline-package] No se pudo generar el paquete offline", error);
     return NextResponse.json({ error: "No se pudo generar el paquete offline" }, { status: 500 });
   }
 }
