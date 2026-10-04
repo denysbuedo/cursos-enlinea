@@ -221,7 +221,6 @@ export function SessionList({
                     <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-[#17212b]">
                       <Headphones className="h-4 w-4 text-primary" />
                       {t("Audio de la sesión", "Session audio")}
-                      {session.audioPlatform && <span className="text-xs font-normal text-[#7b8fa1]">({session.audioPlatform})</span>}
                     </div>
                     <SessionAudio session={session} />
                   </section>
