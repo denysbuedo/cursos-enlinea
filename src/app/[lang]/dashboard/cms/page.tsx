@@ -465,6 +465,81 @@ export default function CmsPage() {
   const [editingEvaluationId, setEditingEvaluationId] = useState<string | null>(null);
 
   const t = (es: string, en: string) => (lang === "en" ? en : es);
+  const enumLabel = (value: string | undefined | null, labels: Record<string, [string, string]>) => {
+    if (!value) return "";
+    const label = labels[value];
+    return label ? t(label[0], label[1]) : value;
+  };
+  const courseStatusLabel = (value: string | undefined | null) => enumLabel(value, {
+    DRAFT: ["Borrador", "Draft"],
+    PUBLISHED: ["Publicado", "Published"],
+    ARCHIVED: ["Archivado", "Archived"],
+  });
+  const pricingLabel = (value: string | undefined | null) => enumLabel(value, {
+    FREE: ["Gratuito", "Free"],
+    PAID: ["De pago", "Paid"],
+  });
+  const roleLabel = (value: string | undefined | null) => enumLabel(value, {
+    LEAD: ["Profesor líder", "Lead instructor"],
+    INSTRUCTOR: ["Instructor", "Instructor"],
+    EDITOR: ["Editor", "Editor"],
+  });
+  const editionStatusLabel = (value: string | undefined | null) => enumLabel(value, {
+    DRAFT: ["Borrador", "Draft"],
+    SCHEDULED: ["Programada", "Scheduled"],
+    PUBLISHED: ["Publicada", "Published"],
+    ARCHIVED: ["Archivada", "Archived"],
+  });
+  const enrollmentStatusLabel = (value: string | undefined | null) => enumLabel(value, {
+    ACTIVE: ["Activa", "Active"],
+    PENDING_PAYMENT: ["Pago pendiente", "Payment pending"],
+    SUSPENDED: ["Suspendida", "Suspended"],
+    CANCELLED: ["Cancelada", "Cancelled"],
+  });
+  const paymentStatusLabel = (value: string | undefined | null) => enumLabel(value, {
+    COMPLETED: ["Completado", "Completed"],
+    PENDING: ["Pendiente", "Pending"],
+    FAILED: ["Fallido", "Failed"],
+    REFUNDED: ["Reembolsado", "Refunded"],
+    CANCELLED: ["Cancelado", "Cancelled"],
+  });
+  const paymentMethodLabel = (value: string | undefined | null) => enumLabel(value, {
+    CARD: ["Tarjeta", "Card"],
+    BANK_TRANSFER: ["Transferencia bancaria", "Bank transfer"],
+    PAYPAL: ["PayPal", "PayPal"],
+    CASH: ["Efectivo", "Cash"],
+  });
+  const resourceTypeLabel = (value: string | undefined | null) => enumLabel(value, {
+    LINK: ["Enlace", "Link"],
+    PDF: ["PDF", "PDF"],
+    READING: ["Lectura", "Reading"],
+    SLIDES: ["Diapositivas", "Slides"],
+    AUDIO: ["Audio", "Audio"],
+    DATASET: ["Conjunto de datos", "Dataset"],
+    OTHER: ["Otro", "Other"],
+  });
+  const resourceSourceLabel = (value: string | undefined | null) => enumLabel(value, {
+    EXTERNAL: ["Externo", "External"],
+    REPOSITORY: ["Repositorio", "Repository"],
+    LOCAL_UPLOAD: ["Subida local", "Local upload"],
+  });
+  const mediaPlatformLabel = (value: string | undefined | null) => enumLabel(value, {
+    YOUTUBE: ["YouTube", "YouTube"],
+    VIMEO: ["Vimeo", "Vimeo"],
+    LOCAL_UPLOAD: ["Subido", "Uploaded"],
+    EXTERNAL: ["Otro enlace", "Other link"],
+    REPOSITORY: ["Repositorio", "Repository"],
+  });
+  const questionTypeLabel = (value: string | undefined | null) => enumLabel(value, {
+    MCQ: ["Selección múltiple", "Multiple choice"],
+    TRUEFALSE: ["Verdadero/Falso", "True/False"],
+    SHORT: ["Respuesta corta", "Short answer"],
+  });
+  const difficultyLabel = (value: string | undefined | null) => enumLabel(value, {
+    BASIC: ["Básica", "Basic"],
+    INTERMEDIATE: ["Intermedia", "Intermediate"],
+    ADVANCED: ["Avanzada", "Advanced"],
+  });
   async function cmsFetch(input: RequestInfo | URL, init?: RequestInit) {
     let response = await fetch(input, init);
     if (response.status !== 401) return response;
@@ -1853,7 +1928,7 @@ export default function CmsPage() {
                 >
                   <span className="block font-medium">{t(course.title.es, course.title.en)}</span>
                   <span className={selectedCourseId === course.id ? "text-white/75" : "text-[#7b8fa1]"}>
-                    {course.status} · {course._count.modules} {t("mód.", "mod.")} · {course._count.sessions} {t("ses.", "ses.")}
+                    {courseStatusLabel(course.status)} · {course._count.modules} {t("mód.", "mod.")} · {course._count.sessions} {t("ses.", "ses.")}
                   </span>
                 </button>
               ))
@@ -1869,7 +1944,7 @@ export default function CmsPage() {
                   {courseForm.id ? t(courseForm.title.es || "Curso sin título", courseForm.title.en || "Untitled course") : t("Curso nuevo", "New course")}
                 </p>
                 <p className="text-xs text-[#7b8fa1]">
-                  {courseForm.status} · {courseForm.pricingModel}
+                  {courseStatusLabel(courseForm.status)} · {pricingLabel(courseForm.pricingModel)}
                   {selectedCourse ? ` · ${selectedCourse._count.enrollments} ${t("matrículas", "enrollments")}` : ""}
                 </p>
               </div>
@@ -2012,9 +2087,9 @@ export default function CmsPage() {
                 </div>
               )}
               <input className="rounded-md border px-3 py-2 text-sm" placeholder="Título ES" value={courseForm.title.es} onChange={(e) => setCourseForm({ ...courseForm, title: { ...courseForm.title, es: e.target.value } })} />
-              <input className="rounded-md border px-3 py-2 text-sm" placeholder="Title EN" value={courseForm.title.en} onChange={(e) => setCourseForm({ ...courseForm, title: { ...courseForm.title, en: e.target.value } })} />
+              <input className="rounded-md border px-3 py-2 text-sm" placeholder={t("Título en inglés", "Title EN")} value={courseForm.title.en} onChange={(e) => setCourseForm({ ...courseForm, title: { ...courseForm.title, en: e.target.value } })} />
               <textarea className="rounded-md border px-3 py-2 text-sm md:col-span-2" placeholder="Descripción ES" value={courseForm.description.es} onChange={(e) => setCourseForm({ ...courseForm, description: { ...courseForm.description, es: e.target.value } })} />
-              <textarea className="rounded-md border px-3 py-2 text-sm md:col-span-2" placeholder="Description EN" value={courseForm.description.en} onChange={(e) => setCourseForm({ ...courseForm, description: { ...courseForm.description, en: e.target.value } })} />
+              <textarea className="rounded-md border px-3 py-2 text-sm md:col-span-2" placeholder={t("Descripción en inglés", "Description EN")} value={courseForm.description.en} onChange={(e) => setCourseForm({ ...courseForm, description: { ...courseForm.description, en: e.target.value } })} />
               <div className="md:col-span-2 grid gap-3 rounded-md border bg-[#f4f7fb] p-3 md:grid-cols-[minmax(0,1fr)_220px]">
                 <div className="space-y-3">
                   <input className="w-full rounded-md border bg-white px-3 py-2 text-sm" placeholder={t("URL de imagen de portada", "Cover image URL")} value={courseForm.coverImageUrl} onChange={(e) => setCourseForm({ ...courseForm, coverImageUrl: e.target.value })} />
@@ -2131,7 +2206,7 @@ export default function CmsPage() {
                   <div className="mt-2 space-y-2">
                     {courseInstructors.map((assignment) => (
                       <div key={assignment.id} className="flex items-center justify-between gap-3 rounded-md border bg-white px-3 py-2 text-sm">
-                        <span><strong>{assignment.user.name}</strong> <span className="text-xs text-[#7b8fa1]">{assignment.role}</span></span>
+                        <span><strong>{assignment.user.name}</strong> <span className="text-xs text-[#7b8fa1]">{roleLabel(assignment.role)}</span></span>
                         {assignment.role !== "LEAD" && (
                           <button type="button" onClick={() => void removeInstructor(assignment.user.id)} className="text-xs font-medium text-red-700 hover:underline">
                             {t("Retirar", "Remove")}
@@ -2148,8 +2223,8 @@ export default function CmsPage() {
                       ))}
                     </select>
                     <select className="rounded-md border px-3 py-2 text-sm" value={selectedInstructorRole} onChange={(e) => setSelectedInstructorRole(e.target.value)}>
-                      <option value="INSTRUCTOR">Instructor</option>
-                      <option value="EDITOR">Editor</option>
+                      <option value="INSTRUCTOR">{t("Instructor", "Instructor")}</option>
+                      <option value="EDITOR">{t("Editor", "Editor")}</option>
                     </select>
                     <button type="button" onClick={() => void assignInstructor()} disabled={!selectedInstructorId || saving} className="rounded-md border border-primary px-3 py-2 text-sm font-medium text-primary disabled:opacity-50">
                       {t("Asignar", "Assign")}
@@ -2164,7 +2239,7 @@ export default function CmsPage() {
               </select>
               <select className="rounded-md border px-3 py-2 text-sm" value={courseForm.language} onChange={(e) => setCourseForm({ ...courseForm, language: e.target.value })}>
                 <option value="es">Español</option>
-                <option value="en">English</option>
+                <option value="en">{t("Inglés", "English")}</option>
               </select>
               <input className="rounded-md border px-3 py-2 text-sm" placeholder={t("Duración estimada (horas)", "Estimated duration (hours)")} value={courseForm.estimatedHours} onChange={(e) => setCourseForm({ ...courseForm, estimatedHours: e.target.value })} />
               <input className="rounded-md border px-3 py-2 text-sm" placeholder={t("Esfuerzo semanal (horas)", "Weekly effort (hours)")} value={courseForm.weeklyHours} onChange={(e) => setCourseForm({ ...courseForm, weeklyHours: e.target.value })} />
@@ -2185,8 +2260,8 @@ export default function CmsPage() {
               <textarea className="rounded-md border px-3 py-2 text-sm" placeholder={t("Competencias ES, una por línea", "Competencies ES, one per line")} value={courseForm.competencies.es} onChange={(e) => setCourseForm({ ...courseForm, competencies: { ...courseForm.competencies, es: e.target.value } })} />
               <textarea className="rounded-md border px-3 py-2 text-sm" placeholder={t("Competencies EN, one per line", "Competencies EN, one per line")} value={courseForm.competencies.en} onChange={(e) => setCourseForm({ ...courseForm, competencies: { ...courseForm.competencies, en: e.target.value } })} />
               <select className="rounded-md border px-3 py-2 text-sm" value={courseForm.pricingModel} onChange={(e) => setCourseForm({ ...courseForm, pricingModel: e.target.value })}>
-                <option value="FREE">Free</option>
-                <option value="PAID">Paid</option>
+                <option value="FREE">{t("Gratuito", "Free")}</option>
+                <option value="PAID">{t("De pago", "Paid")}</option>
               </select>
               <div className="grid grid-cols-2 gap-3">
                 <input className="rounded-md border px-3 py-2 text-sm" placeholder="Precio" value={courseForm.price} onChange={(e) => setCourseForm({ ...courseForm, price: e.target.value })} />
@@ -2315,7 +2390,7 @@ export default function CmsPage() {
                                 <tr key={editionMetric.edition.id} className="border-t">
                                   <td className="p-3">
                                     <p className="font-medium">{t(editionMetric.edition.name.es, editionMetric.edition.name.en)}</p>
-                                    <p className="text-xs text-[#7b8fa1]">{editionMetric.edition.status}{editionMetric.edition.isDefault ? ` · ${t("Defecto", "Default")}` : ""}</p>
+                                    <p className="text-xs text-[#7b8fa1]">{editionStatusLabel(editionMetric.edition.status)}{editionMetric.edition.isDefault ? ` · ${t("Defecto", "Default")}` : ""}</p>
                                   </td>
                                   <td className="p-3">{editionMetric.activeEnrollments}/{editionMetric.totalEnrollments}</td>
                                   <td className="p-3">{editionMetric.averageProgress}%</td>
@@ -2357,7 +2432,7 @@ export default function CmsPage() {
 
                 <div className="grid gap-3 md:grid-cols-2">
                   <input className="rounded-md border px-3 py-2 text-sm" placeholder="Nombre ES" value={editionForm.name.es} onChange={(e) => setEditionForm({ ...editionForm, name: { ...editionForm.name, es: e.target.value } })} />
-                  <input className="rounded-md border px-3 py-2 text-sm" placeholder="Name EN" value={editionForm.name.en} onChange={(e) => setEditionForm({ ...editionForm, name: { ...editionForm.name, en: e.target.value } })} />
+                  <input className="rounded-md border px-3 py-2 text-sm" placeholder={t("Nombre en inglés", "Name EN")} value={editionForm.name.en} onChange={(e) => setEditionForm({ ...editionForm, name: { ...editionForm.name, en: e.target.value } })} />
                   <label className="text-sm">
                     <span className="mb-1 block text-[#7b8fa1]">{t("Inicio", "Start")}</span>
                     <input type="date" className="w-full rounded-md border px-3 py-2 text-sm" value={editionForm.startsAt} onChange={(e) => setEditionForm({ ...editionForm, startsAt: e.target.value })} />
@@ -2368,10 +2443,10 @@ export default function CmsPage() {
                   </label>
                   <input className="rounded-md border px-3 py-2 text-sm" placeholder={t("Cupo", "Capacity")} value={editionForm.capacity} onChange={(e) => setEditionForm({ ...editionForm, capacity: e.target.value })} />
                   <select className="rounded-md border px-3 py-2 text-sm" value={editionForm.status} onChange={(e) => setEditionForm({ ...editionForm, status: e.target.value })}>
-                    <option value="DRAFT">Draft</option>
-                    <option value="SCHEDULED">Scheduled</option>
-                    <option value="PUBLISHED">Published</option>
-                    <option value="ARCHIVED">Archived</option>
+                    <option value="DRAFT">{t("Borrador", "Draft")}</option>
+                    <option value="SCHEDULED">{t("Programada", "Scheduled")}</option>
+                    <option value="PUBLISHED">{t("Publicada", "Published")}</option>
+                    <option value="ARCHIVED">{t("Archivada", "Archived")}</option>
                   </select>
                   <label className="flex items-center gap-2 text-sm">
                     <input type="checkbox" checked={editionForm.isDefault} onChange={(e) => setEditionForm({ ...editionForm, isDefault: e.target.checked })} />
@@ -2411,7 +2486,7 @@ export default function CmsPage() {
                           <div>
                             <p className="font-medium">{t(edition.name.es, edition.name.en)}</p>
                             <p className="text-xs text-[#7b8fa1]">
-                              {edition.status}
+                              {editionStatusLabel(edition.status)}
                               {edition.isDefault ? ` · ${t("por defecto", "default")}` : ""}
                               {edition.capacity ? ` · ${edition._count?.enrollments || 0}/${edition.capacity}` : ` · ${edition._count?.enrollments || 0} ${t("matrículas", "enrollments")}`}
                             </p>
@@ -2500,10 +2575,10 @@ export default function CmsPage() {
                             onChange={(e) => setManualEnrollmentStatus(e.target.value)}
                             className="rounded-md border bg-white px-3 py-2 text-sm"
                           >
-                            <option value="ACTIVE">ACTIVE</option>
-                            <option value="PENDING_PAYMENT">PENDING_PAYMENT</option>
-                            <option value="SUSPENDED">SUSPENDED</option>
-                            <option value="CANCELLED">CANCELLED</option>
+                            <option value="ACTIVE">{enrollmentStatusLabel("ACTIVE")}</option>
+                            <option value="PENDING_PAYMENT">{enrollmentStatusLabel("PENDING_PAYMENT")}</option>
+                            <option value="SUSPENDED">{enrollmentStatusLabel("SUSPENDED")}</option>
+                            <option value="CANCELLED">{enrollmentStatusLabel("CANCELLED")}</option>
                           </select>
                           <button
                             onClick={createManualEnrollment}
@@ -2542,7 +2617,7 @@ export default function CmsPage() {
                                       </td>
                                       <td className="p-3">{Math.round(enrollment.progress)}%</td>
                                       <td className="p-3 text-xs text-[#7b8fa1]">
-                                        {payment ? `${payment.status} · ${Number(payment.amount)} ${payment.currency} · ${payment.method}` : t("Sin pago", "No payment")}
+                                        {payment ? `${paymentStatusLabel(payment.status)} · ${Number(payment.amount)} ${payment.currency} · ${paymentMethodLabel(payment.method)}` : t("Sin pago", "No payment")}
                                       </td>
                                       <td className="p-3">
                                         <select
@@ -2551,10 +2626,10 @@ export default function CmsPage() {
                                           disabled={saving}
                                           className="rounded-md border bg-white px-2 py-1 text-xs"
                                         >
-                                          <option value="ACTIVE">ACTIVE</option>
-                                          <option value="PENDING_PAYMENT">PENDING_PAYMENT</option>
-                                          <option value="SUSPENDED">SUSPENDED</option>
-                                          <option value="CANCELLED">CANCELLED</option>
+                                          <option value="ACTIVE">{enrollmentStatusLabel("ACTIVE")}</option>
+                                          <option value="PENDING_PAYMENT">{enrollmentStatusLabel("PENDING_PAYMENT")}</option>
+                                          <option value="SUSPENDED">{enrollmentStatusLabel("SUSPENDED")}</option>
+                                          <option value="CANCELLED">{enrollmentStatusLabel("CANCELLED")}</option>
                                         </select>
                                       </td>
                                     </tr>
@@ -2586,7 +2661,7 @@ export default function CmsPage() {
                 </div>
                 <div className="grid gap-3 md:grid-cols-[1fr_1fr_100px_140px]">
                   <input className="rounded-md border px-3 py-2 text-sm" placeholder="Módulo ES" value={moduleForm.title.es} onChange={(e) => setModuleForm({ ...moduleForm, title: { ...moduleForm.title, es: e.target.value } })} />
-                  <input className="rounded-md border px-3 py-2 text-sm" placeholder="Module EN" value={moduleForm.title.en} onChange={(e) => setModuleForm({ ...moduleForm, title: { ...moduleForm.title, en: e.target.value } })} />
+                  <input className="rounded-md border px-3 py-2 text-sm" placeholder={t("Módulo en inglés", "Module EN")} value={moduleForm.title.en} onChange={(e) => setModuleForm({ ...moduleForm, title: { ...moduleForm.title, en: e.target.value } })} />
                   <input className="rounded-md border px-3 py-2 text-sm" placeholder="Orden" value={moduleForm.order} onChange={(e) => setModuleForm({ ...moduleForm, order: e.target.value })} />
                   <button onClick={saveModule} disabled={saving} className="inline-flex items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-white disabled:opacity-50">
                     <Plus className="h-4 w-4" />
@@ -2645,7 +2720,7 @@ export default function CmsPage() {
                     <span className="ml-2 text-xs">{t("Las modalidades en vivo e híbrida se habilitarán en una etapa posterior.", "Live and hybrid modes will be enabled in a later stage.")}</span>
                   </div>
                   <input className="rounded-md border px-3 py-2 text-sm" placeholder="Sesión ES" value={sessionForm.title.es} onChange={(e) => setSessionForm({ ...sessionForm, title: { ...sessionForm.title, es: e.target.value } })} />
-                  <input className="rounded-md border px-3 py-2 text-sm" placeholder="Session EN" value={sessionForm.title.en} onChange={(e) => setSessionForm({ ...sessionForm, title: { ...sessionForm.title, en: e.target.value } })} />
+                  <input className="rounded-md border px-3 py-2 text-sm" placeholder={t("Sesión en inglés", "Session EN")} value={sessionForm.title.en} onChange={(e) => setSessionForm({ ...sessionForm, title: { ...sessionForm.title, en: e.target.value } })} />
                   <div className="grid grid-cols-[1fr_90px] gap-3">
                     <select className="rounded-md border px-3 py-2 text-sm" value={sessionForm.videoPlatform} onChange={(e) => setSessionForm({ ...sessionForm, videoPlatform: e.target.value })}>
                       <option value="YOUTUBE">YouTube</option>
@@ -2701,12 +2776,12 @@ export default function CmsPage() {
                       <input className="rounded-md border px-3 py-2 text-sm" placeholder={t("Título del recurso", "Resource title")} value={resourceForm.title} onChange={(e) => setResourceForm({ ...resourceForm, title: e.target.value })} />
                       <input className="rounded-md border px-3 py-2 text-sm" placeholder={t("URL externa o repositorio", "External or repository URL")} value={resourceForm.url} onChange={(e) => setResourceForm({ ...resourceForm, url: e.target.value })} />
                       <select className="rounded-md border px-3 py-2 text-sm" value={resourceForm.type} onChange={(e) => setResourceForm({ ...resourceForm, type: e.target.value })}>
-                        <option value="LINK">Link</option>
+                        <option value="LINK">{t("Enlace", "Link")}</option>
                         <option value="PDF">PDF</option>
                         <option value="READING">{t("Lectura", "Reading")}</option>
                         <option value="SLIDES">{t("Diapositivas", "Slides")}</option>
                         <option value="AUDIO">{t("Audio", "Audio")}</option>
-                        <option value="DATASET">Dataset</option>
+                        <option value="DATASET">{t("Conjunto de datos", "Dataset")}</option>
                         <option value="OTHER">{t("Otro", "Other")}</option>
                       </select>
                       <select className="rounded-md border px-3 py-2 text-sm" value={resourceForm.source} onChange={(e) => setResourceForm({ ...resourceForm, source: e.target.value as SessionResource["source"] })}>
@@ -2730,7 +2805,7 @@ export default function CmsPage() {
                                 <span className="truncate">{resource.title}</span>
                                 <ExternalLink className="h-3.5 w-3.5 flex-shrink-0" />
                               </a>
-                              <p className="mt-1 text-xs text-[#7b8fa1]">{resource.type} · {resource.source}</p>
+                              <p className="mt-1 text-xs text-[#7b8fa1]">{resourceTypeLabel(resource.type)} · {resourceSourceLabel(resource.source)}</p>
                             </div>
                             <button type="button" onClick={() => removeResource(resource.id, resourceIndex)} className="inline-flex items-center gap-1 rounded-md border px-3 py-1.5 text-xs text-red-600 hover:bg-red-50">
                               <Trash2 className="h-3.5 w-3.5" />
@@ -2792,7 +2867,7 @@ export default function CmsPage() {
                           <div key={session.id} className="flex flex-col gap-2 rounded-md border p-3 text-sm sm:flex-row sm:items-center sm:justify-between">
                             <div>
                               <span className="font-medium">{session.order}. {t(session.title.es, session.title.en)}</span>
-                              <span className="ml-2 text-xs text-[#7b8fa1]">{session.status === "ARCHIVED" ? t("ARCHIVADA", "ARCHIVED") : session.videoPlatform || (session.audioPlatform ? t("Audio", "Audio") : t("Sin video/audio", "No video/audio"))}</span>
+                              <span className="ml-2 text-xs text-[#7b8fa1]">{session.status === "ARCHIVED" ? t("Archivada", "Archived") : session.videoPlatform ? mediaPlatformLabel(session.videoPlatform) : (session.audioPlatform ? t("Audio", "Audio") : t("Sin video/audio", "No video/audio"))}</span>
                             </div>
                             <div className="flex gap-2">
                               <button
@@ -2850,7 +2925,7 @@ export default function CmsPage() {
                           <div key={session.id} className="flex flex-col gap-2 rounded-md border p-3 text-sm sm:flex-row sm:items-center sm:justify-between">
                             <div>
                               <span className="font-medium">{session.order}. {t(session.title.es, session.title.en)}</span>
-                              <span className="ml-2 text-xs text-[#7b8fa1]">{session.status === "ARCHIVED" ? t("ARCHIVADA", "ARCHIVED") : session.videoPlatform || (session.audioPlatform ? t("Audio", "Audio") : t("Sin video/audio", "No video/audio"))}</span>
+                              <span className="ml-2 text-xs text-[#7b8fa1]">{session.status === "ARCHIVED" ? t("Archivada", "Archived") : session.videoPlatform ? mediaPlatformLabel(session.videoPlatform) : (session.audioPlatform ? t("Audio", "Audio") : t("Sin video/audio", "No video/audio"))}</span>
                             </div>
                             <div className="flex gap-2">
                               <button
@@ -3010,7 +3085,7 @@ export default function CmsPage() {
                       </select>
                       <input className="rounded-md border px-3 py-2 text-sm" type="number" min="1" placeholder={t("Puntos", "Points")} value={bankQuestionForm.points} onChange={(e) => updateBankQuestion({ points: Number(e.target.value || 1) })} />
                       <input className="rounded-md border px-3 py-2 text-sm" placeholder="Pregunta ES" value={bankQuestionForm.question.es} onChange={(e) => updateBankQuestion({ question: { ...bankQuestionForm.question, es: e.target.value } })} />
-                      <input className="rounded-md border px-3 py-2 text-sm" placeholder="Question EN" value={bankQuestionForm.question.en} onChange={(e) => updateBankQuestion({ question: { ...bankQuestionForm.question, en: e.target.value } })} />
+                      <input className="rounded-md border px-3 py-2 text-sm" placeholder={t("Pregunta en inglés", "Question EN")} value={bankQuestionForm.question.en} onChange={(e) => updateBankQuestion({ question: { ...bankQuestionForm.question, en: e.target.value } })} />
                       <select className="rounded-md border px-3 py-2 text-sm" value={bankQuestionForm.difficulty || "BASIC"} onChange={(e) => updateBankQuestion({ difficulty: e.target.value as CmsQuestion["difficulty"] })}>
                         <option value="BASIC">{t("Básica", "Basic")}</option>
                         <option value="INTERMEDIATE">{t("Intermedia", "Intermediate")}</option>
@@ -3028,7 +3103,7 @@ export default function CmsPage() {
                         {bankQuestionForm.options.map((option, optionIndex) => (
                           <div key={`bank-option-${optionIndex}`} className="grid gap-2 md:grid-cols-[1fr_1fr_auto]">
                             <input className="rounded-md border px-3 py-2 text-sm" placeholder={`Opción ${optionIndex + 1} ES`} value={option.es} onChange={(e) => updateBankQuestionOption(optionIndex, { ...option, es: e.target.value })} />
-                            <input className="rounded-md border px-3 py-2 text-sm" placeholder={`Option ${optionIndex + 1} EN`} value={option.en} onChange={(e) => updateBankQuestionOption(optionIndex, { ...option, en: e.target.value })} />
+                            <input className="rounded-md border px-3 py-2 text-sm" placeholder={t(`Opción ${optionIndex + 1} en inglés`, `Option ${optionIndex + 1} EN`)} value={option.en} onChange={(e) => updateBankQuestionOption(optionIndex, { ...option, en: e.target.value })} />
                             <button type="button" onClick={() => updateBankQuestion({ correctAnswer: option.es || option.en })} className={`rounded-md border px-3 py-2 text-xs ${bankQuestionForm.correctAnswer === (option.es || option.en) ? "bg-primary text-white" : "hover:bg-accent"}`}>{t("Correcta", "Correct")}</button>
                           </div>
                         ))}
@@ -3084,13 +3159,13 @@ export default function CmsPage() {
                           <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
                             <p className="font-medium">{index + 1}. {t(question.question.es, question.question.en)}</p>
                             <div className="flex items-center gap-2">
-                              <span className="text-xs text-[#7b8fa1]">{question.type} · {question.points} pt</span>
+                              <span className="text-xs text-[#7b8fa1]">{questionTypeLabel(question.type)} · {question.points} {t("punto(s)", "pt")}</span>
                               <button type="button" onClick={() => editBankQuestion(question)} className="rounded-md border px-2 py-1 text-xs hover:bg-accent">{t("Editar", "Edit")}</button>
                               <button type="button" onClick={() => void deleteBankQuestion(question.id)} disabled={saving} className="inline-flex items-center gap-1 rounded-md border px-2 py-1 text-xs text-red-600 hover:bg-red-50 disabled:opacity-50"><Trash2 className="h-3 w-3" />{t("Eliminar", "Delete")}</button>
                             </div>
                           </div>
                           <p className="mt-1 text-xs text-[#7b8fa1]">
-                            {[question.difficulty || "BASIC", question.topic, question.moduleId ? selectedCourse.modules.find((module) => module.id === question.moduleId)?.title.es : "", ...(question.tags || [])].filter(Boolean).join(" · ")}
+                            {[difficultyLabel(question.difficulty || "BASIC"), question.topic, question.moduleId ? selectedCourse.modules.find((module) => module.id === question.moduleId)?.title.es : "", ...(question.tags || [])].filter(Boolean).join(" · ")}
                           </p>
                         </div>
                       </div>
@@ -3200,9 +3275,9 @@ export default function CmsPage() {
                 </div>
                 <div className="grid gap-3 md:grid-cols-2">
                   <input className="rounded-md border px-3 py-2 text-sm" placeholder="Título ES" value={evaluationForm.title.es} onChange={(e) => setEvaluationForm({ ...evaluationForm, title: { ...evaluationForm.title, es: e.target.value } })} />
-                  <input className="rounded-md border px-3 py-2 text-sm" placeholder="Title EN" value={evaluationForm.title.en} onChange={(e) => setEvaluationForm({ ...evaluationForm, title: { ...evaluationForm.title, en: e.target.value } })} />
+                  <input className="rounded-md border px-3 py-2 text-sm" placeholder={t("Título en inglés", "Title EN")} value={evaluationForm.title.en} onChange={(e) => setEvaluationForm({ ...evaluationForm, title: { ...evaluationForm.title, en: e.target.value } })} />
                   <textarea className="rounded-md border px-3 py-2 text-sm md:col-span-2" placeholder="Descripción ES" value={evaluationForm.description.es} onChange={(e) => setEvaluationForm({ ...evaluationForm, description: { ...evaluationForm.description, es: e.target.value } })} />
-                  <textarea className="rounded-md border px-3 py-2 text-sm md:col-span-2" placeholder="Description EN" value={evaluationForm.description.en} onChange={(e) => setEvaluationForm({ ...evaluationForm, description: { ...evaluationForm.description, en: e.target.value } })} />
+                  <textarea className="rounded-md border px-3 py-2 text-sm md:col-span-2" placeholder={t("Descripción en inglés", "Description EN")} value={evaluationForm.description.en} onChange={(e) => setEvaluationForm({ ...evaluationForm, description: { ...evaluationForm.description, en: e.target.value } })} />
                   <label className="text-sm">
                     <span className="mb-1 block text-[#7b8fa1]">{t("Nota mínima (%)", "Passing score (%)")}</span>
                     <input className="w-full rounded-md border px-3 py-2 text-sm" value={evaluationForm.passingScore} onChange={(e) => setEvaluationForm({ ...evaluationForm, passingScore: e.target.value })} />
@@ -3272,7 +3347,7 @@ export default function CmsPage() {
                         </select>
                         <input className="rounded-md border px-3 py-2 text-sm" placeholder="Puntos" value={question.points} onChange={(e) => updateQuestion(questionIndex, { points: Number(e.target.value || 1) })} />
                         <input className="rounded-md border px-3 py-2 text-sm" placeholder="Pregunta ES" value={question.question.es} onChange={(e) => updateQuestion(questionIndex, { question: { ...question.question, es: e.target.value } })} />
-                        <input className="rounded-md border px-3 py-2 text-sm" placeholder="Question EN" value={question.question.en} onChange={(e) => updateQuestion(questionIndex, { question: { ...question.question, en: e.target.value } })} />
+                        <input className="rounded-md border px-3 py-2 text-sm" placeholder={t("Pregunta en inglés", "Question EN")} value={question.question.en} onChange={(e) => updateQuestion(questionIndex, { question: { ...question.question, en: e.target.value } })} />
                         <select className="rounded-md border px-3 py-2 text-sm" value={question.difficulty || "BASIC"} onChange={(e) => updateQuestion(questionIndex, { difficulty: e.target.value as CmsQuestion["difficulty"] })}>
                           <option value="BASIC">{t("Básica", "Basic")}</option>
                           <option value="INTERMEDIATE">{t("Intermedia", "Intermediate")}</option>
@@ -3293,7 +3368,7 @@ export default function CmsPage() {
                           {question.options.map((option, optionIndex) => (
                             <div key={optionIndex} className="grid gap-2 md:grid-cols-[1fr_1fr_auto]">
                               <input className="rounded-md border px-3 py-2 text-sm" placeholder={`Opción ${optionIndex + 1} ES`} value={option.es} onChange={(e) => updateQuestionOption(questionIndex, optionIndex, { ...option, es: e.target.value })} />
-                              <input className="rounded-md border px-3 py-2 text-sm" placeholder={`Option ${optionIndex + 1} EN`} value={option.en} onChange={(e) => updateQuestionOption(questionIndex, optionIndex, { ...option, en: e.target.value })} />
+                              <input className="rounded-md border px-3 py-2 text-sm" placeholder={t(`Opción ${optionIndex + 1} en inglés`, `Option ${optionIndex + 1} EN`)} value={option.en} onChange={(e) => updateQuestionOption(questionIndex, optionIndex, { ...option, en: e.target.value })} />
                               <button
                                 onClick={() => updateQuestion(questionIndex, { correctAnswer: option.es || option.en })}
                                 className={`rounded-md border px-3 py-2 text-xs ${question.correctAnswer === (option.es || option.en) ? "bg-primary text-white" : "hover:bg-accent"}`}
@@ -3375,7 +3450,7 @@ export default function CmsPage() {
                         <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                           <div>
                             <p className="font-medium">{review.user.name}</p>
-                            <p className="text-xs text-[#7b8fa1]">{review.user.email} · {review.rating}/5 · {review.status}</p>
+                            <p className="text-xs text-[#7b8fa1]">{review.user.email} · {review.rating}/5 · {enumLabel(review.status, { PENDING: ["Pendiente", "Pending"], PUBLISHED: ["Publicada", "Published"], REJECTED: ["Rechazada", "Rejected"] })}</p>
                           </div>
                           <div className="flex flex-wrap items-center justify-end gap-2">
                             <span className={`rounded-full px-2 py-1 text-[11px] font-semibold ${review.status === "PUBLISHED" ? "bg-green-100 text-green-800" : review.status === "REJECTED" ? "bg-red-100 text-red-800" : "bg-amber-100 text-amber-800"}`}>
