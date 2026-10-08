@@ -380,6 +380,27 @@ test.describe("R1 critical flows", () => {
     await page.getByRole("button", { name: "Crear usuario" }).click();
 
     await expect(page.getByText(email)).toBeVisible();
+
+    const createdUser = await page.evaluate(async (userEmail) => {
+      const response = await fetch(`/api/admin/users?search=${encodeURIComponent(userEmail)}`);
+      return { ok: response.ok, status: response.status, json: await response.json() };
+    }, email);
+    expect(createdUser.ok, `HTTP ${createdUser.status} ${JSON.stringify(createdUser.json)}`).toBeTruthy();
+    const userId = createdUser.json.data[0].id as string;
+    expect(createdUser.json.data[0].emailVerifiedAt).toBeNull();
+
+    const verifyResponse = await page.evaluate(async (id) => {
+      const response = await fetch(`/api/admin/users/${id}/verify`, { method: "POST" });
+      return { ok: response.ok, status: response.status, json: await response.json() };
+    }, userId);
+    expect(verifyResponse.ok, `HTTP ${verifyResponse.status} ${JSON.stringify(verifyResponse.json)}`).toBeTruthy();
+    expect(verifyResponse.json.data.emailVerifiedAt).toBeTruthy();
+
+    const deleteResponse = await page.evaluate(async (id) => {
+      const response = await fetch(`/api/admin/users/${id}`, { method: "DELETE" });
+      return { ok: response.ok, status: response.status, json: await response.json() };
+    }, userId);
+    expect(deleteResponse.ok, `HTTP ${deleteResponse.status} ${JSON.stringify(deleteResponse.json)}`).toBeTruthy();
   });
 
   test("admin can manually enroll an existing user in a course edition", async ({ page }) => {

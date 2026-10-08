@@ -17,6 +17,9 @@ import {
   Award,
   FileClock,
   CreditCard,
+  MailCheck,
+  Send,
+  Trash2,
 } from "lucide-react";
 
 interface PaymentPending {
@@ -51,6 +54,7 @@ interface AdminUser {
   email: string;
   role: string;
   country: string | null;
+  emailVerifiedAt: string | null;
   createdAt: string;
 }
 
@@ -139,6 +143,7 @@ export default function AdminDashboardPage() {
     preferredLang: "es",
   });
   const [roleLoading, setRoleLoading] = useState<string|null>(null);
+  const [userActionLoading, setUserActionLoading] = useState<string | null>(null);
   const [certificates, setCertificates] = useState<AdminCertificate[]>([]);
   const [certificatesTotal, setCertificatesTotal] = useState(0);
   const [certificatesLoading, setCertificatesLoading] = useState(false);
@@ -234,6 +239,54 @@ export default function AdminDashboardPage() {
     await adminFetch(`/api/admin/users/${userId}/role`, { method: "POST", headers: {"Content-Type":"application/json"}, body: JSON.stringify({role:newRole}) });
     setUsers(prev=>prev.map(u=>u.id===userId?{...u,role:newRole}:u));
   } finally { setRoleLoading(null); }};
+
+  const verifyUser = async (userId: string) => {
+    setUserActionLoading(`${userId}:verify`);
+    setError(null);
+    try {
+      const res = await adminFetch(`/api/admin/users/${userId}/verify`, { method: "POST" });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || t("No se pudo confirmar el correo", "Could not confirm email"));
+      setUsers((prev) => prev.map((user) => user.id === userId ? { ...user, emailVerifiedAt: data.data.emailVerifiedAt } : user));
+      await fetchAudit();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t("No se pudo confirmar el correo", "Could not confirm email"));
+    } finally {
+      setUserActionLoading(null);
+    }
+  };
+
+  const resendVerification = async (userId: string) => {
+    setUserActionLoading(`${userId}:resend`);
+    setError(null);
+    try {
+      const res = await adminFetch(`/api/admin/users/${userId}/resend-verification`, { method: "POST" });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || t("No se pudo reenviar el correo", "Could not resend email"));
+      await fetchAudit();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t("No se pudo reenviar el correo", "Could not resend email"));
+    } finally {
+      setUserActionLoading(null);
+    }
+  };
+
+  const deleteUser = async (user: AdminUser) => {
+    if (!window.confirm(t(`¿Eliminar a ${user.name}? Esta acción solo está disponible para usuarios sin actividad asociada.`, `Delete ${user.name}? This is only available for users without associated activity.`))) return;
+    setUserActionLoading(`${user.id}:delete`);
+    setError(null);
+    try {
+      const res = await adminFetch(`/api/admin/users/${user.id}`, { method: "DELETE" });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || t("No se pudo eliminar el usuario", "Could not delete user"));
+      setUsers((prev) => prev.filter((item) => item.id !== user.id));
+      await fetchAudit();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t("No se pudo eliminar el usuario", "Could not delete user"));
+    } finally {
+      setUserActionLoading(null);
+    }
+  };
 
   const fetchCertificates = async () => {
     setCertificatesLoading(true);
@@ -751,13 +804,44 @@ export default function AdminDashboardPage() {
                   <th className="p-3 text-left text-sm">{t("Nombre","Name")}</th>
                   <th className="p-3 text-left text-sm">Email</th>
                   <th className="p-3 text-left text-sm">{t("Rol","Role")}</th>
+                  <th className="p-3 text-left text-sm">{t("Correo", "Email")}</th>
                   <th className="p-3 text-left text-sm">{t("Cambiar","Change")}</th>
+                  <th className="p-3 text-left text-sm">{t("Acciones", "Actions")}</th>
                 </tr></thead>
                 <tbody>{users.map((u: AdminUser)=><tr key={u.id} className="border-t hover:bg-accent/30">
                   <td className="p-3"><p className="text-sm font-medium">{u.name}</p></td>
                   <td className="p-3 text-sm text-muted-foreground">{u.email}</td>
                   <td className="p-3"><span className={"inline-flex rounded-full px-2 py-0.5 text-xs font-medium "+(u.role==="ADMIN"?"bg-red-100 text-red-700":u.role==="INSTRUCTOR"?"bg-amber-100 text-amber-700":"bg-blue-100 text-blue-700")}>{u.role==="ADMIN"?"Admin":u.role==="INSTRUCTOR"?"Instructor":"Estudiante"}</span></td>
+                  <td className="p-3">
+                    {u.emailVerifiedAt ? (
+                      <span className="inline-flex items-center gap-1 text-xs font-medium text-green-700"><CheckCircle2 className="h-3.5 w-3.5" />{t("Confirmado", "Confirmed")}</span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 text-xs font-medium text-amber-700"><Clock className="h-3.5 w-3.5" />{t("Pendiente", "Pending")}</span>
+                    )}
+                  </td>
                   <td className="p-3"><select value={u.role} onChange={e=>changeRole(u.id,e.target.value)} disabled={roleLoading===u.id} className="text-xs border rounded px-2 py-1 bg-white"><option value="STUDENT">{t("Estudiante","Student")}</option><option value="INSTRUCTOR">{t("Instructor","Instructor")}</option><option value="ADMIN">Admin</option></select>{roleLoading===u.id&&<Loader2 className="w-3 h-3 inline ml-2 animate-spin"/>}</td>
+                  <td className="p-3">
+                    <div className="flex flex-wrap gap-2">
+                      {!u.emailVerifiedAt && (
+                        <>
+                          <button onClick={() => verifyUser(u.id)} disabled={userActionLoading !== null} className="inline-flex items-center gap-1 rounded-md border border-green-600 px-2 py-1 text-xs text-green-700 hover:bg-green-50 disabled:opacity-50" title={t("Confirmar correo manualmente", "Confirm email manually")}>
+                            {userActionLoading === `${u.id}:verify` ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <MailCheck className="h-3.5 w-3.5" />}
+                            {t("Confirmar", "Confirm")}
+                          </button>
+                          <button onClick={() => resendVerification(u.id)} disabled={userActionLoading !== null} className="inline-flex items-center gap-1 rounded-md border px-2 py-1 text-xs hover:bg-accent disabled:opacity-50" title={t("Reenviar correo de confirmación", "Resend confirmation email")}>
+                            {userActionLoading === `${u.id}:resend` ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
+                            {t("Reenviar", "Resend")}
+                          </button>
+                        </>
+                      )}
+                      {u.role !== "ADMIN" && (
+                        <button onClick={() => deleteUser(u)} disabled={userActionLoading !== null} className="inline-flex items-center gap-1 rounded-md border border-red-600 px-2 py-1 text-xs text-red-700 hover:bg-red-50 disabled:opacity-50" title={t("Eliminar usuario sin actividad", "Delete user without activity")}>
+                          {userActionLoading === `${u.id}:delete` ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
+                          {t("Eliminar", "Delete")}
+                        </button>
+                      )}
+                    </div>
+                  </td>
                 </tr>)}</tbody>
               </table>
             </div>

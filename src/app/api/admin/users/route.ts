@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
     const [users, total] = await Promise.all([
       prisma.user.findMany({
         where,
-        select: { id: true, name: true, email: true, role: true, country: true, preferredLang: true, createdAt: true },
+        select: { id: true, name: true, email: true, role: true, country: true, preferredLang: true, emailVerifiedAt: true, createdAt: true },
         orderBy: { createdAt: "desc" },
         skip: (page - 1) * pageSize,
         take: pageSize,
@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
     const passwordHash = await hashPassword(password);
     const user = await prisma.user.create({
       data: { email, name, passwordHash, role, country, preferredLang },
-      select: { id: true, name: true, email: true, role: true, country: true, preferredLang: true, createdAt: true },
+      select: { id: true, name: true, email: true, role: true, country: true, preferredLang: true, emailVerifiedAt: true, createdAt: true },
     });
 
     await prisma.auditLog.create({
