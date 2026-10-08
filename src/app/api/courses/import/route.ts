@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
+import JSZip from "jszip";
+import { randomUUID } from "crypto";
 import { requireAuth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { uploadFile } from "@/lib/storage";
 
 type ImportedSession = Record<string, unknown>;
 type ImportedModule = { title: unknown; description?: unknown; order?: number; status?: string; sessions?: ImportedSession[] };
@@ -19,6 +22,74 @@ function jsonValue(value: unknown): Prisma.InputJsonValue | undefined {
   return value === null || value === undefined ? undefined : value as Prisma.InputJsonValue;
 }
 
+type ImportAsset = { path: string; data: Uint8Array };
+type ParsedImport = { payload: Record<string, unknown>; assets: ImportAsset[] };
+
+function parseTeacherHtml(html: string): Record<string, unknown> {
+  const match = html.match(/<script\s+id=["']course-data["'][^>]*>([\s\S]*?)<\/script>/i);
+  if (!match) throw new Error("La plantilla HTML no contiene datos de curso");
+  const content = match[1].trim().replace(/^window\.__COURSE_PACKAGE__\s*=\s*/, "").replace(/;\s*$/, "");
+  return JSON.parse(content) as Record<string, unknown>;
+}
+
+async function parseImportFile(file: File): Promise<ParsedImport> {
+  const name = file.name.toLowerCase();
+  if (name.endsWith(".zip")) {
+    const zip = await JSZip.loadAsync(await file.arrayBuffer());
+    const assets: ImportAsset[] = [];
+    for (const [entryPath, entry] of Object.entries(zip.files)) {
+      if (!entry.dir && entryPath.startsWith("materiales/")) assets.push({ path: entryPath, data: await entry.async("uint8array") });
+    }
+    const htmlEntry = zip.file("curso.html") || zip.file(/(^|\/)curso\.html$/i)[0];
+    if (htmlEntry) return { payload: parseTeacherHtml(await htmlEntry.async("text")), assets };
+    const jsonEntry = zip.file("datos-internos/curso.json") || zip.file(/(^|\/)curso\.json$/i)[0];
+    if (jsonEntry) return { payload: JSON.parse(await jsonEntry.async("text")) as Record<string, unknown>, assets };
+    throw new Error("El paquete no contiene una plantilla de curso válida");
+  }
+  const content = await file.text();
+  return {
+    payload: name.endsWith(".html") || content.includes('id="course-data"')
+      ? parseTeacherHtml(content)
+      : JSON.parse(content) as Record<string, unknown>,
+    assets: [],
+  };
+}
+
+function contentTypeForAsset(assetPath: string) {
+  const extension = assetPath.toLowerCase().split(".").pop();
+  const types: Record<string, string> = {
+    pdf: "application/pdf",
+    ppt: "application/vnd.ms-powerpoint",
+    pptx: "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+    doc: "application/msword",
+    docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    xls: "application/vnd.ms-excel",
+    xlsx: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    mp3: "audio/mpeg",
+    m4a: "audio/mp4",
+    ogg: "audio/ogg",
+    wav: "audio/wav",
+    png: "image/png",
+    jpg: "image/jpeg",
+    jpeg: "image/jpeg",
+    webp: "image/webp",
+    zip: "application/zip",
+  };
+  return (extension && types[extension]) || "application/octet-stream";
+}
+
+function rewriteAssetUrls(value: unknown, assetUrls: Map<string, string>): unknown {
+  if (Array.isArray(value)) return value.map((item) => rewriteAssetUrls(item, assetUrls));
+  if (!value || typeof value !== "object") return value;
+  const result: Record<string, unknown> = {};
+  for (const [key, item] of Object.entries(value as Record<string, unknown>)) {
+    result[key] = key === "url" && typeof item === "string" && assetUrls.has(item)
+      ? assetUrls.get(item)
+      : rewriteAssetUrls(item, assetUrls);
+  }
+  return result;
+}
+
 export async function POST(request: NextRequest) {
   try {
     const session = await requireAuth();
@@ -29,8 +100,19 @@ export async function POST(request: NextRequest) {
     if (contentType.includes("multipart/form-data")) {
       const formData = await request.formData();
       const file = formData.get("file");
-      if (!(file instanceof File)) return NextResponse.json({ error: "Falta el archivo JSON" }, { status: 400 });
-      payload = JSON.parse(await file.text());
+      if (!(file instanceof File)) return NextResponse.json({ error: "Falta el archivo de curso" }, { status: 400 });
+      const parsed = await parseImportFile(file);
+      payload = parsed.payload;
+      const importedCourseId = randomUUID();
+      const assetUrls = new Map<string, string>();
+      for (const asset of parsed.assets) {
+        const filename = asset.path.split("/").pop() || "material.bin";
+        const url = await uploadFile("resources", `${importedCourseId}/${Date.now()}-${filename}`, Buffer.from(asset.data), contentTypeForAsset(asset.path));
+        assetUrls.set(asset.path, url);
+      }
+      if (assetUrls.size && payload.course && typeof payload.course === "object") {
+        payload = { ...payload, course: rewriteAssetUrls(payload.course, assetUrls) };
+      }
     } else {
       payload = await request.json();
     }

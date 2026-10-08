@@ -1210,14 +1210,16 @@ export default function CmsPage() {
     if (!selectedCourseId) return;
     setError("");
     try {
-      const res = await cmsFetch(`/api/courses/${selectedCourseId}/export`);
+      const res = await cmsFetch(`/api/courses/${selectedCourseId}/teacher-package`);
       if (!res.ok) throw new Error(t("No se pudo exportar el curso.", "Could not export course."));
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-      link.download = `${selectedCourse?.slug || "curso"}-mooc.json`;
+      link.download = `${selectedCourse?.slug || "curso"}-plantilla-curso.zip`;
+      document.body.appendChild(link);
       link.click();
+      link.remove();
       URL.revokeObjectURL(url);
     } catch (e) {
       setError(e instanceof Error ? e.message : t("No se pudo exportar el curso.", "Could not export course."));
@@ -2034,7 +2036,7 @@ export default function CmsPage() {
                 <div className="ml-auto flex flex-wrap gap-2">
                   <button onClick={() => void exportCourse()} disabled={saving} className="inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm font-medium hover:bg-accent disabled:opacity-50">
                     <Download className="h-4 w-4" />
-                    {t("Exportar", "Export")}
+                    {t("Descargar plantilla", "Download template")}
                   </button>
                   <Link href={`/${lang}/courses/${selectedCourse.slug}`} target="_blank" className="inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm font-medium hover:bg-accent">
                     <Eye className="h-4 w-4" />
@@ -2046,10 +2048,10 @@ export default function CmsPage() {
             <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-[#52667a]">
               <label className="inline-flex cursor-pointer items-center gap-2 rounded-md border px-3 py-2 font-medium hover:bg-accent">
                 <Upload className="h-4 w-4" />
-                {t("Importar curso JSON", "Import JSON course")}
+                {t("Cargar curso desde plantilla", "Load course template")}
                 <input
                   type="file"
-                  accept="application/json,.json"
+                  accept=".html,.zip,application/json,text/html,application/zip"
                   className="sr-only"
                   disabled={saving}
                   onChange={(event) => {
@@ -2058,7 +2060,7 @@ export default function CmsPage() {
                   }}
                 />
               </label>
-              <span>{t("La importación crea un borrador y conserva videos y materiales como enlaces.", "Import creates a draft and keeps videos and materials as links.")}</span>
+              <span>{t("Puede cargar una plantilla HTML, un paquete ZIP o un archivo técnico compatible. La importación crea un borrador.", "You can load an HTML template, ZIP package, or compatible technical file. Import creates a draft.")}</span>
             </div>
           </div>
 

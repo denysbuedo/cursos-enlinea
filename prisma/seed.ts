@@ -26,19 +26,19 @@ async function main() {
   const passwordHash = await bcrypt.hash("password123", 12);
 
   const admin = await prisma.user.create({
-    data: { email: "admin@edplatform.com", passwordHash, name: "Admin Principal", role: Role.ADMIN, preferredLang: "es" },
+    data: { email: "admin@edplatform.com", passwordHash, name: "Admin Principal", role: Role.ADMIN, preferredLang: "es", emailVerifiedAt: new Date() },
   });
 
   const instructor = await prisma.user.create({
-    data: { email: "profesor@edplatform.com", passwordHash, name: "María García", role: Role.INSTRUCTOR, preferredLang: "es" },
+    data: { email: "profesor@edplatform.com", passwordHash, name: "María García", role: Role.INSTRUCTOR, preferredLang: "es", emailVerifiedAt: new Date() },
   });
 
   const student = await prisma.user.create({
-    data: { email: "alumno@edplatform.com", passwordHash, name: "Carlos Pérez", role: Role.STUDENT, country: "CU", preferredLang: "es" },
+    data: { email: "alumno@edplatform.com", passwordHash, name: "Carlos Pérez", role: Role.STUDENT, country: "CU", preferredLang: "es", emailVerifiedAt: new Date() },
   });
 
   const intlStudent = await prisma.user.create({
-    data: { email: "student@edplatform.com", passwordHash, name: "John Smith", role: Role.STUDENT, country: "US", preferredLang: "en" },
+    data: { email: "student@edplatform.com", passwordHash, name: "John Smith", role: Role.STUDENT, country: "US", preferredLang: "en", emailVerifiedAt: new Date() },
   });
 
   console.log(`  ✅ Usuarios: ${[admin, instructor, student, intlStudent].length}`);

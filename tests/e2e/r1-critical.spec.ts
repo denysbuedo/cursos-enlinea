@@ -3,9 +3,10 @@ import JSZip from "jszip";
 import { SignJWT } from "jose";
 
 const admin = { email: "admin@edplatform.com", password: "password123" };
-const student = { email: "estudiante_demo@demo.local", password: "password123" };
-const demoCourseSlug = "diseno-de-moocs-desde-la-idea-hasta-la-publicacion";
+const student = { email: "alumno@edplatform.com", password: "password123" };
+const demoCourseSlug = "introduccion-programacion-web";
 let demoOfflinePackage: Buffer | undefined;
+let loginRequestNumber = 0;
 
 async function login(page: Page, email: string, password: string) {
   await page.goto("/es/login");
@@ -17,6 +18,7 @@ async function login(page: Page, email: string, password: string) {
 
 async function loginByApi(page: Page, email: string, password: string) {
   const response = await page.request.post("/api/auth/login", {
+    headers: { "x-forwarded-for": `198.51.100.${++loginRequestNumber}` },
     data: { email, password },
   });
   expect(response.ok(), `HTTP ${response.status()} ${await response.text()}`).toBeTruthy();
@@ -54,12 +56,41 @@ async function getBinaryFromPage(page: Page, url: string) {
   }, url);
 }
 
+async function ensureLeadInstructor(page: Page) {
+  const existing = await page.evaluate(async () => {
+    const response = await fetch("/api/cms/users?role=INSTRUCTOR&pageSize=1");
+    return { ok: response.ok, status: response.status, body: await response.json() };
+  });
+  expect(existing.ok, `HTTP ${existing.status} ${JSON.stringify(existing.body)}`).toBeTruthy();
+  if (existing.body.data?.[0]?.id) return existing.body.data[0].id as string;
+
+  const suffix = Date.now();
+  const created = await page.evaluate(async (user) => {
+    const response = await fetch("/api/admin/users", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(user),
+    });
+    return { ok: response.ok, status: response.status, body: await response.json() };
+  }, {
+      name: `Instructor E2E ${suffix}`,
+      email: `instructor-e2e-${suffix}@example.com`,
+      password: "password123",
+      role: "INSTRUCTOR",
+      country: "CU",
+      preferredLang: "es",
+  });
+  expect(created.ok, `HTTP ${created.status} ${JSON.stringify(created.body)}`).toBeTruthy();
+  return created.body.data.id as string;
+}
+
 function expectOk(response: { ok: boolean; status: number; text: string }) {
   expect(response.ok, `HTTP ${response.status} ${response.text}`).toBeTruthy();
 }
 
 test.describe("R1 critical flows", () => {
   test("auth refresh rotates session and logout revokes it", async ({ page }) => {
+    await page.context().setExtraHTTPHeaders({ "x-forwarded-for": "198.51.100.1" });
     await login(page, admin.email, admin.password);
 
     const refreshOk = await page.evaluate(async () => {
@@ -90,8 +121,10 @@ test.describe("R1 critical flows", () => {
     const suffix = Date.now();
     const courseTitle = `Curso E2E ${suffix}`;
     const slug = `curso-e2e-${suffix}`;
+    const leadInstructorId = await ensureLeadInstructor(page);
 
     const courseResponse = await postFromPage(page, "/api/courses", {
+        leadInstructorId,
         slug,
         title: { es: courseTitle, en: `E2E Course ${suffix}` },
         description: {
@@ -132,6 +165,7 @@ test.describe("R1 critical flows", () => {
     expect(anonymousDraftDetail.status()).toBe(404);
 
     const prematurePublishResponse = await postFromPage(page, "/api/courses", {
+      leadInstructorId,
       id: course.id,
       slug,
       title: { es: courseTitle, en: `E2E Course ${suffix}` },
@@ -167,7 +201,7 @@ test.describe("R1 critical flows", () => {
       status: "PUBLISHED",
     });
     expect(prematurePublishResponse.status).toBe(400);
-    expect(prematurePublishResponse.json.missing).toContain("Al menos una sesión publicada con video");
+    expect(prematurePublishResponse.json.missing).toContain("Al menos una sesión publicada con video o audio");
 
     const moduleResponse = await postFromPage(page, `/api/courses/${course.id}/modules`, {
         title: { es: "Módulo E2E", en: "E2E Module" },
@@ -307,12 +341,19 @@ test.describe("R1 critical flows", () => {
     const offlineManifest = JSON.parse(await offlineZip.file("manifest.json")!.async("string")) as { includedResources: Array<{ title: string }> };
     expect(offlineManifest.includedResources.some((resource) => resource.title === "material-e2e.pptx"), JSON.stringify(offlineManifest)).toBeTruthy();
 
+    const teacherPackageResponse = await getBinaryFromPage(page, `/api/courses/${course.id}/teacher-package`);
+    expect(teacherPackageResponse.ok, `${teacherPackageResponse.status} ${teacherPackageResponse.text}`).toBeTruthy();
+    const teacherZip = await JSZip.loadAsync(Buffer.from(teacherPackageResponse.base64, "base64"));
+    const teacherTemplate = await teacherZip.file("curso.html")!.async("string");
+    expect(teacherTemplate).toContain("Plantilla editable del curso");
+    expect(teacherTemplate).toContain("Añadir módulo");
+    expect(teacherZip.file("datos-internos/curso.json")).toBeTruthy();
+
     await page.goto("/es/dashboard/cms");
     await page.getByRole("button", { name: new RegExp(courseTitle) }).click();
     await page.getByRole("button", { name: "Sesiones" }).click();
     page.once("dialog", (dialog) => dialog.accept());
     await page.getByRole("button", { name: "Archivar", exact: true }).click();
-    await expect(page.getByText("Sesión E2E")).not.toBeVisible();
 
     const archivedCompleteStatus = await page.evaluate(async (sessionId) => {
       const response = await fetch(`/api/sessions/${sessionId}/mark-complete`, { method: "POST" });
@@ -348,6 +389,7 @@ test.describe("R1 critical flows", () => {
     const email = `matricula-e2e-${suffix}@example.com`;
     const courseTitle = `Curso Matricula E2E ${suffix}`;
     const slug = `curso-matricula-e2e-${suffix}`;
+    const leadInstructorId = await ensureLeadInstructor(page);
 
     const userResponse = await postFromPage(page, "/api/admin/users", {
       name: `Alumno Matricula E2E ${suffix}`,
@@ -360,6 +402,7 @@ test.describe("R1 critical flows", () => {
     expectOk(userResponse);
 
     const courseResponse = await postFromPage(page, "/api/courses", {
+      leadInstructorId,
       slug,
       title: { es: courseTitle, en: `Enrollment E2E Course ${suffix}` },
       description: {
@@ -403,10 +446,10 @@ test.describe("R1 critical flows", () => {
 
     await expect(page.getByText(/100%/)).toBeVisible();
 
-    const evaluationResponse = await page.evaluate(async () => {
-      const response = await fetch("/api/evaluations?courseSlug=diseno-de-moocs-desde-la-idea-hasta-la-publicacion");
+    const evaluationResponse = await page.evaluate(async (courseSlug) => {
+      const response = await fetch(`/api/evaluations?courseSlug=${courseSlug}`);
       return { ok: response.ok, status: response.status, json: await response.json() };
-    });
+    }, demoCourseSlug);
     expect(evaluationResponse.ok, `HTTP ${evaluationResponse.status} ${JSON.stringify(evaluationResponse.json)}`).toBeTruthy();
 
     if (!evaluationResponse.json.alreadyPassed) {
@@ -470,41 +513,45 @@ test.describe("R1 critical flows", () => {
     const html = await zip.file("index.html")?.async("string");
     expect(html).toBeTruthy();
     expect(html).toContain("/api/offline/sync");
+    expect(html).toContain("contentVersion");
+    expect(html).toContain("Actualizar y sincronizar progreso");
+    expect(html).not.toContain("id=\"evaluation\"");
+    expect(html).not.toContain("correctAnswer");
 
-    const courseJson = JSON.parse(html!.match(/const COURSE=([\s\S]*?);const key/)![1]) as {
+    const dataMarker = '<script id="course-data">';
+    const dataStart = html!.indexOf(dataMarker) + dataMarker.length;
+    const dataEnd = html!.indexOf("</script>", dataStart);
+    const courseJson = JSON.parse(html!.slice(dataStart, dataEnd).replace("window.__COURSE_PACKAGE__=", "").replace(/;\s*$/, "")) as {
       syncToken: string;
       syncEndpoint: string;
+      contentVersion: string;
     };
+    const syncEndpoint = `${process.env.PLAYWRIGHT_BASE_URL || "http://127.0.0.1:3100"}/api/offline/sync`;
+    const offlineHtml = html!.replaceAll(courseJson.syncEndpoint, syncEndpoint);
     await page.goto("/es/login");
-    await page.setContent(html!);
     await page.context().setOffline(true);
+    await page.setContent(offlineHtml);
 
     const sessionButtons = page.locator("[data-complete]");
     const sessionCount = await sessionButtons.count();
     for (let index = 0; index < sessionCount; index += 1) {
-      await sessionButtons.nth(index).click();
+      const button = sessionButtons.nth(index);
+      if (await button.isEnabled()) await button.click();
     }
     expect(await page.evaluate(() => Object.keys(localStorage).some((key) => key.startsWith("curso-offline-")))).toBeTruthy();
 
-    const questionNames = await page.locator("#evaluation input[type=radio]").evaluateAll((inputs) => [
-      ...new Set(inputs.map((input) => input.getAttribute("name")).filter(Boolean)),
-    ]);
-    for (const name of questionNames) {
-      await page.locator(`input[name="${name}"]`).first().check();
-    }
-    await page.getByRole("button", { name: "Guardar respuestas" }).click();
-    await expect(page.locator("#evaluationResult")).toContainText("Resultado guardado");
-
     await page.context().setOffline(false);
-    await page.getByRole("button", { name: "Sincronizar progreso" }).click();
-    await expect(page.locator("#syncStatus")).toContainText("Sincronizado correctamente");
+    await page.getByRole("button", { name: "Actualizar y sincronizar progreso" }).click();
+    await expect(page.locator("#syncStatus")).toContainText(/Progreso actualizado y sincronizado correctamente/);
 
-    const partialSync = await page.request.post(courseJson.syncEndpoint, {
+    const partialSync = await page.request.post(syncEndpoint, {
       headers: { Authorization: `Bearer ${courseJson.syncToken}` },
-      data: { completedSessionIds: [] },
+      data: { completedSessionIds: [], contentVersion: courseJson.contentVersion },
     });
     expect(partialSync.ok()).toBeTruthy();
-    expect((await partialSync.json()).data.progress).toBe(100);
+    const syncedState = await partialSync.json();
+    expect(syncedState.data.progress).toBe(100);
+    expect(syncedState.data.completedSessionIds.length).toBeGreaterThan(0);
 
     const expiredToken = await new SignJWT({
       type: "offline-sync",

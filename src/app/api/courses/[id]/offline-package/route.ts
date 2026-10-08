@@ -145,7 +145,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     }
 
     zip.file("index.html", html);
-    zip.file("manifest.json", JSON.stringify({ format: "cursos-enlinea-mooc-offline", formatVersion: 1, generatedAt: new Date().toISOString(), includedResources: included, externalResources: external, limits: { maxResourceBytes: MAX_RESOURCE_BYTES, maxPackageBytes: MAX_PACKAGE_BYTES } }, null, 2));
+    zip.file("manifest.json", JSON.stringify({ format: "cursos-enlinea-mooc-offline", formatVersion: 2, generatedAt: new Date().toISOString(), includesOfficialEvaluation: false, includedResources: included, externalResources: external, limits: { maxResourceBytes: MAX_RESOURCE_BYTES, maxPackageBytes: MAX_PACKAGE_BYTES } }, null, 2));
     const output = await zip.generateAsync({ type: "nodebuffer", compression: "DEFLATE", compressionOptions: { level: 6 } });
     return new NextResponse(new Uint8Array(output), { headers: { "Content-Type": "application/zip", "Content-Disposition": `attachment; filename="${course.slug}-offline.zip"`, "Cache-Control": "no-store" } });
   } catch (error) {
