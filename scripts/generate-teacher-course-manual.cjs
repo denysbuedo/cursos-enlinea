@@ -313,7 +313,7 @@ function divider() {
 function cover() {
   doc.rect(0, 0, page.width, page.height).fill("#f4f7fa");
   doc.rect(0, 0, page.width, 120).fill(colors.blue);
-  doc.fillColor(colors.white).font("Helvetica-Bold").fontSize(13).text(es("REDUNIV - Plataforma de cursos en linea"), page.left, 42, {
+  doc.fillColor(colors.white).font("Helvetica-Bold").fontSize(13).text(es("REDUNIV - Plataforma de cursos en línea"), page.left, 42, {
     width: pageWidth(),
   });
   doc.font("Helvetica").fontSize(10).text(es("Manual operativo para profesores"), page.left, 64);
@@ -797,7 +797,7 @@ function glossary() {
     ["Palabra", "Explicacion sencilla"],
     [
       ["CMS", "Zona de la plataforma donde se crean y editan cursos."],
-      ["MOOC", "Curso en linea, masivo, abierto o de acceso amplio, pensado para aprendizaje autonomo."],
+      ["MOOC", "Curso en línea, masivo, abierto o de acceso amplio, pensado para aprendizaje autónomo."],
       ["Slug", "Nombre corto de la URL del curso."],
       ["Edicion", "Convocatoria o version del curso."],
       ["Modulo", "Bloque academico del curso."],
@@ -837,7 +837,7 @@ for (let i = range.start; i < range.start + range.count; i += 1) {
   doc.switchToPage(i);
   if (i === 0) continue;
   doc.fillColor(colors.muted).font("Helvetica").fontSize(8.5)
-    .text(es("Manual para profesores - Plataforma de cursos en linea"), page.left, page.height - 30, {
+    .text(es("Manual para profesores - Plataforma de cursos en línea"), page.left, page.height - 30, {
       width: pageWidth() / 2,
       align: "left",
     });
