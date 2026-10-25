@@ -7,6 +7,7 @@ import { CourseCard } from "@/components/courses/CourseCard";
 import { CourseFilters } from "@/components/courses/CourseFilters";
 import { ArrowRight, BookOpenCheck, GraduationCap } from "lucide-react";
 import Link from "next/link";
+import { PLATFORM_ID } from "@/lib/platform-config";
 
 interface CourseData {
   id: string;
@@ -29,6 +30,7 @@ export default function CoursesPage() {
   const params = useParams<{ lang: string }>();
   const lang = getLangFromParams(params);
   const dict = getDictionary(lang);
+  const isNae = PLATFORM_ID === "nae";
 
   const [courses, setCourses] = useState<CourseData[]>([]);
   const [total, setTotal] = useState(0);
@@ -80,16 +82,16 @@ export default function CoursesPage() {
   const totalPages = Math.ceil(total / pageSize);
 
   return (
-    <div className="app-surface min-h-[calc(100vh-8rem)]">
-      <div className="container mx-auto px-4 py-10">
-      <div className="mb-8 rounded-lg border border-border bg-white p-6 shadow-sm">
+    <div className={`${isNae ? "nae-catalog" : "app-surface"} min-h-[calc(100vh-8rem)]`}>
+      <div className={`${isNae ? "w-full" : "container mx-auto"} px-4 py-10`}>
+      <div className={isNae ? "mb-10 text-center" : "mb-8 rounded-lg border border-border bg-white p-6 shadow-sm"}>
         <div>
-          <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1 text-sm font-medium text-primary">
+          {!isNae && <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1 text-sm font-medium text-primary">
             <GraduationCap className="h-4 w-4" />
             {lang === "en" ? "MOOC catalog" : "Catálogo MOOC"}
-          </div>
-          <h1 className="text-3xl font-bold">{dict.courses.allCourses}</h1>
-          <p className="mt-2 max-w-2xl text-muted-foreground">
+          </div>}
+          <h1 className={`${isNae ? "nae-catalog-title text-[#00293b]" : "text-3xl"} font-bold`}>{dict.courses.allCourses}</h1>
+          <p className={`${isNae ? "mx-auto" : ""} mt-2 max-w-2xl text-muted-foreground`}>
             {lang === "en"
               ? "Browse self-paced courses with short lessons, automatic assessment, and verifiable certificates."
               : "Explora cursos autónomos con lecciones breves, evaluación automática y certificados verificables."}
@@ -113,7 +115,7 @@ export default function CoursesPage() {
       />
 
       {loading ? (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          <div className={`grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 ${isNae ? "nae-catalog-grid" : ""}`}>
           {Array.from({ length: 6 }).map((_, i) => (
             <div key={i} className="h-72 animate-pulse rounded-lg border border-border bg-white" />
           ))}
@@ -141,7 +143,7 @@ export default function CoursesPage() {
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          <div className={`grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 ${isNae ? "xl:grid-cols-3 nae-catalog-grid" : "xl:grid-cols-4"}`}>
             {courses.map((course) => (
               <CourseCard
                 key={course.id}

@@ -1,6 +1,7 @@
 "use client";
 
 import { CircleDollarSign, ListFilter, Search } from "lucide-react";
+import { PLATFORM_ID } from "@/lib/platform-config";
 
 interface CourseFiltersProps {
   lang: string;
@@ -33,9 +34,10 @@ export function CourseFilters({
   selectedPricingModel,
 }: CourseFiltersProps) {
   const tl = (es: string, en: string) => (lang === "en" ? en : es);
+  const isNae = PLATFORM_ID === "nae";
 
   return (
-    <div className="mb-8 grid gap-3 rounded-lg border border-border bg-white p-3 shadow-sm sm:grid-cols-[1fr_auto_auto]">
+    <div className={`mb-8 grid gap-3 rounded-lg border bg-white p-3 shadow-sm sm:grid-cols-[1fr_auto_auto] ${isNae ? "nae-course-filters border-[#d4dfe7]" : "border-border"}`}>
       <div className="relative">
         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         <input

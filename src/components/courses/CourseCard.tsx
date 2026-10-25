@@ -1,6 +1,7 @@
 "use client";
 import Link from "next/link";
 import { CalendarDays, Users } from "lucide-react";
+import { PLATFORM_ID } from "@/lib/platform-config";
 
 interface CourseEditionSummary {
   startsAt?: string | null;
@@ -38,20 +39,21 @@ function formatDate(value: string | null | undefined, lang: string) {
 export function CourseCard({slug,title,description,coverImageUrl,scienceBranch,pricingModel,price,currency,lang,_count,editions}:CourseCardProps){
   const t=(es:string,en:string)=>(lang==="en"?en:es);
   const isFree=pricingModel==="FREE";
+  const isNae=PLATFORM_ID === "nae";
   const primaryEdition = editions?.[0];
   const startLabel = formatDate(primaryEdition?.startsAt, lang);
   return (
     <Link
       href={`/${lang}/courses/${slug}`}
-      className="group flex min-h-0 flex-col overflow-hidden rounded-lg border border-border bg-card transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg"
+      className={`group flex min-h-0 flex-col overflow-hidden rounded-lg border border-border bg-card transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg ${isNae ? "nae-course-card" : ""}`}
     >
-      <div className="relative aspect-[16/9] overflow-hidden bg-[#edf2f5]">
+      <div className={`relative aspect-[16/9] overflow-hidden ${isNae ? "bg-[#41bcff] p-3 sm:p-4" : "bg-[#edf2f5]"}`}>
         {coverImageUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={coverImageUrl}
             alt={t(title.es, title.en)}
-            className="h-full w-full object-contain p-2 transition-opacity duration-200 group-hover:opacity-95 sm:p-3"
+            className={`h-full w-full object-contain transition-opacity duration-200 group-hover:opacity-95 ${isNae ? "bg-white" : "p-2 sm:p-3"}`}
           />
         ) : (
           <div className="flex h-full items-center justify-center bg-[#edf2f5]">

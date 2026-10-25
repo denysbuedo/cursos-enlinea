@@ -57,12 +57,12 @@ const presets: Record<PlatformId, PlatformPreset> = {
       en: "Capacity-building and new economic actors development programme.",
     },
     theme: {
-      primary: "#002b44",
+      primary: "#00293b",
       primaryHover: "#004d6a",
       accent: "#e5f8f4",
       background: "#f4f8fa",
-      secondary: "#00b6a1",
-      highlight: "#f0bf43",
+      secondary: "#00cca5",
+      highlight: "#e4c465",
     },
   },
 };

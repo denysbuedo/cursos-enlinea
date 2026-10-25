@@ -60,3 +60,962 @@ textarea {
 .focus-ring:focus-visible {
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--platform-primary) 20%, transparent);
 }
+
+.nae-home {
+  background: #ffffff;
+  color: #00293b;
+}
+
+.nae-header-logo {
+  display: block;
+  width: 27rem;
+  height: 4.5rem;
+  flex-shrink: 0;
+  background-image: url("/nae-header-logo.svg");
+  background-position: 0 center;
+  background-repeat: no-repeat;
+  background-size: 28.75rem 4.375rem;
+}
+
+.nae-hero {
+  position: relative;
+  overflow: hidden;
+  background-color: #002c42;
+  isolation: isolate;
+}
+
+.nae-hero-desktop {
+  position: relative;
+  z-index: 1;
+  width: min(1400px, calc(100% - 2rem));
+  min-height: 380px;
+  margin: 0 auto;
+}
+
+.nae-hero-mobile {
+  display: none;
+}
+
+.nae-hero-rings {
+  position: absolute;
+  z-index: 0;
+  width: 40rem;
+  height: 40rem;
+  pointer-events: none;
+}
+
+.nae-hero-rings-right {
+  display: none;
+  top: -21rem;
+  right: -8rem;
+}
+
+.nae-hero-rings-left {
+  bottom: -22rem;
+  left: -25rem;
+  transform: rotate(180deg);
+}
+
+.nae-ring {
+  position: absolute;
+  inset: 0;
+  border: 1.1rem solid transparent;
+  border-radius: 50%;
+  transform: rotate(-28deg);
+}
+
+.nae-ring-blue { border-left-color: #41bcff; }
+.nae-ring-teal { inset: 2.1rem; border-left-color: #00aecc; }
+.nae-ring-green { inset: 4.2rem; border-left-color: #0dcc63; }
+.nae-ring-gold { inset: 6.3rem; border-left-color: #d0a819; }
+.nae-ring-coral { inset: 8.4rem; border-left-color: #ff7c40; }
+
+.nae-hero-ribbon {
+  position: absolute;
+  top: 1.5rem;
+  left: 5.5rem;
+  z-index: 0;
+  width: 4.5rem;
+  height: 16rem;
+}
+
+.nae-hero-ribbon span {
+  position: absolute;
+  left: 0;
+  width: 2.2rem;
+  height: 3rem;
+  clip-path: polygon(50% 0, 100% 0, 65% 100%, 0 100%);
+}
+
+.nae-ribbon-blue { top: 0; left: 2.1rem !important; background: #41bcff; }
+.nae-ribbon-green { top: 3rem; left: 1.4rem !important; background: #0dcc63; }
+.nae-ribbon-yellow { top: 6rem; left: 0.7rem !important; background: #d0a819; }
+.nae-ribbon-dark { top: 9rem; background: #00883b; }
+.nae-ribbon-brown { top: 12rem; background: #a8542d; }
+
+.nae-hero-title {
+  position: absolute;
+  top: 10.3rem;
+  left: 8.45rem;
+  z-index: 1;
+  max-width: 34rem;
+  color: #ffffff;
+  font-size: clamp(3rem, 4vw, 3.7rem);
+  font-weight: 800;
+  letter-spacing: 0;
+  line-height: 0.94;
+}
+
+.nae-hero-kicker {
+  position: absolute;
+  top: 3.05rem;
+  left: 15rem;
+  margin: 0;
+  color: #80d2ff;
+  font-size: clamp(1rem, 1.45vw, 1.35rem);
+  font-weight: 500;
+}
+
+.nae-hero-actions {
+  position: absolute;
+  top: 11.25rem;
+  right: 2.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.nae-hero-actions a {
+  min-height: 4.25rem;
+  padding: 0.9rem 1.25rem;
+  background-color: #002c42;
+  font-size: 1.05rem;
+}
+
+.nae-hero-actions a:first-child {
+  min-width: 20rem;
+}
+
+.nae-hero-actions a:last-child {
+  min-width: 12rem;
+}
+
+.nae-hero-features {
+  position: absolute;
+  right: 0;
+  bottom: 1.65rem;
+  left: 0;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  color: #8fbcd1;
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+
+.nae-mobile-chip,
+.nae-mobile-title,
+.nae-mobile-copy,
+.nae-mobile-features,
+.nae-mobile-actions,
+.nae-mobile-image {
+  display: none;
+}
+
+@media (min-width: 1536px) {
+  .nae-hero-rings-right {
+    display: block;
+  }
+}
+
+.nae-stat-band {
+  background: #e7f2f8;
+  border-bottom: 1px solid #cfe5ef;
+  border-top: 1px solid #cfe5ef;
+}
+
+.nae-catalog {
+  background: #f4f8fa;
+  color: #00293b;
+}
+
+.nae-section-label {
+  color: #5c7087;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.nae-course-card {
+  border: 2px solid #41bcff;
+  border-radius: 0.8rem;
+  box-shadow: 0 8px 18px rgba(0, 41, 59, 0.06);
+}
+
+.nae-course-card:hover {
+  box-shadow: 0 14px 26px rgba(0, 41, 59, 0.14);
+}
+
+.nae-catalog-title {
+  font-size: 2.25rem;
+  line-height: 1.1;
+}
+
+@media (min-width: 1024px) {
+  .nae-course-filters,
+  .nae-catalog-grid {
+    width: min(1504px, 78.3333vw);
+    margin-right: auto;
+    margin-left: auto;
+  }
+
+  .nae-catalog-grid {
+    column-gap: min(2.2917vw, 44px);
+    row-gap: min(2.2917vw, 44px);
+  }
+}
+
+@media (max-width: 640px) {
+  .nae-catalog-title {
+    font-size: 1.5rem;
+  }
+
+  .nae-course-filters,
+  .nae-catalog-grid {
+    width: calc(100% - 28px);
+    margin-right: auto;
+    margin-left: auto;
+  }
+}
+
+.nae-benefits {
+  background: #e7f2f8;
+}
+
+.nae-benefits-empty {
+  background: #ffffff;
+}
+
+.nae-featured {
+  background: #ffffff;
+}
+
+.nae-featured-inner {
+  width: min(1440px, calc(100% - 2rem));
+  margin: 0 auto;
+  padding: 2rem 0 4rem;
+}
+
+.nae-featured-label {
+  color: #002c42;
+  font-size: 1.15rem;
+  font-weight: 500;
+  letter-spacing: 0;
+  line-height: 1.2;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.nae-featured-heading {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: end;
+  gap: 1.5rem;
+  margin-top: 1.2rem;
+}
+
+.nae-featured-title {
+  margin: 0;
+  color: #002c42;
+  font-size: min(1.9rem, 1.6667vw);
+  font-weight: 800;
+  letter-spacing: 0;
+  line-height: 1.05;
+}
+
+.nae-featured-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.7rem;
+  min-width: 10.5rem;
+  min-height: 3.75rem;
+  border: 2px solid #002c42;
+  border-radius: 1rem;
+  color: #002c42;
+  font-size: 1rem;
+  font-weight: 500;
+  transition: background-color 150ms ease, color 150ms ease;
+}
+
+.nae-featured-link:hover {
+  background: #002c42;
+  color: #ffffff;
+}
+
+.nae-featured-grid {
+  margin-top: 2.6rem;
+  margin-right: auto;
+  margin-left: auto;
+}
+
+@media (min-width: 1024px) {
+  .nae-featured-inner {
+    width: min(1420px, 74vw);
+  }
+
+  .nae-featured-heading {
+    padding-right: min(2.3958vw, 46px);
+    padding-left: min(2.3958vw, 46px);
+  }
+
+  .nae-featured-link {
+    min-width: 0;
+    min-height: 0;
+    width: min(176px, 9.1667vw);
+    height: min(68px, 3.5417vw);
+  }
+
+  .nae-featured-grid {
+    width: min(1420px, 74vw);
+    gap: min(2.2917vw, 44px);
+  }
+}
+
+.nae-featured-empty {
+  margin-top: 2.5rem;
+  border-top: 1px solid #d4e2e9;
+  padding: 2.5rem 1rem;
+  color: #5c7087;
+  font-size: 1rem;
+  text-align: center;
+}
+
+@media (max-width: 640px) {
+  .nae-featured-inner {
+    width: 100%;
+    padding: 1.1rem 1rem 2.5rem;
+  }
+
+  .nae-featured-label {
+    font-size: 1rem;
+  }
+
+  .nae-featured-heading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+    margin-top: 0.85rem;
+  }
+
+  .nae-featured-title {
+    font-size: 1.125rem;
+    text-align: center;
+  }
+
+  .nae-featured-link {
+    min-width: 5.8rem;
+    min-height: 2.65rem;
+    margin-top: 1rem;
+    border-radius: 0.65rem;
+    font-size: 0.85rem;
+  }
+
+  .nae-featured-grid {
+    width: 100%;
+    margin-top: 1.25rem;
+  }
+}
+
+.nae-benefits {
+  background: #e7f2f8;
+  padding: min(2.7083vw, 52px) min(1.25vw, 24px);
+}
+
+.nae-benefits-grid {
+  display: grid;
+  width: min(1872px, 100%);
+  margin: 0 auto;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: min(1.25vw, 24px);
+}
+
+.nae-benefit-card {
+  position: relative;
+  overflow: hidden;
+  height: min(16.875vw, 324px);
+  min-height: 0;
+  padding: min(5.2083vw, 100px) min(1.875vw, 36px) 2.5vw;
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
+  color: #002c42;
+}
+
+.nae-benefit-card-1 { background-color: #bce8fc; background-image: url("/nae-benefits-art.svg"); }
+.nae-benefit-card-2 { background-color: #a5e7c7; background-image: url("/nae-benefits-art.svg"); }
+.nae-benefit-card-3 { background-color: #e7dfc6; background-image: url("/nae-benefits-art.svg"); }
+
+.nae-benefit-card h3,
+.nae-benefit-card p {
+  position: relative;
+  z-index: 1;
+  max-width: calc(100% - 4.5rem);
+}
+
+.nae-benefit-card h3 {
+  max-width: 100%;
+  margin: 0;
+  font-size: min(1.9rem, 1.6667vw);
+  font-weight: 800;
+  letter-spacing: 0;
+  line-height: 1.1;
+}
+
+.nae-benefit-card p {
+  margin-top: min(1.25vw, 24px);
+  color: #5c7087;
+  font-size: min(1.2rem, 1.1458vw);
+  line-height: 1.45;
+}
+
+@media (max-width: 640px) {
+  .nae-benefits {
+    padding: 2rem 1.25rem 2rem;
+  }
+
+  .nae-benefits-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .nae-benefit-card {
+    height: 191px;
+    min-height: 191px;
+    padding: 2.9rem 0.65rem 1.8rem;
+  }
+
+  .nae-benefit-card-1 { background-color: #bfe8fe; }
+  .nae-benefit-card-2 { background-color: #a6e6c3; }
+  .nae-benefit-card-3 { background-color: #e7dfc8; }
+
+  .nae-benefit-card h3 {
+    max-width: calc(100% - 3.25rem);
+    font-size: 1.125rem;
+  }
+
+  .nae-benefit-card p {
+    max-width: calc(100% - 3.25rem);
+    margin-top: 1rem;
+    font-size: 0.95rem;
+    line-height: 1.45;
+  }
+
+}
+
+.nae-benefit {
+  position: relative;
+  overflow: hidden;
+  min-height: 10rem;
+}
+
+.nae-benefit::after {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 2.8rem;
+  height: 100%;
+  background: linear-gradient(180deg, #41bcff 0 22%, #6fe4a8 22% 48%, #e4c465 48% 74%, #ffa880 74% 100%);
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 0 82%, 55% 62%, 0 45%, 60% 24%);
+  content: "";
+}
+
+.nae-footer {
+  color: #ffffff;
+}
+
+.nae-footer-main {
+  background: #012b41;
+}
+
+.nae-footer-main .container {
+  grid-template-columns: 7rem 1fr;
+  column-gap: 1.8rem;
+  row-gap: 1.25rem;
+  padding-left: 2.3rem;
+  padding-right: 2.3rem;
+}
+
+.nae-footer-logo {
+  display: block;
+  width: 17rem;
+  height: 7rem;
+  grid-column: 1 / -1;
+  background-image: url("/nae-footer.svg");
+  background-position: -2.3rem -1.4rem;
+  background-repeat: no-repeat;
+  background-size: 23rem auto;
+}
+
+.nae-footer-heading {
+  color: #667b92;
+  font-size: 1.15rem;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.nae-footer-links {
+  display: grid;
+  gap: 0.65rem;
+  margin-top: 1rem;
+}
+
+.nae-footer-links a {
+  color: #41bcff;
+  font-size: 0.9rem;
+  transition: color 150ms ease;
+}
+
+.nae-footer-links a:hover {
+  color: #80d2ff;
+}
+
+.nae-footer-bottom {
+  background: #00171f;
+}
+
+@media (max-width: 640px) {
+  .nae-header-logo {
+    width: 2rem;
+    height: 2.75rem;
+    background-position: -0.75rem center;
+    background-size: 28.75rem 4.375rem;
+  }
+
+  .nae-hero {
+    min-height: 0;
+    background: #002c42;
+    color: #ffffff;
+  }
+
+  .nae-hero-desktop {
+    display: none;
+  }
+
+  .nae-hero-rings {
+    display: none;
+  }
+
+  .nae-hero-mobile {
+    position: relative;
+    display: block;
+    height: 17.75rem;
+    overflow: hidden;
+    background: #002c42;
+  }
+
+  .nae-mobile-rings {
+    position: absolute;
+    z-index: 0;
+    width: 15rem;
+    height: 15rem;
+    pointer-events: none;
+  }
+
+  .nae-mobile-rings-right {
+    top: -8rem;
+    right: -5.6rem;
+  }
+
+  .nae-mobile-rings-left {
+    bottom: -8.2rem;
+    left: -6.3rem;
+    transform: rotate(180deg);
+  }
+
+  .nae-mobile-ribbon {
+    position: absolute;
+    top: 0.15rem;
+    left: 2.25rem;
+    z-index: 1;
+    width: 3rem;
+    height: 8rem;
+  }
+
+  .nae-mobile-ribbon span {
+    position: absolute;
+    left: 0;
+    width: 1.3rem;
+    height: 1.75rem;
+    clip-path: polygon(50% 0, 100% 0, 65% 100%, 0 100%);
+  }
+
+  .nae-mobile-ribbon .nae-ribbon-blue { top: 0; left: 1.25rem !important; }
+  .nae-mobile-ribbon .nae-ribbon-green { top: 1.75rem; left: 0.85rem !important; }
+  .nae-mobile-ribbon .nae-ribbon-yellow { top: 3.5rem; left: 0.45rem !important; }
+  .nae-mobile-ribbon .nae-ribbon-dark { top: 5.25rem; }
+  .nae-mobile-ribbon .nae-ribbon-brown { top: 7rem; }
+
+  .nae-mobile-brand-logo {
+    position: absolute;
+    top: 2rem;
+    left: 4.45rem;
+    z-index: 2;
+    display: block;
+    width: 11.5rem;
+    height: 1.8rem;
+    background-image: url("/nae-header-logo.svg");
+    background-position: 0 center;
+    background-repeat: no-repeat;
+    background-size: 11.5rem 1.75rem;
+  }
+
+  .nae-mobile-title {
+    position: absolute;
+    top: 3.5rem;
+    left: 5rem;
+    z-index: 2;
+    display: block;
+    max-width: 12rem;
+    color: #ffffff;
+    font-size: 1.25rem;
+    font-weight: 800;
+    letter-spacing: 0;
+    line-height: 0.92;
+  }
+
+  .nae-mobile-copy {
+    position: absolute;
+    top: 7.9rem;
+    left: 5.25rem;
+    z-index: 2;
+    display: block;
+    width: 6.5rem;
+    color: #8fbcd1;
+    font-size: 0.62rem;
+    line-height: 1.45;
+    text-align: center;
+  }
+
+  .nae-mobile-features {
+    position: absolute;
+    top: 7.85rem;
+    left: 12.15rem;
+    z-index: 2;
+    display: grid;
+    gap: 0.3rem;
+    color: #8fbcd1;
+    font-size: 0.65rem;
+  }
+
+  .nae-mobile-actions {
+    position: absolute;
+    right: 0;
+    bottom: 2.55rem;
+    left: 0;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 0.65rem;
+    padding-left: 1.5rem;
+  }
+
+  .nae-mobile-actions a {
+    min-height: 2.5rem;
+    padding: 0.45rem 0.65rem;
+    background-color: #002c42;
+    font-size: 0.8rem;
+    white-space: nowrap;
+  }
+
+  .nae-mobile-actions a:first-child {
+    width: 11.8rem;
+  }
+
+  .nae-mobile-actions a:last-child {
+    width: 7rem;
+  }
+
+  .nae-stat-band .container > div {
+    min-height: 6.3rem;
+  }
+}
+
+@media (min-width: 640px) {
+  .nae-footer-main .container {
+    grid-template-columns: 1.45fr 1fr 1fr;
+    column-gap: 2.5rem;
+    padding-left: 2rem;
+    padding-right: 2rem;
+  }
+
+  .nae-footer-logo {
+    width: 25rem;
+    height: 11rem;
+    grid-column: auto;
+    background-position: -3.2rem -2rem;
+    background-size: 33.1rem auto;
+  }
+}
+
+/* The supplied NAE artwork is the visual source of truth for the home banner. */
+.nae-hero {
+  height: min(380px, 19.7917vw);
+  min-height: 0;
+  background: #002c42;
+}
+
+.nae-hero-reference {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background: #002c42;
+}
+
+.nae-hero-reference picture,
+.nae-hero-reference img {
+  display: block;
+}
+
+.nae-hero-reference img {
+  position: absolute;
+  top: calc(-1 * min(5vw, 6rem));
+  left: 50%;
+  width: min(100vw, 1920px);
+  max-width: none;
+  height: auto;
+  transform: translateX(-50%);
+}
+
+.nae-hero-hotspot {
+  position: absolute;
+  z-index: 2;
+  display: block;
+  border-radius: 0.8rem;
+}
+
+.nae-hero-hotspot:focus-visible {
+  outline: 3px solid #ffffff;
+  outline-offset: 3px;
+}
+
+.nae-hero-hotspot-catalog {
+  top: 47.37%;
+  left: 56.77%;
+  width: 16.82%;
+  height: 18.16%;
+}
+
+.nae-hero-hotspot-dashboard {
+  top: 47.37%;
+  left: 74.58%;
+  width: 9.84%;
+  height: 18.16%;
+}
+
+@media (max-width: 640px) {
+  .nae-hero {
+    height: 284px;
+  }
+
+  .nae-hero-reference img {
+    top: -72px;
+    width: 368px;
+    max-width: none;
+  }
+
+  .nae-hero-hotspot-catalog {
+    top: 203px;
+    left: calc(50% - 160px);
+    width: 188px;
+    height: 40px;
+  }
+
+  .nae-hero-hotspot-dashboard {
+    top: 203px;
+    left: calc(50% + 39px);
+    width: 111px;
+    height: 40px;
+  }
+}
+
+.nae-stat-grid {
+  display: grid;
+  width: 90%;
+  max-width: 1728px;
+  margin: 0 auto;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  border-left: 1px solid #cfe5ef;
+}
+
+.nae-stat-item {
+  display: flex;
+  min-height: 168px;
+  align-items: center;
+  justify-content: center;
+  gap: 1.25rem;
+  border-right: 1px solid #cfe5ef;
+  padding: 2rem 1.5rem;
+}
+
+.nae-stat-icon {
+  display: flex;
+  width: 4.25rem;
+  height: 4.25rem;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #002c42;
+  box-shadow: 0 2px 5px rgba(0, 44, 66, 0.1);
+}
+
+.nae-stat-icon svg {
+  width: 2.2rem;
+  height: 2.2rem;
+}
+
+.nae-stat-value {
+  color: #002c42;
+  font-size: 3.25rem;
+  font-weight: 700;
+  letter-spacing: 0;
+  line-height: 0.95;
+}
+
+.nae-stat-label {
+  margin-top: 0.55rem;
+  color: #002c42;
+  font-size: 1.05rem;
+  font-weight: 500;
+  line-height: 1.25;
+}
+
+@media (max-width: 640px) {
+  .nae-stat-grid {
+    width: 100%;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .nae-stat-item {
+    min-height: 101px;
+    gap: 0.75rem;
+    padding: 1rem 1.5rem;
+  }
+
+  .nae-stat-icon {
+    width: 2.5rem;
+    height: 2.5rem;
+  }
+
+  .nae-stat-icon svg {
+    width: 1.45rem;
+    height: 1.45rem;
+  }
+
+  .nae-stat-value {
+    font-size: 2rem;
+  }
+
+  .nae-stat-label {
+    margin-top: 0.25rem;
+    font-size: 0.75rem;
+    line-height: 1.2;
+  }
+}
+
+.nae-stats-reference {
+  position: relative;
+  height: min(168px, 8.75vw);
+  overflow: hidden;
+  background: #e7f2f8;
+}
+
+.nae-stats-reference-art {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+.nae-stats-reference-art picture,
+.nae-stats-reference-art img {
+  display: block;
+}
+
+.nae-stats-reference-art img {
+  position: absolute;
+  top: calc(-1 * min(24.7917vw, 476px));
+  left: 50%;
+  width: min(100vw, 1920px);
+  max-width: none;
+  height: auto;
+  transform: translateX(-50%);
+}
+
+.nae-stats-reference-values {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.nae-stats-reference-value {
+  position: absolute;
+  top: 24%;
+  width: min(6rem, 5vw);
+  height: min(3.2rem, 2.7vw);
+  background: #e7f2f8;
+  color: #002c42;
+}
+
+.nae-stats-reference-value:nth-child(1) { left: 13%; }
+.nae-stats-reference-value:nth-child(2) { left: 33.6%; }
+.nae-stats-reference-value:nth-child(3) { left: 57.2%; }
+.nae-stats-reference-value:nth-child(4) { left: 81.2%; }
+
+.nae-stats-reference-value > span:first-child {
+  display: block;
+  padding-left: min(1.25rem, 1.04vw);
+  font-size: min(3.25rem, 2.5vw);
+  font-weight: 700;
+  letter-spacing: 0;
+  line-height: 0.95;
+}
+
+@media (max-width: 640px) {
+  .nae-stats-reference {
+    height: 203px;
+  }
+
+  .nae-stats-reference-art img {
+    top: -356px;
+    width: 368px;
+  }
+
+  .nae-stats-reference-value {
+    top: 20px;
+    width: 3.5rem;
+    height: 2.5rem;
+  }
+
+  .nae-stats-reference-value:nth-child(1),
+  .nae-stats-reference-value:nth-child(3) {
+    left: calc(50% - 124px);
+  }
+
+  .nae-stats-reference-value:nth-child(2),
+  .nae-stats-reference-value:nth-child(4) {
+    left: calc(50% + 55px);
+  }
+
+  .nae-stats-reference-value:nth-child(3),
+  .nae-stats-reference-value:nth-child(4) {
+    top: 121px;
+  }
+
+  .nae-stats-reference-value > span:first-child {
+    padding-left: 0.8rem;
+    font-size: 2rem;
+  }
+}
