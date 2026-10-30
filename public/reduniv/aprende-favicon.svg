@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128" aria-label="Isotipo APRENDE">
+<rect width="128" height="128" rx="26" fill="#0C1D30"/><path d="M64 111 C47 100 28 98 17 102 L17 32 C34 28 49 34 64 47 Z" fill="#49DCCB"/>
+<path d="M64 111 C80 99 99 98 111 102 L111 32 C94 27 80 33 64 47 Z" fill="#2776C9"/>
+<path d="M64 47 V111" fill="none" stroke="#FFFFFF" stroke-width="4.1"/>
+<path d="M17 102 C35 98 49 103 64 112 C81 102 98 98 111 102" fill="none" stroke="#FFFFFF" stroke-width="3.7" stroke-linecap="round"/>
+<circle cx="111" cy="32" r="5" fill="#13B9AA"/></svg>

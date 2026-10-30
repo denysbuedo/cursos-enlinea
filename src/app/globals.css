@@ -1019,3 +1019,744 @@ textarea {
     font-size: 2rem;
   }
 }
+
+/* APRENDE / Reduniv visual system. These selectors are intentionally scoped
+   to keep the NAE identity and layout independent. */
+html[data-platform="reduniv"] body {
+  background: #ffffff;
+  color: #102b46;
+  font-family: Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+.reduniv-header {
+  width: 100%;
+  background: #ffffff;
+  border-bottom: 1px solid #e6edf4;
+  box-shadow: none;
+}
+
+.reduniv-header-nav {
+  height: 4.5rem;
+  min-height: 4.5rem;
+}
+
+.reduniv-header-brand {
+  color: #102b46;
+}
+
+.reduniv-header-logo {
+  display: block;
+  width: 12rem;
+  height: 2.8rem;
+  flex-shrink: 0;
+  background-image: url("/reduniv/aprende-logo-principal.svg");
+  background-position: left center;
+  background-repeat: no-repeat;
+  background-size: contain;
+}
+
+.reduniv-nav-link {
+  position: relative;
+  display: inline-flex;
+  height: 4.5rem;
+  align-items: center;
+  padding: 0 0.75rem;
+  color: #102b46;
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: color 160ms ease;
+}
+
+.reduniv-nav-link::after {
+  position: absolute;
+  right: 0.75rem;
+  bottom: -1px;
+  left: 0.75rem;
+  height: 3px;
+  background: transparent;
+  content: "";
+}
+
+.reduniv-nav-link:hover,
+.reduniv-nav-link:focus-visible {
+  color: #2776c9;
+}
+
+.reduniv-nav-link-active {
+  color: #102b46;
+}
+
+.reduniv-nav-link-active::after {
+  background: #49dccb;
+}
+
+.reduniv-language-switcher {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  min-height: 2rem;
+  padding: 0.25rem 0.45rem;
+  border: 1px solid #e6edf4;
+  border-radius: 999px;
+  color: #102b46;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.reduniv-language-icon {
+  width: 0.95rem;
+  height: 0.95rem;
+  color: #102b46;
+}
+
+.reduniv-language-option {
+  padding: 0.15rem 0.25rem;
+  color: #102b46;
+  line-height: 1.2;
+  text-decoration: none;
+}
+
+.reduniv-language-option:hover,
+.reduniv-language-option:focus-visible {
+  color: #2776c9;
+}
+
+.reduniv-language-current {
+  border-bottom: 2px solid #49dccb;
+  font-weight: 800;
+}
+
+.reduniv-login-button {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.25rem;
+  background: #102b46;
+  color: #ffffff;
+  white-space: nowrap;
+}
+
+.reduniv-login-button:hover,
+.reduniv-login-button:focus-visible {
+  background: #2776c9;
+  color: #ffffff;
+}
+
+.reduniv-header-logout {
+  color: #102b46;
+}
+
+.reduniv-header-logout:hover,
+.reduniv-header-logout:focus-visible {
+  color: #2776c9;
+}
+
+.reduniv-menu-button {
+  border: 1px solid #e6edf4;
+  color: #102b46;
+  background: #ffffff;
+}
+
+.reduniv-menu-button:hover,
+.reduniv-menu-button:focus-visible {
+  color: #102b46;
+  background: #eaf7f4;
+}
+
+.reduniv-mobile-menu {
+  border-top: 1px solid #e6edf4;
+  background: #ffffff;
+}
+
+.reduniv-mobile-nav-link,
+.reduniv-mobile-logout {
+  display: flex;
+  align-items: center;
+  min-height: 2.75rem;
+  color: #102b46;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.reduniv-mobile-nav-link:hover,
+.reduniv-mobile-nav-link:focus-visible,
+.reduniv-mobile-logout:hover,
+.reduniv-mobile-logout:focus-visible {
+  color: #2776c9;
+  background: #f5f9fc;
+}
+
+.reduniv-mobile-nav-link-active {
+  border-left: 3px solid #49dccb;
+  background: #f5f9fc;
+}
+
+@media (max-width: 1023px) {
+  .reduniv-header-nav {
+    height: 4rem;
+    min-height: 4rem;
+  }
+
+  .reduniv-nav-link {
+    height: 4rem;
+  }
+}
+
+.reduniv-home {
+  overflow: hidden;
+  background: #ffffff;
+  color: #102b46;
+}
+
+.reduniv-hero {
+  min-height: 32.5rem;
+  display: flex;
+  align-items: center;
+  color: #ffffff;
+  background-color: #0c1d30;
+  background-image: url("/reduniv/banner-fondo-1920x720.png");
+  background-position: center;
+  background-size: cover;
+}
+
+.reduniv-hero-inner {
+  width: min(100%, 80rem);
+  margin: 0 auto;
+  padding: 4.5rem 2rem;
+}
+
+.reduniv-hero-eyebrow,
+.reduniv-section-eyebrow {
+  margin: 0;
+  color: #49dccb;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  line-height: 1.4;
+}
+
+.reduniv-hero h1 {
+  max-width: 42rem;
+  margin: 1rem 0 1.25rem;
+  color: #ffffff;
+  font-size: clamp(2.75rem, 5vw, 4rem);
+  font-weight: 800;
+  letter-spacing: 0;
+  line-height: 1.1;
+}
+
+.reduniv-hero h1 em {
+  color: #49dccb;
+  font-style: normal;
+}
+
+.reduniv-hero-copy {
+  max-width: 39rem;
+  margin: 0;
+  color: rgba(255, 255, 255, 0.88);
+  font-size: clamp(1rem, 1.5vw, 1.25rem);
+  line-height: 1.6;
+}
+
+.reduniv-hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 2rem;
+}
+
+.reduniv-button {
+  display: inline-flex;
+  min-height: 3rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 0.75rem;
+  padding: 0.75rem 1.25rem;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  text-decoration: none;
+  transition: transform 160ms ease, background-color 160ms ease, color 160ms ease;
+}
+
+.reduniv-button:hover {
+  transform: translateY(-1px);
+}
+
+.reduniv-button-primary {
+  background: #49dccb;
+  color: #0c1d30;
+}
+
+.reduniv-button-primary:hover {
+  background: #62e4d5;
+}
+
+.reduniv-button-secondary {
+  border: 1px solid rgba(255, 255, 255, 0.42);
+  color: #ffffff;
+}
+
+.reduniv-button-secondary:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.reduniv-intro {
+  background: #f5f9fc;
+}
+
+.reduniv-featured-heading h2 {
+  margin: 0.7rem 0 0;
+  color: #102b46;
+  font-size: clamp(1.75rem, 3vw, 2.5rem);
+  font-weight: 800;
+  letter-spacing: 0;
+  line-height: 1.15;
+}
+
+.reduniv-info-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1.375rem;
+}
+
+.reduniv-info-card {
+  display: block;
+  min-height: 15.25rem;
+  border: 1px solid #d8e5ed;
+  border-radius: 0.875rem;
+  padding: 1.5rem;
+  background: #ffffff;
+  box-shadow: 0 5px 15px rgba(16, 43, 70, 0.035);
+  text-decoration: none;
+  transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+}
+
+.reduniv-info-card:hover {
+  border-color: #49dccb;
+  box-shadow: 0 12px 28px rgba(16, 43, 70, 0.1);
+  transform: translateY(-2px);
+}
+
+.reduniv-info-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.reduniv-info-number {
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.75rem;
+  color: #13b9aa;
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.reduniv-info-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border: 1px solid #bcebe5;
+  border-radius: 0.75rem;
+  color: #0c8f86;
+  background: #eefaf8;
+}
+
+.reduniv-info-card h3 {
+  margin: 1.25rem 0 0;
+  color: #102b46;
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.reduniv-info-card p {
+  margin: 0.65rem 0 0;
+  color: #4b6278;
+  font-size: 0.94rem;
+  line-height: 1.55;
+}
+
+.reduniv-info-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-top: 1.25rem;
+  color: #2776c9;
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+
+.reduniv-featured {
+  border-top: 1px solid #d8e5ed;
+  background: #f5f9fc;
+}
+
+.reduniv-featured-heading {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.reduniv-text-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: #2776c9;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.reduniv-text-link:hover {
+  color: #102b46;
+}
+
+.reduniv-featured .group {
+  border-color: #d8e5ed;
+  border-radius: 1rem;
+  background: #ffffff;
+  box-shadow: 0 5px 15px rgba(16, 43, 70, 0.035);
+}
+
+.reduniv-footer {
+  color: #ffffff;
+  background: #0c1d30;
+}
+
+.reduniv-footer-main {
+  border-top: 4px solid #49dccb;
+}
+
+.reduniv-footer-brand {
+  max-width: 30rem;
+}
+
+.reduniv-footer-logo {
+  display: block;
+  width: 11.5rem;
+  height: 2.7rem;
+  background-image: url("/reduniv/aprende-logo-fondo-oscuro.svg");
+  background-position: left center;
+  background-repeat: no-repeat;
+  background-size: contain;
+}
+
+.reduniv-footer-brand > p {
+  margin: 1rem 0 0;
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 0.9375rem;
+  line-height: 1.6;
+}
+
+.reduniv-footer-brand .reduniv-footer-signature {
+  color: #49dccb;
+  font-size: 0.8125rem;
+}
+
+.reduniv-footer nav h2 {
+  margin: 0;
+  color: #ffffff;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.reduniv-footer nav ul {
+  display: grid;
+  gap: 0.7rem;
+  margin: 1.1rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.reduniv-footer nav a {
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 0.9375rem;
+  text-decoration: none;
+}
+
+.reduniv-footer nav a:hover {
+  color: #49dccb;
+}
+
+.reduniv-footer-bottom {
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.62);
+}
+
+@media (max-width: 800px) {
+  .reduniv-hero {
+    min-height: 34rem;
+    align-items: end;
+    background-image: linear-gradient(90deg, rgba(12, 29, 48, 0.98), rgba(12, 29, 48, 0.72)), url("/reduniv/banner-fondo-movil-720x720.png");
+    background-position: 55% center;
+  }
+
+  .reduniv-hero-inner {
+    padding: 3.25rem 1.25rem 3.5rem;
+  }
+
+  .reduniv-hero h1 {
+    font-size: clamp(2.25rem, 10vw, 3.25rem);
+  }
+
+  .reduniv-info-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .reduniv-info-card {
+    min-height: auto;
+  }
+
+  .reduniv-featured-heading {
+    align-items: start;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+}
+
+@media (max-width: 520px) {
+  .reduniv-header-logo,
+  .reduniv-footer-logo {
+    width: 8.75rem;
+    height: 2.3rem;
+  }
+
+  .reduniv-login-button {
+    padding-right: 0.65rem;
+    padding-left: 0.65rem;
+    font-size: 0.75rem;
+  }
+
+  .reduniv-hero-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .reduniv-button {
+    width: 100%;
+  }
+}
+
+@media (max-width: 400px) {
+  .reduniv-header-logo {
+    width: 7.8rem;
+    height: 2.1rem;
+  }
+
+  .reduniv-language-switcher {
+    gap: 0.1rem;
+    padding-right: 0.3rem;
+    padding-left: 0.3rem;
+    font-size: 0.6875rem;
+  }
+
+  .reduniv-language-icon {
+    width: 0.85rem;
+    height: 0.85rem;
+  }
+
+  .reduniv-login-button {
+    padding-right: 0.5rem;
+    padding-left: 0.5rem;
+  }
+}
+
+/* Keep the platform-specific bundle invalidated when the local preview reloads. */
+
+/* Shared APRENDE treatment for the public and learner-facing pages. */
+html[data-platform="reduniv"] .reduniv-catalog,
+html[data-platform="reduniv"] .reduniv-dashboard,
+html[data-platform="reduniv"] .reduniv-course-detail,
+html[data-platform="reduniv"] .reduniv-checkout,
+html[data-platform="reduniv"] .reduniv-auth-page,
+html[data-platform="reduniv"] .reduniv-account-page,
+html[data-platform="reduniv"] .reduniv-status-page,
+html[data-platform="reduniv"] .reduniv-cms,
+html[data-platform="reduniv"] .reduniv-admin {
+  color: #102b46;
+}
+
+html[data-platform="reduniv"] .app-surface,
+html[data-platform="reduniv"] .reduniv-catalog,
+html[data-platform="reduniv"] .reduniv-dashboard {
+  background: #f5f9fc;
+}
+
+.reduniv-featured-heading {
+  align-items: center;
+  flex-direction: column;
+  margin-bottom: 2.25rem;
+  text-align: center;
+}
+
+.reduniv-featured .grid {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 18rem));
+  justify-content: center;
+}
+
+.reduniv-text-link {
+  border: 1px solid #bcebe5;
+  border-radius: 999px;
+  padding: 0.6rem 0.9rem 0.6rem 1rem;
+  background: #ffffff;
+  color: #2776c9;
+  box-shadow: 0 3px 10px rgba(16, 43, 70, 0.05);
+  transition: border-color 160ms ease, background-color 160ms ease, color 160ms ease, transform 160ms ease;
+}
+
+.reduniv-text-link:hover {
+  border-color: #49dccb;
+  background: #eaf7f4;
+  color: #102b46;
+  transform: translateY(-1px);
+}
+
+.reduniv-course-card {
+  border-color: #d8e5ed;
+  box-shadow: 0 5px 15px rgba(16, 43, 70, 0.045);
+}
+
+.reduniv-course-card:hover {
+  border-color: #bcebe5;
+  box-shadow: 0 14px 28px rgba(16, 43, 70, 0.12);
+}
+
+.reduniv-course-card > div:first-child {
+  background: #edf7f7;
+}
+
+.reduniv-course-card > div:first-child > div {
+  background: #eaf7f4;
+}
+
+.reduniv-course-filters {
+  border-color: #d8e5ed;
+  box-shadow: 0 8px 22px rgba(16, 43, 70, 0.06);
+}
+
+.reduniv-course-filters input,
+.reduniv-course-filters select {
+  border-color: #d8e5ed;
+  background: #f8fbfd;
+}
+
+.reduniv-course-filters input:focus,
+.reduniv-course-filters select:focus {
+  border-color: #49dccb;
+  box-shadow: 0 0 0 3px rgba(73, 220, 203, 0.18);
+}
+
+.reduniv-catalog-header {
+  border-top: 0 !important;
+  box-shadow: 0 8px 22px rgba(16, 43, 70, 0.06);
+  text-align: center;
+}
+
+.reduniv-catalog-kicker {
+  border: 1px solid #bcebe5;
+  background: #eaf7f4;
+}
+
+.reduniv-catalog-title {
+  color: #102b46;
+}
+
+.reduniv-catalog > .container > .reduniv-catalog-grid {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 18rem));
+  justify-content: center;
+}
+
+.reduniv-auth-page h1,
+.reduniv-account-page h1,
+.reduniv-status-page h1,
+.reduniv-checkout h1,
+.reduniv-dashboard h1,
+.reduniv-course-detail h1,
+.reduniv-cms h1,
+.reduniv-admin h1 {
+  color: #102b46;
+}
+
+.reduniv-auth-page form,
+.reduniv-account-page form {
+  border: 1px solid #d8e5ed;
+  border-color: #d8e5ed;
+  border-radius: 0.875rem;
+  background: #ffffff;
+  padding: 1.5rem;
+  box-shadow: 0 10px 26px rgba(16, 43, 70, 0.07);
+}
+
+.reduniv-auth-page input,
+.reduniv-account-page input,
+.reduniv-checkout input,
+.reduniv-checkout select {
+  border-color: #d8e5ed;
+}
+
+.reduniv-auth-page input:focus,
+.reduniv-account-page input:focus,
+.reduniv-checkout input:focus,
+.reduniv-checkout select:focus {
+  border-color: #49dccb;
+  box-shadow: 0 0 0 3px rgba(73, 220, 203, 0.18);
+  outline: none;
+}
+
+.reduniv-auth-page button,
+.reduniv-account-page button,
+.reduniv-checkout button {
+  background: #102b46;
+}
+
+.reduniv-auth-page button:hover,
+.reduniv-account-page button:hover,
+.reduniv-checkout button:hover {
+  background: #0c1d30;
+}
+
+.reduniv-course-detail {
+  background: #ffffff;
+}
+
+.reduniv-course-detail > nav {
+  color: #4b6278;
+}
+
+.reduniv-course-detail > nav a,
+.reduniv-course-detail a.text-primary,
+.reduniv-dashboard a.text-primary,
+.reduniv-account-page a.text-primary {
+  color: #2776c9;
+}
+
+.reduniv-dashboard > .container > section > div:first-child,
+.reduniv-dashboard > .container > section > .rounded-lg,
+.reduniv-dashboard .rounded-lg.border.bg-white {
+  border-color: #d8e5ed;
+  box-shadow: 0 8px 22px rgba(16, 43, 70, 0.045);
+}
+
+@media (max-width: 640px) {
+  .reduniv-featured-heading {
+    margin-bottom: 1.75rem;
+  }
+
+  .reduniv-featured .grid {
+    grid-template-columns: minmax(0, 19rem);
+  }
+
+  .reduniv-info-card {
+    min-height: 0;
+  }
+}
